@@ -1,5 +1,5 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v3';
+var CACHE = 'nutrijabon-v4';
 var FONT_CACHE = 'nutrijabon-fonts-v1';
 var FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 var ASSETS = [
@@ -8,7 +8,10 @@ var ASSETS = [
 ];
 
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASSETS); }).then(function () { return self.skipWaiting(); }));
+  // cache: 'reload' evita que el caché HTTP del navegador entregue archivos viejos al instalar una versión nueva
+  e.waitUntil(caches.open(CACHE).then(function (c) {
+    return c.addAll(ASSETS.map(function (u) { return new Request(u, { cache: 'reload' }); }));
+  }).then(function () { return self.skipWaiting(); }));
 });
 
 self.addEventListener('activate', function (e) {
@@ -37,7 +40,11 @@ self.addEventListener('fetch', function (e) {
   }
   if (url.origin !== self.location.origin) return;
 
-  var network = fetch(req).then(function (res) {
+  // Revalida siempre con el servidor (petición condicional, barata) en lugar del caché HTTP
+  var fresh = req.mode === 'navigate'
+    ? new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : new Request(req, { cache: 'no-cache' });
+  var network = fetch(fresh).then(function (res) {
     if (!res || !res.ok) return res;
     var copy = res.clone();
     return caches.open(CACHE).then(function (c) { return c.put(req, copy); }).then(function () { return res; });

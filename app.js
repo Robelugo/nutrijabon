@@ -215,7 +215,7 @@
       h += '<section class="card"><h3 class="card-title">' + icon('clock') + ' Deja listo para mañana (' + DAY_NAMES[wd(tm)].toLowerCase() + ')</h3><ul class="plain">' +
         prep.map(function (x) {
           return '<li><button class="link-row" data-action="open-recipe" data-id="' + x.r.id + '" data-k="' + tmk + '" data-meal="' + x.m.id + '">' +
-            '<span class="emoji">' + x.r.emoji + '</span><span><b>' + x.m.name + ': ' + esc(x.r.name) + '</b><br><span class="small muted">' + x.r.ahead + '</span></span></button></li>';
+            '<span class="roundel sm" style="--mc:var(--m-' + x.m.id + ')">' + x.r.emoji + '</span><span><b>' + x.m.name + ': ' + esc(x.r.name) + '</b><br><span class="small muted">' + x.r.ahead + '</span></span></button></li>';
         }).join('') + '</ul></section>';
     }
 
@@ -230,10 +230,11 @@
   function mealItem(k, m, next) {
     var rid = recipeId(k, m.id), r = RECIPE[rid], t = mealTime(m.id);
     var clock = '<span class="meal-clock">' + t + '</span>';
+    var mc = ' style="--mc:var(--m-' + m.id + ')"';
     if (isSkipped(k, m)) {
-      return '<li class="meal is-skipped"><article class="meal-card"><div class="meal-main">' +
+      return '<li class="meal is-skipped"><article class="meal-card"' + mc + '><div class="meal-main">' +
         '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span><span class="badge warn">No toca hoy</span></div>' +
-        '<div class="dish struck"><span class="emoji">' + r.emoji + '</span><span>' + esc(r.name) + '</span></div>' +
+        '<div class="dish struck"><span class="roundel">' + r.emoji + '</span><span>' + esc(r.name) + '</span></div>' +
         '<p class="small muted">Solo en días de ejercicio. <button class="link-btn" data-action="set-ex" data-v="1">¿Sí hiciste ejercicio?</button></p>' +
         '</div></article></li>';
     }
@@ -243,9 +244,9 @@
       (rid !== defaultRecipe(k, m.id) ? '<span class="badge">Cambiado</span>' : '') +
       (r.extra ? '<span class="badge">Idea extra</span>' : '');
     return '<li class="meal' + (done ? ' is-done' : '') + (isNext ? ' is-next' : '') + '">' +
-      '<article class="meal-card"><div class="meal-main">' +
+      '<article class="meal-card"' + mc + '><div class="meal-main">' +
       '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span>' + badges + '</div>' +
-      '<button class="dish" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"><span class="emoji">' + r.emoji + '</span><span class="dish-name">' + esc(r.name) + '</span>' + icon('right', 'ic-sm') + '</button>' +
+      '<button class="dish" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"><span class="roundel">' + r.emoji + '</span><span class="dish-name">' + esc(r.name) + '</span>' + icon('right', 'ic-sm') + '</button>' +
       eqChips(m.eq) +
       '<div class="meal-actions"><button class="chip-btn" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '">' + icon('book', 'ic-sm') + ' Ver receta</button>' +
       '<button class="chip-btn" data-action="open-swap" data-k="' + k + '" data-meal="' + m.id + '">' + icon('swap', 'ic-sm') + ' Cambiar</button></div>' +
@@ -285,7 +286,7 @@
         '<button class="pill ' + (train ? 'pill-train' : 'pill-rest') + '" data-action="toggle-ex" data-k="' + k + '" aria-label="Cambiar a ' + (train ? 'descanso' : 'día de ejercicio') + '">' + icon(train ? 'dumbbell' : 'moon', 'ic-sm') + (train ? 'Ejercicio' : 'Descanso') + '</button></header>' +
         '<ul class="mini-meals">' + sortedMeals().map(function (m) {
           var r = RECIPE[recipeId(k, m.id)], sk = isSkipped(k, m), dn = isDone(k, m.id);
-          return '<li><button class="mini' + (sk ? ' is-skipped' : '') + (dn ? ' is-done' : '') + '" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"' + (sk ? ' title="No toca: día de descanso"' : '') + '>' +
+          return '<li><button style="--mc:var(--m-' + m.id + ')" class="mini' + (sk ? ' is-skipped' : '') + (dn ? ' is-done' : '') + '" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"' + (sk ? ' title="No toca: día de descanso"' : '') + '>' +
             '<span class="t">' + mealTime(m.id) + '</span><span class="n"><span class="emoji">' + r.emoji + '</span> ' + esc(r.name) + '</span>' +
             (dn ? icon('check', 'ic-sm ok') : '') + '</button></li>';
         }).join('') + '</ul></article>';
@@ -315,7 +316,7 @@
       return '<section class="recipe-group"><h3 class="group-title">' + m.name + ' <span class="muted small">· ' + eqList(m.eq).join(' · ') + '</span></h3>' +
         '<div class="recipe-grid">' + list.filter(function (r) { return r.meal === m.id; }).map(function (r) {
           var pd = planDays(r);
-          return '<button class="recipe-card" data-action="open-recipe" data-id="' + r.id + '"><span class="emoji big">' + r.emoji + '</span>' +
+          return '<button class="recipe-card" style="--mc:var(--m-' + r.meal + ')" data-action="open-recipe" data-id="' + r.id + '"><span class="roundel big">' + r.emoji + '</span>' +
             '<span class="rc-name">' + esc(r.name) + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
         }).join('') + '</div></section>';
     }).join('');
@@ -429,7 +430,7 @@
   }
   function planHtml() {
     return '<ul class="plain plan-list">' + sortedMeals().map(function (m) {
-      return '<li class="plan-row"><span class="t">' + mealTime(m.id) + '</span><div><b>' + m.name + '</b>' +
+      return '<li class="plan-row" style="--mc:var(--m-' + m.id + ')"><span class="t">' + mealTime(m.id) + '</span><div><b>' + m.name + '</b>' +
         (m.trainingOnly ? ' <span class="badge">solo días de ejercicio</span>' : '') + eqChips(m.eq) + '</div></li>';
     }).join('') + '</ul><h4 class="sec-title">Total en un día de ejercicio</h4><div class="eq-grid">' +
       G_ORDER.map(function (g) {
@@ -522,10 +523,10 @@
       actions = '<button class="btn primary" data-action="use-today" data-id="' + r.id + '">' + icon('calendar') + ' Usar en ' + m.name.toLowerCase() + ' de hoy</button>';
     }
     var where = ctx.k && ctx.mode === 'day' ? m.name + ' · ' + DAY_NAMES[wd(fromKey(ctx.k))] + ' ' + fromKey(ctx.k).getDate() : m.name;
-    return '<div class="sheet-head"><span class="sheet-emoji">' + r.emoji + '</span>' +
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + r.meal + ')">' + r.emoji + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">' + where + '</div><h2 id="sheet-title">' + esc(r.name) + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
-      '<div class="sheet-content">' + eqChips(m.eq) +
+      '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + eqChips(m.eq) +
       (r.extra
         ? '<div class="banner info">' + icon('info') + '<div>Idea extra de NutriJabón con las mismas porciones de tu ' + m.name.toLowerCase() + '. Coméntala con tu nutrióloga.</div></div>'
         : (pd ? '<p class="small muted">En tu plan: ' + pd + '</p>' : '')) +
@@ -543,20 +544,20 @@
     function row(r) {
       return '<div class="option' + (r.id === cur ? ' is-current' : '') + '">' +
         '<button class="option-main" data-action="choose-swap" data-k="' + k + '" data-meal="' + mealId + '" data-id="' + r.id + '">' +
-        '<span class="emoji big">' + r.emoji + '</span><span class="option-text"><b>' + esc(r.name) + '</b><span class="small muted">' +
+        '<span class="roundel">' + r.emoji + '</span><span class="option-text"><b>' + esc(r.name) + '</b><span class="small muted">' +
         (r.id === def ? 'El de tu plan para este día' : r.extra ? 'Idea extra' : 'Otra opción de tu plan') + '</span></span>' +
         (r.id === cur ? '<span class="current-mark" aria-label="Elegido">' + icon('check') + '</span>' : '') + '</button>' +
         '<button class="icon-btn" data-action="preview-recipe" data-k="' + k + '" data-id="' + r.id + '" aria-label="Ver receta de ' + esc(r.name) + '">' + icon('book') + '</button></div>';
     }
-    return '<div class="sheet-head"><span class="sheet-emoji">' + icon('swap') + '</span>' +
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + mealId + ')">' + icon('swap') + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">' + longDate(d) + '</div><h2 id="sheet-title">Cambiar ' + m.name.toLowerCase() + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
-      '<div class="sheet-content"><p class="small muted">Todas tienen las mismas porciones (' + eqList(m.eq).join(', ') + '), así que puedes intercambiarlas.</p>' +
+      '<div class="sheet-content" style="--mc:var(--m-' + mealId + ')"><p class="small muted">Todas tienen las mismas porciones (' + eqList(m.eq).join(', ') + '), así que puedes intercambiarlas.</p>' +
       '<h3 class="sec-title">De tu plan</h3><div class="options">' + opts.filter(function (r) { return !r.extra; }).map(row).join('') + '</div>' +
       '<h3 class="sec-title">Ideas extra</h3><div class="options">' + opts.filter(function (r) { return r.extra; }).map(row).join('') + '</div></div>';
   }
   function onboardingSheet() {
-    return '<div class="sheet-head"><span class="sheet-emoji">🌱</span><div class="sheet-titles"><div class="eyebrow">NutriJabón</div><h2 id="sheet-title">¡Hola! Armemos tu semana</h2></div></div>' +
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--green)">🌱</span><div class="sheet-titles"><div class="eyebrow">NutriJabón</div><h2 id="sheet-title">¡Hola! Armemos tu semana</h2></div></div>' +
       '<div class="sheet-content"><p>Aquí verás qué toca comer cada día según tu plan vegano, con recetas, lista de compras y equivalentes.</p>' +
       '<h3 class="sec-title">¿Qué días haces ejercicio?</h3>' + dayChips() +
       '<div class="banner ok">' + icon('dumbbell') + '<div>Los días de ejercicio incluyen tu <b>pre-entreno</b>. Los días de descanso no lo comes. Puedes cambiar esto cuando quieras.</div></div></div>' +
