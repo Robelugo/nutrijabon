@@ -93,33 +93,38 @@
     }).join('') + '</div>';
   }
 
-  /* ---------------- Íconos ---------------- */
+  /* ---------------- Íconos (estilo calcomanía setentera) ----------------
+   * Ilustrados: formas planas con relleno de color y contorno grueso.
+   * Clases de relleno: y amarillo, p rosa, o naranja, g verde, b azul, r rojo, c crema, k tinta;
+   * n = sin contorno, mid/thick = contorno más grueso, sc = trazo crema. */
   var ICONS = {
-    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>',
-    calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-    book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
-    cart: '<circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2 2h2l2.7 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L22 7H5.1"/>',
-    guide: '<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
-    sliders: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+    sun: '<path class="o" d="M20 12A3.2 3.2 0 0 1 17.66 17.66A3.2 3.2 0 0 1 12 20A3.2 3.2 0 0 1 6.34 17.66A3.2 3.2 0 0 1 4 12A3.2 3.2 0 0 1 6.34 6.34A3.2 3.2 0 0 1 12 4A3.2 3.2 0 0 1 17.66 6.34A3.2 3.2 0 0 1 20 12Z"/><circle class="y" cx="12" cy="12" r="4.3"/>',
+    calendar: '<rect class="c" x="3" y="5" width="18" height="16" rx="3"/><path class="p" d="M3 10.5V8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v2.5Z"/><path d="M8 2.8v4M16 2.8v4"/><circle class="g n" cx="8" cy="15.6" r="1.6"/><circle class="o n" cx="12" cy="15.6" r="1.6"/><circle class="b n" cx="16" cy="15.6" r="1.6"/>',
+    book: '<path d="M8.5 8.2c-1-1.2 1-2.3 0-3.5M12 8.2c-1-1.2 1-2.3 0-3.5M15.5 8.2c-1-1.2 1-2.3 0-3.5"/><path class="g" d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M5.6 15.2h12.8"/>',
+    cart: '<path d="M7.5 10a4.5 4.5 0 0 1 9 0"/><path class="o" d="M4 11h16l-1.7 8.6a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6Z"/><rect class="y" x="2.5" y="8.6" width="19" height="3.4" rx="1.7"/><path d="M9.5 14.2v4M12 14.2v4M14.5 14.2v4"/>',
+    guide: '<path class="p" d="M12 7C10 5.2 6.5 4.6 2.5 5.2v13.6c4-.6 7.5 0 9.5 1.8Z"/><path class="b" d="M12 7c2-1.8 5.5-2.4 9.5-1.8v13.6c-4-.6-7.5 0-9.5 1.8Z"/>',
+    sliders: '<path d="M6 2.5v19M12 2.5v19M18 2.5v19"/><rect class="p" x="3.3" y="12.4" width="5.4" height="4.4" rx="1.6"/><rect class="y" x="9.3" y="5.4" width="5.4" height="4.4" rx="1.6"/><rect class="g" x="15.3" y="14.4" width="5.4" height="4.4" rx="1.6"/>',
+    swap: '<path class="p" d="M3 5.2h11V2.6l6.6 4.1-6.6 4.1V8.2H3Z"/><path class="b" d="M21 15.8H10v-2.6l-6.6 4.1 6.6 4.1v-2.6h11Z"/>',
+    dumbbell: '<rect class="k" x="7" y="10.8" width="10" height="2.4" rx="1"/><rect class="p" x="1.4" y="9" width="2.6" height="6" rx="1.1"/><rect class="p" x="20" y="9" width="2.6" height="6" rx="1.1"/><rect class="p" x="3.7" y="6.4" width="4" height="11.2" rx="1.8"/><rect class="p" x="16.3" y="6.4" width="4" height="11.2" rx="1.8"/>',
+    moon: '<path class="y" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M18.6 2.6v4M16.6 4.6h4"/>',
+    clock: '<circle class="o" cx="12" cy="12" r="9.6"/><circle class="c" cx="12" cy="12" r="6.6"/><path d="M12 8.3V12l2.6 1.6"/>',
+    search: '<path class="thick" d="M15.6 15.6l5 5"/><circle class="b" cx="10.5" cy="10.5" r="6.6"/><path class="sc" d="M7.5 9.4a3.3 3.3 0 0 1 2.5-2.5"/>',
+    share: '<rect class="o" x="4" y="10.2" width="16" height="10.8" rx="2.2"/><path class="y" d="M12 2.6l4.8 5h-2.9v6.8h-3.8V7.6H7.2Z"/>',
+    info: '<circle class="b" cx="12" cy="12" r="9.6"/><circle class="c n" cx="12" cy="7.6" r="1.6"/><rect class="c n" x="10.7" y="10.3" width="2.6" height="7.4" rx="1.3"/>',
+    alert: '<path class="y" d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path class="mid" d="M12 9.2v4.4"/><circle class="k n" cx="12" cy="17.2" r="1.4"/>',
+    ban: '<circle class="r" cx="12" cy="12" r="9.6"/><circle class="c" cx="12" cy="12" r="5.8"/><rect class="r" x="6.2" y="10.6" width="11.6" height="2.8" rx="1" transform="rotate(-45 12 12)"/>',
+    leaf: '<path class="g" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/>',
+    download: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="g" d="M12 17.6l-5-5.2h3.2V3h3.6v9.4H17Z"/>',
+    // Glifos: trazos gruesos y redondos que toman el color del texto
     check: '<path d="M20 6 9 17l-5-5"/>',
     left: '<path d="m15 18-6-6 6-6"/>',
     right: '<path d="m9 18 6-6-6-6"/>',
     down: '<path d="m6 9 6 6 6-6"/>',
-    swap: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
-    x: '<path d="M18 6 6 18M6 6l12 12"/>',
-    dumbbell: '<path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 10l7-7M14 21l7-7"/>',
-    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
-    clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
-    search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
-    share: '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/>',
-    info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
-    alert: '<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
-    ban: '<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
-    leaf: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/>',
-    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>'
+    x: '<path d="M18 6 6 18M6 6l12 12"/>'
   };
+  var GLYPHS = { check: 1, left: 1, right: 1, down: 1, x: 1 };
   function icon(name, cls) {
-    return '<svg class="ic' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
+    return '<svg class="ic ' + (GLYPHS[name] ? 'glyph' : 'art') + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
   }
 
   /* ---------------- Lógica del plan ---------------- */
@@ -406,12 +411,12 @@
   }
   function viewGuia() {
     return '<div class="stack"><h2 class="page-title">Guía</h2>' +
-      accordion('ex', '🏋️ Ejercicio vs. descanso', exHtml()) +
-      accordion('plan', '🕒 Tu día en porciones', planHtml()) +
-      accordion('eq', '🔁 Equivalentes veganos', eqHtml()) +
-      accordion('tips', '🌱 Tips veganos', tipsHtml()) +
-      accordion('ajustes', '⚙️ Ajustes', settingsHtml()) +
-      accordion('instalar', '📲 Instalar en tus dispositivos', installHtml()) +
+      accordion('ex', icon('dumbbell') + 'Ejercicio vs. descanso', exHtml()) +
+      accordion('plan', icon('clock') + 'Tu día en porciones', planHtml()) +
+      accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
+      accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
+      accordion('ajustes', icon('sliders') + 'Ajustes', settingsHtml()) +
+      accordion('instalar', icon('download') + 'Instalar en tus dispositivos', installHtml()) +
       '<p class="small muted center">Basado en el plan de tu nutrióloga del 8 nov 2026 · Próxima revisión: 18 dic 2026.<br>NutriJabón te ayuda a seguir tu plan; no sustituye la consulta profesional.</p></div>';
   }
   function exHtml() {
