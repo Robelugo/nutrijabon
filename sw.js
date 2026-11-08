@@ -1,5 +1,5 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v2';
+var CACHE = 'nutrijabon-v3';
 var FONT_CACHE = 'nutrijabon-fonts-v1';
 var FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 var ASSETS = [
