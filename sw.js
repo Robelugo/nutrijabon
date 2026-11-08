@@ -1,5 +1,7 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v1';
+var CACHE = 'nutrijabon-v2';
+var FONT_CACHE = 'nutrijabon-fonts-v1';
+var FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 var ASSETS = [
   './', './index.html', './styles.css', './data.js', './app.js', './manifest.webmanifest',
   './icons/favicon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'
@@ -11,13 +13,29 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== CACHE; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== FONT_CACHE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 
 self.addEventListener('fetch', function (e) {
   var req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  if (req.method !== 'GET') return;
+  var url = new URL(req.url);
+
+  // Tipografías de Google Fonts: se guardan la primera vez para usarlas sin internet
+  if (FONT_HOSTS.indexOf(url.hostname) !== -1) {
+    e.respondWith(caches.open(FONT_CACHE).then(function (c) {
+      return c.match(req).then(function (hit) {
+        if (hit) return hit;
+        return fetch(req).then(function (res) {
+          if (res && (res.ok || res.type === 'opaque')) c.put(req, res.clone());
+          return res;
+        });
+      });
+    }));
+    return;
+  }
+  if (url.origin !== self.location.origin) return;
 
   var network = fetch(req).then(function (res) {
     if (!res || !res.ok) return res;
