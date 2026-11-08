@@ -1,5 +1,7 @@
 # NutriJabón 🌱
 
+**Abrir / instalar:** https://robelugo.github.io/nutrijabon/
+
 App para seguir tu plan de alimentación **vegano** día por día. Funciona en Android, iPhone/iPad, Windows y Mac: es una app web instalable (PWA), así que no necesita tiendas de apps y funciona sin internet una vez instalada.
 
 ## Qué hace
