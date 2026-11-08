@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>NutriJabón</title>
+  <meta name="description" content="Tu plan de alimentación vegano día por día: menú, recetas, lista de compras y equivalentes.">
+  <meta name="theme-color" content="#f4f6f1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d1410" media="(prefers-color-scheme: dark)">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NutriJabón">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <img src="icons/favicon.svg" alt="" width="36" height="36">
+        <div>
+          <h1>NutriJabón</h1>
+          <p id="subtitle">Tu plan vegano</p>
+        </div>
+      </div>
+      <button class="icon-btn" id="settings-btn" data-action="goto-settings" aria-label="Ajustes"></button>
+    </header>
+    <nav class="tabs" id="tabs" aria-label="Secciones"></nav>
+    <main id="view"></main>
+  </div>
+
+  <div id="sheet" class="sheet-backdrop" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">
+      <div id="sheet-body"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <noscript><p style="padding:24px">Activa JavaScript para usar NutriJabón.</p></noscript>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
