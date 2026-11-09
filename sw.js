@@ -1,10 +1,10 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-redesign-v1';
+var CACHE = 'nutrijabon-redesign-v2';
 var FILES_CACHE = 'nutrijabon-files'; // archivos que arma la app (recordatorios .ics)
 var ASSETS = [
-  './', './index.html', './styles.css', './data.js', './app.js', './manifest.webmanifest',
+  './', './index.html', './styles.css', './journal.css', './art/cocina.jpg', './data.js', './app.js', './manifest.webmanifest',
   './fonts/fraunces-latin.woff2', './fonts/nunito-latin.woff2',
-  './art/bagel-tofu.jpg', './art/bolitas-amaranto.jpg', './art/chilaquiles.jpg', './art/tabule.jpg', './art/toast-pera.jpg',
+  './art/alambre-seitan.jpg', './art/bagel-tofu.jpg', './art/bolitas-amaranto.jpg', './art/burrito-salad.jpg', './art/burrito-seitan.jpg', './art/chilaquiles.jpg', './art/fresas-choco.jpg', './art/galleta-manzana.jpg', './art/garden-veggie.jpg', './art/latte-fruta.jpg', './art/mac-cheese.jpg', './art/matcha.jpg', './art/mix-pre.jpg', './art/mix-salado.jpg', './art/noodles.jpg', './art/pan-tofu.jpg', './art/pasta-rapida.jpg', './art/rice-cake.jpg', './art/sandwich-tofu.jpg', './art/tabule.jpg', './art/tacos-arabes.jpg', './art/toast-pera.jpg', './art/x-curry-garbanzo.jpg', './art/x-licuado-fresa.jpg', './art/x-mango-pistache.jpg', './art/x-palomitas.jpg', './art/x-quinoa-tempeh.jpg', './art/x-tacos-champi.jpg', './art/x-tacos-frijol.jpg', './art/x-tacos-seitan.jpg', './art/x-tinga-tofu.jpg', './art/x-uvas-almendras.jpg', './art/x-wrap-platano.jpg', './art/x-yogurt-moras.jpg',
   './icons/favicon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png',
   './icons/sc-hoy.png', './icons/sc-semana.png', './icons/sc-compras.png', './icons/sc-prep.png'
 ];

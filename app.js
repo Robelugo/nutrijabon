@@ -501,20 +501,17 @@
       '<button class="icon-btn" data-action="day-shift" data-n="1" aria-label="Día siguiente">' + icon('right') + '</button>' +
       '</div>' +
       (isToday ? '' : '<div class="center"><button class="link-btn" data-action="day-today">Volver a hoy</button></div>') +
-      '<div class="segmented" role="radiogroup" aria-label="Tipo de día">' +
-      '<button role="radio" class="seg-train" aria-checked="' + train + '" data-action="set-ex" data-v="1">' + icon('dumbbell') + ' Día de ejercicio</button>' +
-      '<button role="radio" class="seg-rest" aria-checked="' + !train + '" data-action="set-ex" data-v="0">' + icon('moon') + ' Descanso</button>' +
-      '</div>' +
+      '<div class="day-settings"><select aria-label="Tipo de día" data-input="day-type"><option value="1"' + (train ? ' selected' : '') + '>Día de ejercicio</option><option value="0"' + (!train ? ' selected' : '') + '>Descanso</option></select>' +
       '<p class="hint">' + (overridden
         ? 'Cambiado solo para este día · <button class="link-btn" data-action="reset-ex">usar mis días</button>'
-        : 'Según tus días de ejercicio · <button class="link-btn" data-action="goto-settings">editar</button>') + '</p>' +
-      '</section>';
+        : '<button class="link-btn" data-action="goto-settings">Editar días</button>') + '</p>' +
+      '</div></section>';
 
     if (next) {
       var featured = meals.find(function (m) { return m.id === next.id; });
       h += '<ul class="meals featured">' + mealItem(k, featured, next) + '</ul>';
     }
-    h += train
+    var notes = train
       ? '<div class="banner ok">' + icon('dumbbell') + '<div><b>Día de ejercicio:</b> incluye tu pre-entreno (' + esc(pre.name) + ') antes de entrenar.</div></div>'
       : '<div class="banner warn">' + icon('ban') + '<div><b>Día de descanso: no comas el pre-entreno</b> (' + esc(pre.name) + '). Son 1 fruta, 1 cereal y 1 grasa con proteína menos. Todo lo demás sigue igual.' +
         restMedsText() + '</div></div>';
@@ -528,7 +525,7 @@
     if (isToday) h += prepBanner() + recapCard() + checkinNudge(k);
 
     if (isToday && !S.settings.medsSeen) {
-      h += '<div class="banner info">' + icon('pill') + '<div><b>Nuevo:</b> marca ' + icon('check', 'ic-xs') + ' si cumpliste o ' + icon('x', 'ic-xs') +
+      notes += '<div class="banner info">' + icon('pill') + '<div><b>Nuevo:</b> marca ' + icon('check', 'ic-xs') + ' si cumpliste o ' + icon('x', 'ic-xs') +
         ' si no. Además puedes llevar tus vitaminas y medicamentos: tu vitamina ya está con el pre-entreno.<div class="row-gap banner-actions">' +
         '<button class="chip-btn" data-action="goto-sec" data-sec="tomas">' + icon('pill', 'ic-sm') + ' Agregar medicamento</button>' +
         '<button class="chip-btn" data-action="meds-seen">Entendido</button></div></div></div>';
@@ -539,6 +536,7 @@
       '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><span style="width:' + pct + '%"></span></div></div>';
 
     h += '<ol class="meals">' + meals.filter(function (m) { return !next || m.id !== next.id; }).map(function (m) { return mealItem(k, m, null); }).join('') + '</ol>';
+    h += '<details class="card acc day-notes" data-acc="dayNotes"' + (ui.open.dayNotes ? ' open' : '') + '><summary>Indicaciones del día' + icon('down', 'chev') + '</summary><div class="acc-body">' + notes + '</div></details>';
     if (diff <= 0) h += checkinCard(k, isToday);
 
     var tm = addDays(d, 1), tmk = keyOf(tm);
@@ -562,11 +560,8 @@
     return h + '</div>';
   }
 
-  var illustratedRecipes = ['toast-pera', 'bolitas-amaranto', 'bagel-tofu', 'chilaquiles', 'tabule'];
   function dishArt(r) {
-    return illustratedRecipes.indexOf(r.id) >= 0
-      ? '<img class="dish-art" src="art/' + r.id + '.jpg" alt="" loading="lazy">'
-      : '<span class="dish-symbol" aria-hidden="true">' + r.emoji + '</span>';
+    return '<img class="dish-art" src="art/' + r.id + '.jpg" alt="" loading="lazy">';
   }
   function mealItem(k, m, next) {
     var rid = recipeId(k, m.id), r = RECIPE[rid], t = mealTime(m.id);
@@ -587,8 +582,11 @@
       (rid !== defaultRecipe(k, m.id) ? '<span class="badge">Cambiado</span>' : '') +
       (tasteOf(rid) === 1 ? '<span class="badge">❤️ Favorita</span>' : tasteOf(rid) === -1 ? '<span class="badge">👎 No te gusta</span>' : '') +
       (r.extra ? '<span class="badge">Idea extra</span>' : '');
+    var foldKey = 'meal-' + k + '-' + m.id;
+    var summary = isNext ? '' : '<details class="timeline-item" data-acc="' + foldKey + '"' + (ui.open[foldKey] ? ' open' : '') + '><summary><time>' + t + '</time><span class="timeline-label"><small>' + m.name + '</small><b>' + esc(r.name) + '</b></span>' +
+      (done || missed ? '<span class="timeline-status">' + (done ? 'Sí cumplí' : 'No cumplí') + '</span>' : '') + icon('down', 'chev') + '</summary>';
     return '<li class="meal' + (done ? ' is-done' : '') + (missed ? ' is-missed' : '') + (isNext ? ' is-next' : '') + '">' +
-      '<article class="meal-card"' + mc + '><div class="meal-main">' + (isNext ? dishArt(r) : '') +
+      summary + '<article class="meal-card"' + mc + '><div class="meal-main">' + (isNext ? dishArt(r) : '') +
       '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span>' + badges + '</div>' +
       '<button class="dish" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"><span class="roundel">' + r.emoji + '</span><span class="dish-name">' + esc(r.name) + '</span>' + icon('right', 'ic-sm') + '</button>' +
       eqChips(m.eq) +
@@ -596,7 +594,7 @@
       '<button class="chip-btn" data-action="open-swap" data-k="' + k + '" data-meal="' + m.id + '">' + icon('swap', 'ic-sm') + ' Cambiar</button></div>' +
       '</div>' + markBtns(mk, m.name, 'data-action="mark" data-k="' + k + '" data-meal="' + m.id + '"', '') +
       (missed ? whyChips('meal', k, m.id, whyOf(k, 'why', m.id)) : '') +
-      '</article>' + medRows(k, m, meds, false) + '</li>';
+      '</article>' + (isNext ? '' : '</details>') + medRows(k, m, meds, false) + '</li>';
   }
   // Razones rápidas al marcar ✗ (opcional; tocar la elegida la quita)
   function whyChips(kind, k, id, cur) {
@@ -649,7 +647,7 @@
     var mon = addDays(mondayOf(today()), ui.weekOffset * 7), tk = keyOf(today());
     var days = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return addDays(mon, i); });
     var nTrain = days.filter(function (d) { return isTraining(keyOf(d)); }).length;
-    var h = '<div class="stack">' + weekNav('week', mon, ui.weekOffset) + '<div class="day-picker" role="group" aria-label="Día de la semana">' + days.map(function (d, i) {
+    var h = '<div class="stack"><h2 class="page-title">Semana</h2>' + weekNav('week', mon, ui.weekOffset) + '<div class="day-picker" role="group" aria-label="Día de la semana">' + days.map(function (d, i) {
       return '<button data-action="week-day" data-v="' + i + '" aria-pressed="' + (ui.weekDay === i) + '">' + DAY_ABBR[i] + '<b>' + d.getDate() + '</b></button>';
     }).join('') + '</div>' + progressCard(mon);
     h += '<p class="hint center">' + nTrain + (nTrain === 1 ? ' día' : ' días') + ' de ejercicio · ' + (7 - nTrain) + ' de descanso. Toca la etiqueta de un día para cambiarlo.</p>' +
@@ -674,7 +672,7 @@
   /* ---------------- Vista: Recetas ---------------- */
   function viewRecetas() {
     var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; })).concat([['fav', '❤️ Favoritas']]);
-    return '<div class="stack"><h2 class="page-title">Recetas</h2>' +
+    return '<div class="stack"><header class="catalog-head"><h2 class="page-title">Recetas</h2></header>' +
       '<label class="search">' + icon('search') + '<input type="search" placeholder="Busca un platillo o ingrediente…" value="' + esc(ui.rQuery) + '" data-input="rq" aria-label="Buscar recetas"></label>' +
       '<div class="chip-row">' + filters.map(function (f) {
         return '<button class="fchip" aria-pressed="' + (ui.rFilter === f[0]) + '" data-action="rfilter" data-v="' + f[0] + '">' + f[1] + '</button>';
@@ -735,10 +733,10 @@
     var res = buildShopping(mon), checked = S.shop[wk] || {};
     var home = res.items.filter(function (i) { return isPantry(i.n); }), items = res.items.filter(function (i) { return !isPantry(i.n); });
     var nChecked = items.filter(function (i) { return checked[i.n]; }).length;
-    var h = '<div class="stack">' + weekNav('shop', mon, ui.shopOffset) + shopSwitch();
+    var h = '<div class="stack"><h2 class="page-title">Compras</h2>' + weekNav('shop', mon, ui.shopOffset) + shopSwitch();
     h += '<div class="banner ok">' + icon('info') + '<div>Calculada con el menú de esa semana (incluye tus cambios de platillo): ' +
       res.trainDays + (res.trainDays === 1 ? ' día' : ' días') + ' con pre-entreno y ' + (7 - res.trainDays) + ' de descanso.</div></div>';
-    h += '<div class="shop-tools"><span class="muted small" id="shop-count">' + nChecked + ' de ' + items.length + ' listos</span>' +
+    h += '<progress class="shop-meter" aria-label="Avance de compras" max="' + Math.max(1, items.length) + '" value="' + nChecked + '"></progress><div class="shop-tools"><span class="muted small" id="shop-count">' + nChecked + ' de ' + items.length + ' listos</span>' +
       '<div class="row-gap"><button class="chip-btn" data-action="shop-share">' + icon('share', 'ic-sm') + ' Compartir</button>' +
       '<button class="chip-btn" data-action="shop-clear">Desmarcar todo</button></div></div>';
     if (!Object.keys(S.settings.pantry || {}).length) {
@@ -865,7 +863,7 @@
   function viewPrep(mon) {
     var wk = keyOf(mon), tasks = buildPrep(mon, false), done = S.prep[wk] || {};
     var n = tasks.length, nd = tasks.filter(function (t) { return done[t.id]; }).length, pct = n ? Math.round(nd / n * 100) : 0;
-    var h = '<div class="stack">' + weekNav('shop', mon, ui.shopOffset) + shopSwitch();
+    var h = '<div class="stack"><h2 class="page-title">Compras</h2>' + weekNav('shop', mon, ui.shopOffset) + shopSwitch();
     if (!n) return h + '<p class="empty">Esta semana no hay nada que adelantar.</p></div>';
     h += '<div class="progress"><div class="progress-top"><span id="prep-count"><b>' + nd + '</b> de ' + n + ' tareas</span><span class="muted" id="prep-pct">' + pct + '%</span></div>' +
       '<div class="bar"><span id="prep-bar" style="width:' + pct + '%"></span></div></div>' +
@@ -910,6 +908,7 @@
     var el = document.getElementById('shop-count'); if (!el) return;
     var all = document.querySelectorAll('[data-input="shop"]'), n = 0;
     all.forEach(function (x) { if (x.checked) n++; });
+    document.querySelector('.shop-meter').value = n;
     el.textContent = n + ' de ' + all.length + ' listos';
   }
   function shareShopping() {
@@ -967,6 +966,7 @@
       accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
       accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
       accordion('fuera', icon('fork') + 'Comer fuera', outHtml()) +
+      '<h3 class="section-heading">Preferencias y datos</h3>' +
       accordion('ajustes', icon('paw') + 'Ajustes', settingsHtml()) +
       accordion('tomas', icon('pill') + 'Vitaminas y medicamentos', medsHtml()) +
       accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
@@ -1413,7 +1413,7 @@
     return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + r.meal + ')">' + r.emoji + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">' + where + '</div><h2 id="sheet-title">' + esc(r.name) + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
-      '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + eqChips(m.eq) +
+      '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + dishArt(r) + eqChips(m.eq) +
       '<button class="btn cook-btn" data-action="cook-recipe" data-id="' + r.id + '">' + icon('pot') + ' Modo cocina <span class="small muted">paso a paso, con temporizador</span></button>' +
       tasteBtns(r.id) +
       (r.extra
@@ -1448,8 +1448,8 @@
       '<h3 class="sec-title">Ideas extra</h3><div class="options">' + opts.filter(function (r) { return r.extra; }).map(row).join('') + '</div></div>';
   }
   function onboardingSheet() {
-    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--green)">🌱</span><div class="sheet-titles"><div class="eyebrow">NutriJabón</div><h2 id="sheet-title">¡Hola! Armemos tu semana</h2></div></div>' +
-      '<div class="sheet-content"><p>Aquí verás qué toca comer cada día según tu plan vegano, con recetas, lista de compras y equivalentes.</p>' +
+    return '<div class="sheet-head"><img class="welcome-cat" src="icons/favicon.svg" width="48" height="48" alt=""><div class="sheet-titles"><div class="eyebrow">NutriJabón</div><h2 id="sheet-title">¡Hola! Armemos tu semana</h2></div></div>' +
+      '<div class="sheet-content"><img class="welcome-art" src="art/cocina.jpg" alt=""><p>Aquí verás qué toca comer cada día según tu plan vegano, con recetas, lista de compras y equivalentes.</p>' +
       '<h3 class="sec-title">¿Qué días haces ejercicio?</h3>' + dayChips() +
       '<div class="banner ok">' + icon('dumbbell') + '<div>Los días de ejercicio incluyen tu <b>pre-entreno</b>. Los días de descanso no lo comes. Puedes cambiar esto cuando quieras.</div></div></div>' +
       '<div class="sheet-actions"><button class="btn primary" data-action="finish-onboarding">Empezar</button></div>';
@@ -1843,6 +1843,7 @@
   }
   function renderSheet() {
     if (!sheet) return;
+    sheetBox.dataset.kind = sheet.type;
     var isCook = sheet.type === 'cook';
     sheetBox.classList.toggle('is-cook', isCook); sheetEl.classList.toggle('cook', isCook);
     sheetBody.innerHTML = SHEETS[sheet.type].apply(null, sheet.args);
@@ -1925,6 +1926,7 @@
   var TABS = [['hoy', 'Hoy', 'sun'], ['semana', 'Semana', 'calendar'], ['recetas', 'Recetas', 'book'], ['compras', 'Compras', 'cart'], ['guia', 'Guía', 'guide']];
   var mainEl;
   function render() {
+    mainEl.dataset.view = ui.tab;
     mainEl.innerHTML = VIEWS[ui.tab]();
     document.querySelectorAll('.tab').forEach(function (b) {
       if (b.dataset.tab === ui.tab) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -2036,7 +2038,8 @@
   }
   function onChange(e) {
     var el = e.target, t = el.dataset && el.dataset.input;
-    if (t === 'extras') { ui.extras = el.checked; document.getElementById('recipe-results').innerHTML = recipeResults(); }
+    if (t === 'day-type') setEx(currentKey(), el.value === '1');
+    else if (t === 'extras') { ui.extras = el.checked; document.getElementById('recipe-results').innerHTML = recipeResults(); }
     else if (t === 'shop') {
       var wk = el.dataset.wk, n = el.dataset.n;
       S.shop[wk] = S.shop[wk] || {};
