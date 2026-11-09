@@ -1,5 +1,5 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v11';
+var CACHE = 'nutrijabon-v12';
 var FONT_CACHE = 'nutrijabon-fonts-v1';
 var FILES_CACHE = 'nutrijabon-files'; // archivos que arma la app (recordatorios .ics)
 var FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];

@@ -259,6 +259,62 @@
     { id: 'desp', name: 'Despensa y condimentos', emoji: '🧂' }
   ];
 
+  /* Comer fuera: qué pedir para cubrir las porciones de cada comida.
+   * opts usa nombres EXACTOS de EQUIV (la porción sale de ahí); el primero es la sugerencia principal.
+   * meals = en qué comidas tiene sentido cada lugar. */
+  var EAT_OUT = {
+    tips: [
+      'Arma tu plato con tus porciones: un cereal (tortilla, arroz, pan), tu leguminosa o proteína y verduras.',
+      'Lo cocinado fuera casi siempre ya lleva aceite: mejor no agregues más grasa.',
+      'Pide sin queso, sin crema y sin mantequilla. Pregunta si los frijoles llevan manteca y si el arroz o la sopa llevan consomé de pollo.',
+      'Aderezos y salsas cremosas aparte: la mayonesa normal lleva huevo y muchas vinagretas llevan miel o queso.'
+    ],
+    places: [
+      {
+        id: 'tacos', emoji: '🌮', name: 'Taquería', meals: ['des', 'com', 'cen'],
+        order: 'Tacos de frijol, nopal, champiñón o flor de calabaza en tortilla de maíz, con guacamole y salsa.',
+        opts: { cer: ['Tortilla de maíz'], leg: ['Frijol cocido'], ver: ['Nopal cocido', 'Champiñón crudo', 'Flor de calabaza cocida'], gsp: ['Guacamole', 'Aguacate'] },
+        ask: ['Tortillas de maíz: las de harina suelen llevar manteca.', 'Pregunta si los frijoles llevan manteca.', 'Sin queso ni crema.']
+      },
+      {
+        id: 'fonda', emoji: '🍲', name: 'Fonda o comida corrida', meals: ['des', 'com', 'cen'],
+        order: 'Sopa de verduras, arroz, frijoles de la olla o lentejas, ensalada y tortillas.',
+        opts: { cer: ['Arroz cocido', 'Tortilla de maíz'], leg: ['Frijol cocido', 'Lenteja cocida'], ver: ['Sopa de verduras', 'Verduras picadas', 'Lechuga'], gsp: ['Aguacate'] },
+        ask: ['Pregunta si la sopa y el arroz llevan consomé de pollo.', 'Mejor frijoles de la olla que refritos (pueden llevar manteca).', 'Sin queso ni crema encima.']
+      },
+      {
+        id: 'sushi', emoji: '🍣', name: 'Sushi o japonés', meals: ['com', 'cen'],
+        order: 'Rollos de verduras o aguacate, edamame y ensalada; tofu si lo tienen.',
+        opts: { cer: ['Arroz cocido'], leg: ['Edamame'], pro: ['Tofu firme'], ver: ['Pepino rebanado', 'Verduras picadas'], gsp: ['Aguacate'] },
+        ask: ['Sin queso crema ni mayonesa (spicy y otros aderezos llevan huevo).', 'La salsa de anguila y muchos caldos (dashi) llevan pescado.', 'Pregunta si la sopa miso lleva dashi de pescado.']
+      },
+      {
+        id: 'italiano', emoji: '🍝', name: 'Italiano o pizza', meals: ['com', 'cen'],
+        order: 'Pasta con salsa de tomate (pomodoro o arrabbiata) y verduras, o pizza sin queso con verduras.',
+        opts: { cer: ['Pasta cocida'], ver: ['Verduras picadas', 'Tomate / jitomate', 'Lechuga'], gsp: ['Aceite de oliva', 'Aceituna negra'] },
+        ask: ['Pasta seca: la fresca lleva huevo.', 'Sin parmesano; el pesto lleva queso.', 'Pregunta si la masa lleva leche o manteca.']
+      },
+      {
+        id: 'asia', emoji: '🥡', name: 'Comida china o asiática', meals: ['com', 'cen'],
+        order: 'Tofu salteado con verduras y arroz al vapor.',
+        opts: { cer: ['Arroz cocido'], pro: ['Tofu firme'], ver: ['Verduras picadas', 'Brócoli cocido'], gsp: ['Aceite (cualquiera)'] },
+        ask: ['Muchas salsas llevan salsa de ostión o de pescado.', 'El arroz frito suele llevar huevo: pide arroz al vapor.', 'Pide que lo salteen con poco aceite.']
+      },
+      {
+        id: 'cafe', emoji: '☕', name: 'Cafetería', meals: ['pre', 'des', 'c1', 'c2'],
+        order: 'Café o té con bebida de soya, fruta, y pan con aguacate o crema de cacahuate.',
+        opts: { lec: ['Bebida de soya', 'Bebida de chícharo sin azúcar'], fru: ['Plátano', 'Manzana', 'Papaya picada'], cer: ['Pan de masa madre', 'Bagel'], gsp: ['Aguacate'], gcp: ['Crema de cacahuate natural', 'Almendra'], ver: ['Tomate / jitomate'] },
+        ask: ['Bebida vegetal sin azúcar y sin jarabes.', 'Muchos panes, bagels y muffins llevan leche, huevo o miel.']
+      },
+      {
+        id: 'tienda', emoji: '🏪', name: 'Tienda de conveniencia', meals: ['pre', 'c1', 'c2'],
+        order: 'Fruta, cacahuates o almendras naturales y bebida de soya sin azúcar.',
+        opts: { fru: ['Manzana', 'Plátano'], gcp: ['Cacahuate', 'Almendra', 'Mix de frutos secos y semillas'], lec: ['Bebida de soya'], cer: ['Palomitas naturales'] },
+        ask: ['Nueces naturales: sin miel, sin azúcar y sin enchilado dulce.', 'Revisa que la bebida diga “sin azúcar”.']
+      }
+    ]
+  };
+
   /* Prep del domingo: qué se puede adelantar de la semana.
    * n = nombre exacto del ingrediente en las recetas; las cantidades salen del menú de esa semana.
    * dry = tazas en seco por cada taza cocida (aprox.); dryG = gramos en seco por taza cocida. */
@@ -405,7 +461,7 @@
   ];
 
   window.NJ_DATA = {
-    GROUPS: GROUPS, MEALS: MEALS, WEEK: WEEK, RECIPES: RECIPES, SHOP_CATS: SHOP_CATS, PREP: PREP,
+    GROUPS: GROUPS, MEALS: MEALS, WEEK: WEEK, RECIPES: RECIPES, SHOP_CATS: SHOP_CATS, PREP: PREP, EAT_OUT: EAT_OUT,
     EQUIV: EQUIV, REMOVED: REMOVED, FRUIT_IDEAS: FRUIT_IDEAS, TIPS: TIPS,
     PLAN: { assigned: '2026-11-08', review: '2026-12-18' }
   };

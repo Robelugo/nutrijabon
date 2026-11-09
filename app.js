@@ -129,6 +129,9 @@
     download: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="g" d="M12 17.6l-5-5.2h3.2V3h3.6v9.4H17Z"/>',
     upload: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="p" d="M12 2.6l5 5.2h-3.2v9.4h-3.6V7.8H7Z"/>',
     bell: '<circle class="o" cx="12" cy="2.9" r="1.5"/><path class="p" d="M9.5 17.6a2.5 2.5 0 0 0 5 0Z"/><path class="y" d="M12 3.6a6.2 6.2 0 0 0-6.2 6.2v5.2h12.4V9.8A6.2 6.2 0 0 0 12 3.6Z"/><path class="sc" d="M8.6 12.6V10a3.5 3.5 0 0 1 2.1-3.2"/><rect class="o" x="3.4" y="14.6" width="17.2" height="3.2" rx="1.6"/><path d="M1.8 9.4a10 10 0 0 1 2.3-5M22.2 9.4a10 10 0 0 0-2.3-5"/>',
+    fork: '<circle class="b" cx="12" cy="12.4" r="6.2"/><circle class="c" cx="12" cy="12.4" r="3.4"/>' +
+      '<path d="M1.6 2.8v4.4M3 2.8v4.4M4.4 2.8v4.4M1.6 7.2a1.4 1.4 0 0 0 2.8 0"/><path class="mid" d="M3 8.8v12.4"/>' +
+      '<path class="y" d="M20.3 2.8c1.8 1.3 2.3 4.4 2.1 8.2h-2.1Z"/><path class="mid" d="M21.35 11v10.2"/>',
     pot: '<path d="M3.6 13H1.6M20.4 13h2"/><path class="o" d="M4 10.6h16v6.6a3.6 3.6 0 0 1-3.6 3.6H7.6A3.6 3.6 0 0 1 4 17.2Z"/>' +
       '<path class="y" d="M6 8.4a6 4.2 0 0 1 12 0Z"/><rect class="y" x="2.6" y="8.2" width="18.8" height="3" rx="1.5"/><circle class="p" cx="12" cy="3.4" r="1.4"/><path class="sc" d="M7.2 14v3.2"/>',
     pill: '<g transform="rotate(-40 12 12)"><path class="p" d="M12 7.6H6.4a4.4 4.4 0 0 0 0 8.8H12Z"/><path class="y" d="M12 7.6h5.6a4.4 4.4 0 0 1 0 8.8H12Z"/><path class="sc" d="M5.6 10.2h3"/></g><path d="M20.4 3.2v2.6M19.1 4.5h2.6"/>',
@@ -410,7 +413,9 @@
       REASONS[kind].map(function (x) {
         return '<button class="why-chip" aria-pressed="' + (cur === x[0]) + '" data-action="why" data-kind="' + kind + '" data-k="' + k + '" data-id="' + id + '" data-r="' + x[0] + '">' +
           '<span aria-hidden="true">' + x[1] + '</span> ' + x[2] + '</button>';
-      }).join('') + '</div>';
+      }).join('') +
+      (kind === 'meal' && cur === 'fuera' ? '<button class="link-btn why-link" data-action="open-out" data-meal="' + id + '">Qué pedir la próxima vez que comas fuera</button>' : '') +
+      '</div>';
   }
   // Botones ✓ / ✗: tocar el que ya está marcado lo desmarca
   function markBtns(mk, label, attrs, cls) {
@@ -564,7 +569,7 @@
     ['mar', '🫙', 'Domingo: marina para lunes a miércoles'],
     ['wed', '🌙', 'Miércoles en la noche: marina para jueves a domingo']
   ];
-  function listText(a) { return a.length > 1 ? a.slice(0, -1).join(', ') + ' y ' + a[a.length - 1] : a[0] || ''; }
+  function listText(a, conj) { return a.length > 1 ? a.slice(0, -1).join(', ') + ' ' + (conj || 'y') + ' ' + a[a.length - 1] : a[0] || ''; }
   function daysText(days) { return listText(days.slice().sort().map(function (i) { return DAY_SHORT[i]; })); }
   function uniq(a) { return a.filter(function (x, i) { return a.indexOf(x) === i; }); }
   function weekUses(mon, base) { // base = menú de tu plan con tus días de ejercicio (sin cambios sueltos)
@@ -725,6 +730,7 @@
       accordion('plan', icon('clock') + 'Tu día en porciones', planHtml()) +
       accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
       accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
+      accordion('fuera', icon('fork') + 'Comer fuera', outHtml()) +
       accordion('ajustes', icon('paw') + 'Ajustes', settingsHtml()) +
       accordion('tomas', icon('pill') + 'Vitaminas y medicamentos', medsHtml()) +
       accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
@@ -1107,6 +1113,7 @@
         D.FRUIT_IDEAS.map(function (f) { return '<span class="eq-chip">' + f[0] + ' · ' + f[1] + '</span>'; }).join('') + '</div></div>' : '') +
       '<h3 class="sec-title">Preparación</h3><ol class="steps">' + r.steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>' +
       (r.tips || []).map(function (t) { return '<div class="banner leaf">' + icon('leaf') + '<div><b>Ojo vegano:</b> ' + t + '</div></div>'; }).join('') +
+      (ctx.mode === 'day' && !(isSkipped(ctx.k, m)) ? outLink(r.meal) : '') +
       '</div><div class="sheet-actions">' + actions + '</div>';
   }
   function swapSheet(k, mealId) {
@@ -1123,7 +1130,7 @@
     return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + mealId + ')">' + icon('swap') + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">' + longDate(d) + '</div><h2 id="sheet-title">Cambiar ' + m.name.toLowerCase() + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
-      '<div class="sheet-content" style="--mc:var(--m-' + mealId + ')"><p class="small muted">Todas tienen las mismas porciones (' + eqList(m.eq).join(', ') + '), así que puedes intercambiarlas.</p>' +
+      '<div class="sheet-content" style="--mc:var(--m-' + mealId + ')"><p class="small muted">Todas tienen las mismas porciones (' + eqList(m.eq).join(', ') + '), así que puedes intercambiarlas.</p>' + outLink(mealId) +
       '<h3 class="sec-title">De tu plan</h3><div class="options">' + opts.filter(function (r) { return !r.extra; }).map(row).join('') + '</div>' +
       '<h3 class="sec-title">Ideas extra</h3><div class="options">' + opts.filter(function (r) { return r.extra; }).map(row).join('') + '</div></div>';
   }
@@ -1133,6 +1140,65 @@
       '<h3 class="sec-title">¿Qué días haces ejercicio?</h3>' + dayChips() +
       '<div class="banner ok">' + icon('dumbbell') + '<div>Los días de ejercicio incluyen tu <b>pre-entreno</b>. Los días de descanso no lo comes. Puedes cambiar esto cuando quieras.</div></div></div>' +
       '<div class="sheet-actions"><button class="btn primary" data-action="finish-onboarding">Empezar</button></div>';
+  }
+
+  /* Comer fuera: qué pedir en cada lugar para cubrir las porciones de una comida.
+   * Las cantidades salen de tus equivalentes (D.EQUIV) multiplicadas por las porciones de esa comida. */
+  var EQ_BY_NAME = {};
+  G_ORDER.forEach(function (g) { (D.EQUIV[g] || []).forEach(function (x) { EQ_BY_NAME[g + '|' + x[0]] = x; }); });
+  var PORTION_FRAC = { '½': 1 / 2, '⅓': 1 / 3, '⅔': 2 / 3, '¼': 1 / 4, '¾': 3 / 4, '⅙': 1 / 6 };
+  var UNIT_PL = { pieza: 'piezas', taza: 'tazas', cda: 'cdas', cdita: 'cditas', vasito: 'vasitos', paquete: 'paquetes', mitad: 'mitades' };
+  var UNIT_SG = {}; Object.keys(UNIT_PL).forEach(function (k) { UNIT_SG[UNIT_PL[k]] = k; });
+  function scalePortion(s, n) { // ('½ taza', 2) → '1 taza'
+    var m = /^(\d+)?([½⅓⅔¼¾⅙])?\s+(\S+)(.*)$/.exec(s);
+    if (!m || (!m[1] && !m[2])) return n === 1 ? s : n + ' × ' + s;
+    var q = ((m[1] ? +m[1] : 0) + (m[2] ? PORTION_FRAC[m[2]] : 0)) * n;
+    var base = UNIT_SG[m[3]] || (UNIT_PL[m[3]] ? m[3] : null);
+    var word = base ? (q > 1 + 1e-9 ? UNIT_PL[base] : base) : m[3];
+    return fmtNum(q, m[3] === 'g' ? 'g' : 'taza') + ' ' + word + m[4];
+  }
+  function outPlan(place, m) {
+    var items = [], missing = [];
+    G_ORDER.forEach(function (g) {
+      var n = m.eq[g]; if (!n) return;
+      var names = (place.opts[g] || []).filter(function (x) { return EQ_BY_NAME[g + '|' + x]; });
+      if (!names.length) { missing.push(eqText(g, n)); return; }
+      var x = EQ_BY_NAME[g + '|' + names[0]];
+      items.push({ g: g, n: n, text: scalePortion(x[1], n) + ' de ' + lowerFirst(x[0]), flag: x[2], alts: names.slice(1).map(lowerFirst) });
+    });
+    return { items: items, missing: missing };
+  }
+  function outLink(mealId) {
+    return '<button class="out-link" data-action="open-out" data-meal="' + mealId + '">' + icon('fork') +
+      '<span><b>¿Comes fuera?</b><span class="small muted">Qué pedir para cubrir tu ' + MEAL[mealId].name.toLowerCase() + '</span></span>' + icon('right', 'ic-sm') + '</button>';
+  }
+  function outSheet(mealId) {
+    var m = MEAL[mealId], places = D.EAT_OUT.places.filter(function (p) { return p.meals.indexOf(mealId) !== -1; });
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + mealId + ')">' + icon('fork') + '</span>' +
+      '<div class="sheet-titles"><div class="eyebrow">Comer fuera</div><h2 id="sheet-title">' + m.name + '</h2></div>' +
+      '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
+      '<div class="sheet-content" style="--mc:var(--m-' + mealId + ')"><p class="small muted">Tu ' + m.name.toLowerCase() + ' lleva:</p>' + eqChips(m.eq) +
+      '<ul class="plain out-tips">' + D.EAT_OUT.tips.map(function (t) { return '<li>' + icon('leaf', 'ic-xs') + '<span>' + t + '</span></li>'; }).join('') + '</ul>' +
+      '<div class="out-places">' + places.map(function (p, i) {
+        var plan = outPlan(p, m);
+        return '<details class="out-place"' + (i === 0 ? ' open' : '') + '><summary><span class="emoji">' + p.emoji + '</span><b>' + p.name + '</b>' + icon('down', 'chev') + '</summary>' +
+          '<div class="out-body"><p>' + p.order + '</p><h4 class="sec-title">Para cubrir tu ' + m.name.toLowerCase() + '</h4><ul class="plain out-items">' +
+          plan.items.map(function (it) {
+            return '<li>' + dot(it.g) + '<div><b>' + esc(it.text) + '</b> <span class="muted small">= ' + eqText(it.g, it.n) + '</span>' +
+              (it.flag ? '<span class="flag">' + icon('alert', 'ic-xs') + ' ' + esc(it.flag) + '</span>' : '') +
+              (it.alts.length ? '<span class="small muted out-alt">o ' + esc(listText(it.alts, 'o')) + '</span>' : '') + '</div></li>';
+          }).join('') + '</ul>' +
+          (plan.missing.length ? '<p class="small out-missing">' + icon('alert', 'ic-xs') + ' Aquí es difícil cubrir ' + listText(plan.missing) + '.</p>' : '') +
+          '<h4 class="sec-title">Pide o pregunta</h4><ul class="plain out-ask">' + p.ask.map(function (a) { return '<li>' + icon('info', 'ic-xs') + '<span>' + a + '</span></li>'; }).join('') + '</ul></div></details>';
+      }).join('') + '</div>' +
+      '<p class="small muted">Basado en tus equivalentes veganos. Si algo no se pudo, márcalo con ✗ y “Comí fuera” para comentarlo en tu revisión.</p></div>';
+  }
+  function outHtml() { // sección de la Guía
+    return '<p>Qué pedir en una taquería, fonda, sushi, cafetería y más para cubrir las porciones de cada comida, sin ingredientes animales escondidos.</p>' +
+      '<ul class="plain out-tips">' + D.EAT_OUT.tips.map(function (t) { return '<li>' + icon('leaf', 'ic-xs') + '<span>' + t + '</span></li>'; }).join('') + '</ul>' +
+      '<h4 class="sec-title">Elige la comida</h4><div class="row-gap">' + sortedMeals().map(function (m) {
+        return '<button class="chip-btn" style="--mc:var(--m-' + m.id + ')" data-action="open-out" data-meal="' + m.id + '"><i class="dot" style="--c:var(--m-' + m.id + ')"></i>' + m.name + '</button>';
+      }).join('') + '</div>';
   }
 
   /* Resumen para la revisión con la nutrióloga */
@@ -1248,7 +1314,7 @@
   }
 
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -1362,6 +1428,7 @@
       case 'mark': if (ds.close) closeSheet(); setMark('done', ds.k, ds.meal, ds.v === '1'); break;
       case 'mark-med': setMark('tk', ds.k, ds.id, ds.v === '1'); break;
       case 'why': setWhy(ds.kind, ds.k, ds.id, ds.r); break;
+      case 'open-out': openSheet('out', [ds.meal]); break;
       case 'meds-seen': S.settings.medsSeen = true; save(); render(); break;
       case 'med-add': addMed(); break;
       case 'med-del': delMed(ds.id); break;
