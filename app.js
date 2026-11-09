@@ -108,7 +108,13 @@
     book: '<path d="M8.5 8.2c-1-1.2 1-2.3 0-3.5M12 8.2c-1-1.2 1-2.3 0-3.5M15.5 8.2c-1-1.2 1-2.3 0-3.5"/><path class="g" d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M5.6 15.2h12.8"/>',
     cart: '<path d="M7.5 10a4.5 4.5 0 0 1 9 0"/><path class="o" d="M4 11h16l-1.7 8.6a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6Z"/><rect class="y" x="2.5" y="8.6" width="19" height="3.4" rx="1.7"/><path d="M9.5 14.2v4M12 14.2v4M14.5 14.2v4"/>',
     guide: '<path class="p" d="M12 7C10 5.2 6.5 4.6 2.5 5.2v13.6c4-.6 7.5 0 9.5 1.8Z"/><path class="b" d="M12 7c2-1.8 5.5-2.4 9.5-1.8v13.6c-4-.6-7.5 0-9.5 1.8Z"/>',
-    sliders: '<path d="M6 2.5v19M12 2.5v19M18 2.5v19"/><rect class="p" x="3.3" y="12.4" width="5.4" height="4.4" rx="1.6"/><rect class="y" x="9.3" y="5.4" width="5.4" height="4.4" rx="1.6"/><rect class="g" x="15.3" y="14.4" width="5.4" height="4.4" rx="1.6"/>',
+    // Ajustes: patita de gato (naranja, con cojincitos rosas) sosteniendo una llave azul.
+    // La silueta se arma con círculos: primero contorno (k mid) y encima el relleno (o n).
+    paw: '<g transform="rotate(-45 12 12)"><rect class="b" x="3" y="10.4" width="16.5" height="3.2" rx="1.6"/><path class="b" d="M23.49 10.7A4.2 4.2 0 1 0 23.49 13.3H20.6V10.7Z"/></g>' +
+      '<circle class="k mid" cx="7.3" cy="17.4" r="3.87"/><circle class="k mid" cx="4.2" cy="14.56" r="1.42"/><circle class="k mid" cx="6.18" cy="13.19" r="1.42"/><circle class="k mid" cx="8.5" cy="13.19" r="1.42"/><circle class="k mid" cx="10.48" cy="14.65" r="1.42"/>' +
+      '<circle class="o n" cx="7.3" cy="17.4" r="3.87"/><circle class="o n" cx="4.2" cy="14.56" r="1.42"/><circle class="o n" cx="6.18" cy="13.19" r="1.42"/><circle class="o n" cx="8.5" cy="13.19" r="1.42"/><circle class="o n" cx="10.48" cy="14.65" r="1.42"/>' +
+      '<path class="p n" transform="translate(7.3 17.4) scale(.86)" d="M0-.3c-1.5 0-2.6 1.3-2.6 2.3 0 .8.7 1.1 1.4.9.5-.1.8-.3 1.2-.3s.7.2 1.2.3c.7.2 1.4-.1 1.4-.9 0-1-1.1-2.3-2.6-2.3Z"/>' +
+      '<circle class="p n" cx="4.3" cy="14.78" r=".82"/><circle class="p n" cx="6.22" cy="13.44" r=".82"/><circle class="p n" cx="8.47" cy="13.44" r=".82"/><circle class="p n" cx="10.39" cy="14.86" r=".82"/>',
     swap: '<path class="p" d="M3 5.2h11V2.6l6.6 4.1-6.6 4.1V8.2H3Z"/><path class="b" d="M21 15.8H10v-2.6l-6.6 4.1 6.6 4.1v-2.6h11Z"/>',
     dumbbell: '<rect class="k" x="7" y="10.8" width="10" height="2.4" rx="1"/><rect class="p" x="1.4" y="9" width="2.6" height="6" rx="1.1"/><rect class="p" x="20" y="9" width="2.6" height="6" rx="1.1"/><rect class="p" x="3.7" y="6.4" width="4" height="11.2" rx="1.8"/><rect class="p" x="16.3" y="6.4" width="4" height="11.2" rx="1.8"/>',
     moon: '<path class="y" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M18.6 2.6v4M16.6 4.6h4"/>',
@@ -551,7 +557,7 @@
       accordion('plan', icon('clock') + 'Tu día en porciones', planHtml()) +
       accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
       accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
-      accordion('ajustes', icon('sliders') + 'Ajustes', settingsHtml()) +
+      accordion('ajustes', icon('paw') + 'Ajustes', settingsHtml()) +
       accordion('tomas', icon('pill') + 'Vitaminas y medicamentos', medsHtml()) +
       accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
       accordion('respaldo', icon('cassette') + 'Respaldo y otros equipos', backupHtml()) +
@@ -1222,7 +1228,7 @@
     document.getElementById('tabs').innerHTML = TABS.map(function (t) {
       return '<button class="tab" data-action="tab" data-tab="' + t[0] + '">' + icon(t[2]) + '<span>' + t[1] + '</span></button>';
     }).join('');
-    document.getElementById('settings-btn').innerHTML = icon('sliders');
+    document.getElementById('settings-btn').innerHTML = icon('paw');
 
     document.addEventListener('click', onClick);
     document.addEventListener('input', onInput);
