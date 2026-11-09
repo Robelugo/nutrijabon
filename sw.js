@@ -1,5 +1,5 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v18';
+var CACHE = 'nutrijabon-v19';
 var FILES_CACHE = 'nutrijabon-files'; // archivos que arma la app (recordatorios .ics)
 var ASSETS = [
   './', './index.html', './styles.css', './data.js', './app.js', './manifest.webmanifest',

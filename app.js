@@ -182,6 +182,32 @@
     return (S.settings.meds || []).filter(function (md) { return md.meal === mealId && (md.when === 'all' || isTraining(k)); });
   }
   function medMark(k, id) { var r = dayRec(k); return r.tk ? r.tk[id] : undefined; }
+  // Gustos por receta: 1 = me gusta, -1 = no me gusta (en settings.taste)
+  function tasteOf(id) { return (S.settings.taste || {})[id] || 0; }
+  function tasteNote(id) { var t = tasteOf(id); return t === 1 ? ' · ❤️ te gusta' : t === -1 ? ' · 👎 no te gusta' : ''; }
+  function tasteBtns(id) {
+    var t = tasteOf(id);
+    return '<div class="taste row-gap" role="group" aria-label="¿Te gusta este platillo?">' +
+      '<button class="chip-btn taste-btn" aria-pressed="' + (t === 1) + '" data-action="taste" data-id="' + id + '" data-v="1">❤️ Me gusta</button>' +
+      '<button class="chip-btn taste-btn" aria-pressed="' + (t === -1) + '" data-action="taste" data-id="' + id + '" data-v="-1">👎 No me gusta</button></div>';
+  }
+  function setTaste(id, v) {
+    S.settings.taste = S.settings.taste || {};
+    if (S.settings.taste[id] === v) delete S.settings.taste[id]; else S.settings.taste[id] = v;
+    save();
+    if (sheet) renderSheet();
+    var y = window.scrollY; render(); window.scrollTo(0, y);
+    var t = tasteOf(id);
+    toast(t === 1 ? 'Guardada en tus favoritas ❤️' : t === -1 ? 'Anotado: no te gusta. Saldrá al final en “Cambiar”' : 'Quitado');
+  }
+  function tasteList(v) { return D.RECIPES.filter(function (r) { return tasteOf(r.id) === v; }).map(function (r) { return r.name; }); }
+  function tastesHtml() { // sección del resumen para la revisión
+    var favs = tasteList(1), nos = tasteList(-1);
+    if (!favs.length && !nos.length) return '';
+    return '<h3 class="sec-title">Tus gustos</h3>' +
+      (favs.length ? '<p class="small"><b>❤️ Te gustan:</b> ' + esc(favs.join(', ')) + '.</p>' : '') +
+      (nos.length ? '<p class="small"><b>👎 No te gustan:</b> ' + esc(nos.join(', ')) + '.</p>' : '');
+  }
   // Tomas del pre-entreno que también van en días de descanso (p. ej. la vitamina)
   function restMeds() { return (S.settings.meds || []).filter(function (md) { return md.meal === 'pre' && md.when === 'all'; }); }
   function restMedsText() {
@@ -527,6 +553,7 @@
     h += '<section class="card"><h3 class="card-title">Porciones de este día</h3><div class="eq-grid">' +
       G_ORDER.map(function (g) { return '<div class="eq-cell">' + dot(g) + '<span>' + G[g].name + '</span><b>' + (tot[g] || 0) + '</b></div>'; }).join('') +
       '</div>' + (train ? '' : '<p class="small muted">Sin pre-entreno: 1 fruta, 1 cereal y 1 grasa con proteína menos que en un día de ejercicio.</p>') + '</section>';
+    h += '<div class="center"><button class="chip-btn" data-action="share-day" data-k="' + k + '">' + icon('share', 'ic-sm') + ' Compartir el menú de este día</button></div>';
 
     return h + '</div>';
   }
@@ -548,6 +575,7 @@
       (missed ? '<span class="badge miss">No cumplí</span>' : '') +
       (m.trainingOnly ? '<span class="badge">Antes de entrenar</span>' : '') +
       (rid !== defaultRecipe(k, m.id) ? '<span class="badge">Cambiado</span>' : '') +
+      (tasteOf(rid) === 1 ? '<span class="badge">❤️ Favorita</span>' : tasteOf(rid) === -1 ? '<span class="badge">👎 No te gusta</span>' : '') +
       (r.extra ? '<span class="badge">Idea extra</span>' : '');
     return '<li class="meal' + (done ? ' is-done' : '') + (missed ? ' is-missed' : '') + (isNext ? ' is-next' : '') + '">' +
       '<article class="meal-card"' + mc + '><div class="meal-main">' +
@@ -612,7 +640,8 @@
     var days = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return addDays(mon, i); });
     var nTrain = days.filter(function (d) { return isTraining(keyOf(d)); }).length;
     var h = '<div class="stack">' + weekNav('week', mon, ui.weekOffset) + progressCard(mon);
-    h += '<p class="hint center">' + nTrain + (nTrain === 1 ? ' día' : ' días') + ' de ejercicio · ' + (7 - nTrain) + ' de descanso. Toca la etiqueta de un día para cambiarlo.</p>';
+    h += '<p class="hint center">' + nTrain + (nTrain === 1 ? ' día' : ' días') + ' de ejercicio · ' + (7 - nTrain) + ' de descanso. Toca la etiqueta de un día para cambiarlo.</p>' +
+      '<div class="center"><button class="chip-btn" data-action="share-week" data-mon="' + keyOf(mon) + '">' + icon('share', 'ic-sm') + ' Compartir el menú de la semana</button></div>';
     h += '<div class="week-grid">' + days.map(function (d) {
       var k = keyOf(d), train = isTraining(k);
       return '<article class="card day-card' + (k === tk ? ' is-today' : '') + '">' +
@@ -632,7 +661,7 @@
 
   /* ---------------- Vista: Recetas ---------------- */
   function viewRecetas() {
-    var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; }));
+    var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; })).concat([['fav', '❤️ Favoritas']]);
     return '<div class="stack"><h2 class="page-title">Recetas</h2>' +
       '<label class="search">' + icon('search') + '<input type="search" placeholder="Busca un platillo o ingrediente…" value="' + esc(ui.rQuery) + '" data-input="rq" aria-label="Buscar recetas"></label>' +
       '<div class="chip-row">' + filters.map(function (f) {
@@ -644,16 +673,18 @@
   function recipeResults() {
     var q = norm(ui.rQuery.trim());
     var list = D.RECIPES.filter(function (r) {
-      return (ui.extras || !r.extra) && (ui.rFilter === 'all' || r.meal === ui.rFilter) &&
+      return (ui.extras || !r.extra || ui.rFilter === 'fav') && (ui.rFilter === 'all' || r.meal === ui.rFilter || (ui.rFilter === 'fav' && tasteOf(r.id) === 1)) &&
         (!q || norm(r.name + ' ' + r.ing.map(function (i) { return i.n + ' ' + (i.t || ''); }).join(' ')).indexOf(q) !== -1);
     });
-    if (!list.length) return '<p class="empty">No encontré recetas con eso. Prueba con otro ingrediente.</p>';
+    if (!list.length) return ui.rFilter === 'fav'
+      ? '<p class="empty">Aún no tienes favoritas. Abre una receta y toca ❤️ Me gusta.</p>'
+      : '<p class="empty">No encontré recetas con eso. Prueba con otro ingrediente.</p>';
     return MEALS.filter(function (m) { return list.some(function (r) { return r.meal === m.id; }); }).map(function (m) {
       return '<section class="recipe-group"><h3 class="group-title">' + m.name + ' <span class="muted small">· ' + eqList(m.eq).join(' · ') + '</span></h3>' +
         '<div class="recipe-grid">' + list.filter(function (r) { return r.meal === m.id; }).map(function (r) {
           var pd = planDays(r);
           return '<button class="recipe-card" style="--mc:var(--m-' + r.meal + ')" data-action="open-recipe" data-id="' + r.id + '"><span class="roundel big">' + r.emoji + '</span>' +
-            '<span class="rc-name">' + esc(r.name) + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
+            '<span class="rc-name">' + esc(r.name) + (tasteOf(r.id) === 1 ? ' ❤️' : tasteOf(r.id) === -1 ? ' 👎' : '') + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
         }).join('') + '</div></section>';
     }).join('');
   }
@@ -689,7 +720,8 @@
   function viewCompras() {
     var mon = shopMonday(), wk = keyOf(mon);
     if (ui.shopView === 'prep') return viewPrep(mon);
-    var res = buildShopping(mon), items = res.items, checked = S.shop[wk] || {};
+    var res = buildShopping(mon), checked = S.shop[wk] || {};
+    var home = res.items.filter(function (i) { return isPantry(i.n); }), items = res.items.filter(function (i) { return !isPantry(i.n); });
     var nChecked = items.filter(function (i) { return checked[i.n]; }).length;
     var h = '<div class="stack">' + weekNav('shop', mon, ui.shopOffset) + shopSwitch();
     h += '<div class="banner ok">' + icon('info') + '<div>Calculada con el menú de esa semana (incluye tus cambios de platillo): ' +
@@ -697,17 +729,38 @@
     h += '<div class="shop-tools"><span class="muted small" id="shop-count">' + nChecked + ' de ' + items.length + ' listos</span>' +
       '<div class="row-gap"><button class="chip-btn" data-action="shop-share">' + icon('share', 'ic-sm') + ' Compartir</button>' +
       '<button class="chip-btn" data-action="shop-clear">Desmarcar todo</button></div></div>';
+    if (!Object.keys(S.settings.pantry || {}).length) {
+      h += '<p class="small muted center">Toca 🏠 en lo que siempre tienes en casa (sal, aceite, especias) y dejará de aparecer en la lista.</p>';
+    }
     D.SHOP_CATS.forEach(function (cat) {
       var list = items.filter(function (i) { return i.c === cat.id; }).sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); });
       if (!list.length) return;
       h += '<section class="card"><h3 class="card-title"><span class="emoji">' + cat.emoji + '</span> ' + cat.name + '</h3><ul class="shop-list">' +
         list.map(function (i) {
           var c = !!checked[i.n];
-          return '<li><label class="shop-item' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="shop" data-wk="' + wk + '" data-n="' + esc(i.n) + '"' + (c ? ' checked' : '') + '>' +
-            '<span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span></label></li>';
+          return '<li class="shop-li"><label class="shop-item' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="shop" data-wk="' + wk + '" data-n="' + esc(i.n) + '"' + (c ? ' checked' : '') + '>' +
+            '<span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span></label>' +
+            '<button class="pantry-btn" data-action="pantry" data-n="' + esc(i.n) + '" aria-label="Siempre tengo en casa: ' + esc(i.n) + '" title="Siempre tengo en casa">🏠</button></li>';
         }).join('') + '</ul></section>';
     });
+    if (home.length) {
+      h += '<details class="card pantry-card"><summary><span class="emoji">🏠</span> Siempre en casa (' + home.length + ')' + icon('down', 'chev') + '</summary>' +
+        '<p class="small muted">No aparecen en la lista ni cuando la compartes. Toca “Ya no” si se te acaba algo.</p><ul class="plain pantry-list">' +
+        home.sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); }).map(function (i) {
+          return '<li><span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span>' +
+            '<button class="chip-btn" data-action="pantry" data-n="' + esc(i.n) + '">Ya no</button></li>';
+        }).join('') + '</ul></details>';
+    }
     return h + '</div>';
+  }
+  // Lo que siempre tienes en casa no sale en la lista (settings.pantry, por nombre de ingrediente)
+  function isPantry(n) { return !!(S.settings.pantry || {})[n]; }
+  function togglePantry(n) {
+    S.settings.pantry = S.settings.pantry || {};
+    if (S.settings.pantry[n]) delete S.settings.pantry[n]; else S.settings.pantry[n] = true;
+    save();
+    var y = window.scrollY; render(); window.scrollTo(0, y);
+    toast(isPantry(n) ? n + ': siempre en casa 🏠' : n + ' vuelve a la lista');
   }
   /* ---------------- Prep del domingo ----------------
    * Tareas armadas con el menú real de la semana (cambios de platillo y días de descanso incluidos):
@@ -847,7 +900,7 @@
   }
   function shareShopping() {
     var mon = shopMonday(), wk = keyOf(mon), sun = addDays(mon, 6), checked = S.shop[wk] || {};
-    var items = buildShopping(mon).items.filter(function (i) { return !checked[i.n]; });
+    var items = buildShopping(mon).items.filter(function (i) { return !checked[i.n] && !isPantry(i.n); });
     if (!items.length) { toast('Ya tienes todo ✓'); return; }
     var lines = ['Lista de compras NutriJabón (' + mon.getDate() + ' ' + MONTHS_ABBR[mon.getMonth()] + ' – ' + sun.getDate() + ' ' + MONTHS_ABBR[sun.getMonth()] + ')'];
     D.SHOP_CATS.forEach(function (cat) {
@@ -857,6 +910,21 @@
       list.forEach(function (i) { lines.push('• ' + i.n + (i.qty !== 'al gusto' ? ' — ' + i.qty : '')); });
     });
     shareText('Lista de compras', lines.join('\n'), 'Lista copiada');
+  }
+  // Compartir el menú (sin vitaminas ni medicamentos: eso es privado)
+  function menuDayText(k) {
+    var lines = [longDate(fromKey(k)) + ' · ' + (isTraining(k) ? 'día de ejercicio' : 'descanso')];
+    sortedMeals().forEach(function (m) {
+      if (isSkipped(k, m)) return;
+      var r = RECIPE[recipeId(k, m.id)];
+      lines.push(mealTime(m.id) + ' ' + m.name + ': ' + r.name);
+    });
+    return lines.join('\n');
+  }
+  function shareDay(k) { shareText('Menú del día', 'Menú NutriJabón 🌱\n' + menuDayText(k), 'Menú copiado'); }
+  function shareWeek(mon) {
+    var days = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return menuDayText(keyOf(addDays(mon, i))); });
+    shareText('Menú de la semana', 'Menú NutriJabón 🌱 · ' + rangeText(mon, addDays(mon, 6)) + '\n\n' + days.join('\n\n'), 'Menú copiado');
   }
   function shareText(title, text, copiedMsg) {
     if (navigator.share) {
@@ -1157,6 +1225,8 @@
     if (st.medsSeen === true) out.settings.medsSeen = true;
     if (st.vitAllDays === true) out.settings.vitAllDays = true;
     if (KEY_RE.test(st.recapSeen)) out.settings.recapSeen = st.recapSeen;
+    if (isObj(st.taste)) Object.keys(st.taste).forEach(function (id) { if (RECIPE[id] && (st.taste[id] === 1 || st.taste[id] === -1)) (out.settings.taste = out.settings.taste || {})[id] = st.taste[id]; });
+    if (isObj(st.pantry)) Object.keys(st.pantry).forEach(function (n) { if (st.pantry[n] === true && n.length <= 80) (out.settings.pantry = out.settings.pantry || {})[n] = true; });
     out.settings.onboarded = true;
     if (isObj(d.days)) Object.keys(d.days).forEach(function (k) {
       var r = d.days[k], o = {};
@@ -1254,6 +1324,9 @@
     if (n2 && n1.indexOf(n2) === -1) out.settings.notes = ((n1 ? n1 + '\n' : '') + n2).slice(0, 2000);
     if (b.settings.lastBackup && (!out.settings.lastBackup || b.settings.lastBackup > out.settings.lastBackup)) out.settings.lastBackup = b.settings.lastBackup;
     out.settings.medsSeen = out.settings.medsSeen || b.settings.medsSeen;
+    var tb = b.settings.taste || {}; out.settings.taste = out.settings.taste || {};
+    Object.keys(tb).forEach(function (id) { if (!(id in out.settings.taste)) out.settings.taste[id] = tb[id]; });
+    out.settings.pantry = Object.assign({}, b.settings.pantry || {}, out.settings.pantry || {});
     return out;
   }
   function finishImport(merge) {
@@ -1325,6 +1398,7 @@
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
       '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + eqChips(m.eq) +
       '<button class="btn cook-btn" data-action="cook-recipe" data-id="' + r.id + '">' + icon('pot') + ' Modo cocina <span class="small muted">paso a paso, con temporizador</span></button>' +
+      tasteBtns(r.id) +
       (r.extra
         ? '<div class="banner info">' + icon('info') + '<div>Idea extra de NutriJabón con las mismas porciones de tu ' + m.name.toLowerCase() + '. Coméntala con tu nutrióloga.</div></div>'
         : (pd ? '<p class="small muted">En tu plan: ' + pd + '</p>' : '')) +
@@ -1339,12 +1413,13 @@
   }
   function swapSheet(k, mealId) {
     var m = MEAL[mealId], cur = recipeId(k, mealId), def = defaultRecipe(k, mealId), d = fromKey(k);
-    var opts = D.RECIPES.filter(function (r) { return r.meal === mealId; });
+    var opts = D.RECIPES.filter(function (r) { return r.meal === mealId; })
+      .sort(function (a, b) { return tasteOf(b.id) - tasteOf(a.id); }); // primero tus favoritas, al final las que no te gustan
     function row(r) {
       return '<div class="option' + (r.id === cur ? ' is-current' : '') + '">' +
         '<button class="option-main" data-action="choose-swap" data-k="' + k + '" data-meal="' + mealId + '" data-id="' + r.id + '">' +
         '<span class="roundel">' + r.emoji + '</span><span class="option-text"><b>' + esc(r.name) + '</b><span class="small muted">' +
-        (r.id === def ? 'El de tu plan para este día' : r.extra ? 'Idea extra' : 'Otra opción de tu plan') + '</span></span>' +
+        (r.id === def ? 'El de tu plan para este día' : r.extra ? 'Idea extra' : 'Otra opción de tu plan') + tasteNote(r.id) + '</span></span>' +
         (r.id === cur ? '<span class="current-mark" aria-label="Elegido">' + icon('check') + '</span>' : '') + '</button>' +
         '<button class="icon-btn" data-action="preview-recipe" data-k="' + k + '" data-id="' + r.id + '" aria-label="Ver receta de ' + esc(r.name) + '">' + icon('book') + '</button></div>';
     }
@@ -1510,6 +1585,7 @@
       (R.swaps.length ? '<ul class="plain swap-list">' + R.swaps.map(function (x) {
         return '<li><span class="roundel sm" style="--mc:var(--m-' + x.r.meal + ')">' + x.r.emoji + '</span><span>' + esc(x.r.name) + '</span><b>×' + x.n + '</b></li>';
       }).join('') + '</ul>' : '<p class="small muted">Seguiste los platillos de tu plan.</p>') +
+      tastesHtml() +
       '<h3 class="sec-title"><label for="notes">Preguntas para tu nutrióloga</label></h3>' +
       '<textarea id="notes" class="notes no-print" rows="4" data-input="notes" placeholder="Ej.: ¿En días de descanso solo quito el pre-entreno?">' + esc(notes) + '</textarea>' +
       '<p id="notes-print" class="print-only notes-print">' + esc(notes) + '</p>' +
@@ -1553,6 +1629,9 @@
       L.push('', 'Platillos que elegí en lugar del plan:');
       R.swaps.forEach(function (x) { L.push('• ' + x.r.name + ' ×' + x.n); });
     }
+    var favs = tasteList(1), nos = tasteList(-1);
+    if (favs.length) L.push('', 'Platillos que me gustan:', favs.join(', '));
+    if (nos.length) L.push('', 'Platillos que no me gustan:', nos.join(', '));
     var notes = (S.settings.notes || '').trim();
     if (notes) L.push('', 'Preguntas:', notes);
     return L.join('\n');
@@ -1861,6 +1940,10 @@
       case 'open-recap': openSheet('recap', [ds.mon]); break;
       case 'recap-seen': S.settings.recapSeen = ds.wk; save(); render(); break;
       case 'ck': setCheck(ds.k, ds.f, +ds.v); break;
+      case 'taste': setTaste(ds.id, +ds.v); break;
+      case 'share-day': shareDay(ds.k); break;
+      case 'share-week': shareWeek(fromKey(ds.mon)); break;
+      case 'pantry': togglePantry(ds.n); break;
       case 'goto-checkin': { var ckEl = document.getElementById('checkin'); if (ckEl) ckEl.scrollIntoView({ block: 'start', behavior: 'smooth' }); break; }
       case 'import-merge': finishImport(true); break;
       case 'import-replace': finishImport(false); break;

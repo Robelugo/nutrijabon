@@ -568,6 +568,23 @@ main {
 .ck-note { display: flex; flex-direction: column; gap: 4px; }
 .ck-note textarea { width: 100%; resize: vertical; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 15px; }
 .feel-notes { display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
+/* Gustos y despensa */
+.taste { justify-content: flex-start; }
+.taste-btn[aria-pressed="true"] { background: var(--pressed-bg); color: var(--pressed-fg); border-color: var(--pressed-bg); }
+.shop-li { display: flex; align-items: center; gap: 6px; border-top: 2px dashed var(--line-soft); }
+.shop-li:first-child { border-top: 0; }
+.shop-li .shop-item { flex: 1; min-width: 0; border-top: 0; }
+.pantry-btn { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; filter: grayscale(1); opacity: .55; }
+.pantry-btn:hover, .pantry-btn:focus-visible { filter: none; opacity: 1; }
+.pantry-card { padding: 0; }
+.pantry-card > summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 14px 16px; cursor: pointer; font-family: var(--font-display); font-weight: 900; font-size: 17px; }
+.pantry-card > summary::-webkit-details-marker { display: none; }
+.pantry-card > summary .chev { margin-left: auto; }
+.pantry-card[open] > summary .chev { transform: rotate(180deg); }
+.pantry-card > p { padding: 0 16px; }
+.pantry-list { padding: 8px 16px 14px; }
+.pantry-list li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 2px dashed var(--line-soft); }
+.pantry-list li:first-child { border-top: 0; }
 /* Resumen semanal */
 .recap-card { display: flex; flex-direction: column; gap: 12px; }
 .recap-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
