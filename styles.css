@@ -728,3 +728,52 @@ main {
   .sheet-content { padding: 14px 0 0; }
   .meter-list li, .stats { break-inside: avoid; }
 }
+
+/* La misma jerarquía visual en las cinco vistas. */
+:root {
+  --radius: 16px;
+  --shadow: none;
+  --rings: 0 0 0 1px var(--orange);
+}
+.topbar { margin-bottom: 4px; }
+.topbar::after { height: 4px; background: var(--rainbow-fill); }
+.tabs::before { height: 1px; background: var(--line-soft); }
+.day-title h2, .page-title { color: var(--text); text-shadow: none; }
+.card, .meal-card, .progress, .recipe-card, .banner, .search, .segmented,
+.chip-btn, .icon-btn, .fchip, .ex-col { border: 1px solid var(--line-soft); box-shadow: none; }
+.page-title { margin-block: 6px; }
+.day-picker, .guide-picker { display: grid; gap: 4px; }
+.day-picker { grid-template-columns: repeat(7,minmax(0,1fr)); }
+.guide-picker { grid-template-columns: repeat(2,1fr); margin-bottom: 12px; }
+.day-picker button, .guide-picker button {
+  padding: 8px 2px; background: var(--surface-2); color: var(--text); border-radius: 12px;
+  min-height: 44px; font-weight: 800;
+}
+.day-picker b { display: block; font-size: 1.2rem; }
+.day-picker [aria-pressed=true], .guide-picker [aria-pressed=true], .fchip[aria-pressed=true] {
+  background: var(--yellow); color: var(--ink);
+}
+.guide-rest .ok, .guide-train .warn { display: none; }
+.ex-grid { grid-template-columns: minmax(0,1fr); }
+.featured .meal-card { display: block; overflow: hidden; border: 1px solid var(--orange); padding: clamp(14px,3vw,24px); }
+.featured .meal-main { display: grid; grid-template-columns: minmax(0,1fr) minmax(76px,32%); align-items: center; }
+.featured .meal-main > * { grid-column: 1; }
+.featured .meal-main > :is(.dish-art,.dish-symbol) { grid-column: 2; grid-row: 1 / 4; border-radius: 12px; }
+.featured .dish { font-size: clamp(1.4rem,4vw,2.2rem); line-height: 1.1; }
+.featured .dish .roundel { display: none; }
+.featured .meal-actions { grid-column: 1 / -1; }
+.featured .mark { flex-direction: row; margin-top: 10px; }
+.featured .meal-card > .mark button { width: auto; border-radius: 24px; gap: 5px; padding: 0 12px; }
+.featured .meal-card > .mark .yes::after { content: "Sí cumplí"; }
+.featured .meal-card > .mark .no::after { content: "No cumplí"; }
+.dish-art,.dish-symbol { width: 100%; aspect-ratio: 1.9; object-fit: cover; border-radius: 10px; }
+.dish-symbol { display: grid; place-items: center; background: var(--surface-2); font-size: clamp(2rem,7vw,3.6rem); }
+.recipe-card { min-width: 0; padding: 9px; gap: 9px; }
+.recipe-card:hover { box-shadow: none; border-color: var(--orange); }
+.rc-name,.rc-meta { padding-inline: 4px; }
+.acc .shop-list { margin-top: 12px; }
+.week-selection, .day-picker { width: 100%; max-width: 720px; margin-inline: auto; }
+@media (max-width: 520px) {
+  .recipe-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+  .day-picker button { font-size: .85rem; }
+}

@@ -1,9 +1,10 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v19';
+var CACHE = 'nutrijabon-redesign-v1';
 var FILES_CACHE = 'nutrijabon-files'; // archivos que arma la app (recordatorios .ics)
 var ASSETS = [
   './', './index.html', './styles.css', './data.js', './app.js', './manifest.webmanifest',
   './fonts/fraunces-latin.woff2', './fonts/nunito-latin.woff2',
+  './art/bagel-tofu.jpg', './art/bolitas-amaranto.jpg', './art/chilaquiles.jpg', './art/tabule.jpg', './art/toast-pera.jpg',
   './icons/favicon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png',
   './icons/sc-hoy.png', './icons/sc-semana.png', './icons/sc-compras.png', './icons/sc-prep.png'
 ];
