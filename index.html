@@ -22,14 +22,16 @@
 <body>
   <div class="app">
     <header class="topbar">
-      <div class="brand">
-        <img src="icons/favicon.svg" alt="" width="44" height="44">
-        <div>
-          <h1>NutriJabón</h1>
-          <p id="subtitle">Tu plan vegano</p>
+      <div class="masthead">
+        <div class="masthead-brand">
+          <img src="icons/favicon.svg" alt="" width="56" height="56">
+          <div class="masthead-copy">
+            <h1>NutriJabón</h1>
+            <p id="subtitle"></p>
+          </div>
         </div>
+        <button class="settings-button" id="settings-btn" data-action="goto-settings"><span>Ajustes</span></button>
       </div>
-      <button class="icon-btn" id="settings-btn" data-action="goto-settings" aria-label="Ajustes"></button>
     </header>
     <nav class="tabs" id="tabs" aria-label="Secciones"></nav>
     <main id="view"></main>

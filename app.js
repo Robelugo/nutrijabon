@@ -139,13 +139,14 @@
     clipboard: '<rect class="c" x="4.2" y="3.6" width="15.6" height="18.4" rx="2.6"/><rect class="p n" x="7.6" y="9.4" width="8.8" height="2.4" rx="1.2"/><rect class="g n" x="7.6" y="13.2" width="5.6" height="2.4" rx="1.2"/><rect class="o n" x="7.6" y="17" width="7.4" height="2.4" rx="1.2"/><rect class="b" x="8.2" y="1.8" width="7.6" height="4" rx="1.5"/>',
     cassette: '<rect class="o" x="1.8" y="4.4" width="20.4" height="15.2" rx="2.6"/><rect class="p n" x="3.4" y="6" width="17.2" height="2.4" rx="1"/><rect class="c" x="4.4" y="8.4" width="15.2" height="6.4" rx="3.2"/><circle class="k n" cx="8.4" cy="11.6" r="1.8"/><circle class="k n" cx="15.6" cy="11.6" r="1.8"/><circle class="c n" cx="8.4" cy="11.6" r=".7"/><circle class="c n" cx="15.6" cy="11.6" r=".7"/><path d="M10.6 11.6h2.8"/><path class="y" d="M6.2 19.6l1.5-3.4h8.6l1.5 3.4Z"/>',
     // Glifos: trazos gruesos y redondos que toman el color del texto
+    settings: '<path d="M3 6h3m6 0h9M3 12h9m6 0h3M3 18h2m6 0h10"/><circle cx="9" cy="6" r="2.6"/><circle cx="15" cy="12" r="2.6"/><circle cx="8" cy="18" r="2.6"/>',
     check: '<path d="M20 6 9 17l-5-5"/>',
     left: '<path d="m15 18-6-6 6-6"/>',
     right: '<path d="m9 18 6-6-6-6"/>',
     down: '<path d="m6 9 6 6 6-6"/>',
     x: '<path d="M18 6 6 18M6 6l12 12"/>'
   };
-  var GLYPHS = { check: 1, left: 1, right: 1, down: 1, x: 1 };
+  var GLYPHS = { settings: 1, check: 1, left: 1, right: 1, down: 1, x: 1 };
   function icon(name, cls) {
     return '<svg class="ic ' + (GLYPHS[name] ? 'glyph' : 'art') + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
   }
@@ -967,7 +968,7 @@
       accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
       accordion('fuera', icon('fork') + 'Comer fuera', outHtml()) +
       '<h3 class="section-heading">Preferencias y datos</h3>' +
-      accordion('ajustes', icon('paw') + 'Ajustes', settingsHtml()) +
+      accordion('ajustes', icon('settings') + 'Ajustes', settingsHtml()) +
       accordion('tomas', icon('pill') + 'Vitaminas y medicamentos', medsHtml()) +
       accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
       accordion('respaldo', icon('cassette') + 'Respaldo y otros equipos', backupHtml()) +
@@ -2085,7 +2086,10 @@
     if (id === 'tomas' && !S.settings.medsSeen) { S.settings.medsSeen = true; save(); }
     closeSheet(); ui.open[id] = true; setTab('guia');
     var sec = document.getElementById('sec-' + id);
-    if (sec) sec.scrollIntoView({ block: 'start' });
+    if (sec) {
+      sec.querySelector('summary').focus({ preventScroll: true });
+      sec.scrollIntoView({ block: 'start' });
+    }
   }
 
   /* ---------------- Inicio ---------------- */
@@ -2098,7 +2102,7 @@
     document.getElementById('tabs').innerHTML = TABS.map(function (t) {
       return '<button class="tab" data-action="tab" data-tab="' + t[0] + '">' + icon(t[2]) + '<span>' + t[1] + '</span></button>';
     }).join('');
-    document.getElementById('settings-btn').innerHTML = icon('paw');
+    document.getElementById('settings-btn').insertAdjacentHTML('afterbegin', icon('settings'));
 
     document.addEventListener('click', onClick);
     document.addEventListener('input', onInput);

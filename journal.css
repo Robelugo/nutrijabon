@@ -166,3 +166,35 @@ main { padding-top:22px; }
 @media(min-width:960px){
   [data-view=semana] .stack > .week-selection { grid-column:1; }
 }
+
+/* Cream masthead with the rainbow carried by the original cat illustration. */
+.topbar {
+  display:block; margin:0; padding:env(safe-area-inset-top) 0 0;
+  background:#f3ead6; color:#292019; border-bottom:1px solid #aa967b;
+}
+.topbar::after { content:none; }
+.masthead {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  max-width:1440px; margin:auto; padding:10px clamp(12px,4vw,48px);
+}
+.masthead-brand { display:flex; align-items:center; gap:clamp(6px,1.2vw,15px); min-width:0; }
+.masthead-brand img { width:clamp(44px,7vw,62px); height:auto; }
+.masthead-copy { min-width:0; }
+.masthead-copy h1 {
+  color:#302019; font:850 clamp(26px,5vw,42px)/1 var(--font-display);
+  letter-spacing:-.055em; text-shadow:1px 2px #e6a3a9;
+}
+.masthead-copy p { margin:5px 0 0; font-size:clamp(11px,1.4vw,13px); line-height:1.25; color:#615044; font-weight:750; }
+.settings-button {
+  display:inline-flex; flex:none; align-items:center; justify-content:center; gap:7px;
+  min-height:44px; padding:8px 13px; border:1px solid #ae9579; border-radius:12px;
+  background:#fbf4e5; color:#35271e; font:800 .88rem var(--font-body);
+}
+.settings-button .ic,.acc .ic.glyph { stroke-width:1.9; }
+.settings-button:hover { background:#ffe5a1; border-color:#88683b; }
+.settings-button:focus-visible { outline:3px solid #67421c; outline-offset:2px; }
+.acc[id^="sec-"] { scroll-margin-top:calc(94px + env(safe-area-inset-top)); }
+@media(max-width:355px) {
+  .settings-button { padding-inline:9px; gap:5px; }
+  .masthead-brand img { width:38px; }
+}
