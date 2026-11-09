@@ -222,3 +222,13 @@ main { padding-top:22px; }
 .pantry-btn { filter:none; opacity:1; }
 .emoji.big .planner-icon { width:30px; height:30px; }
 @media(min-width:960px){.tab[aria-current=page] .planner-icon { background:transparent; }}
+
+/* Dedicated section emblems work in the bottom bar and the desktop rail. */
+.tab-emblem { display:grid; place-items:center; border-radius:11px; width:46px; height:33px; }
+.tab-emblem svg { width:28px; height:28px; fill:none; stroke:#493628; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
+.tab[aria-current=page] .tab-emblem { background:#493822; box-shadow:inset 0 -2px var(--yellow); }
+.tab:focus-visible { outline-offset:-2px; }
+@media(min-width:960px) {
+  .tab-emblem { width:32px; height:32px; flex:none; }
+  .tab[aria-current=page] .tab-emblem { background:#493822; box-shadow:none; }
+}

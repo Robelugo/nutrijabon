@@ -1967,7 +1967,15 @@
 
   /* ---------------- Render ---------------- */
   var VIEWS = { hoy: viewHoy, semana: viewSemana, recetas: viewRecetas, compras: viewCompras, guia: viewGuia };
-  var TABS = [['hoy', 'Hoy', 'sun'], ['semana', 'Semana', 'calendar'], ['recetas', 'Recetas', 'book'], ['compras', 'Compras', 'cart'], ['guia', 'Guía', 'guide']];
+  // At navigation size each section has a distinct silhouette.
+  var TAB_ART = {
+    hoy: '<g stroke="#f5ca68"><path d="M16 3v3M5 8l2 2m20-2-2 2M2 17h3m22 0h3"/><path fill="#f5ca68" d="M7 21a9 9 0 0 1 18 0Z"/></g><path stroke="#f0a087" d="M3 23h26M8 27h16"/>',
+    semana: '<rect x="4" y="6" width="24" height="22" rx="4" fill="#f5dda8"/><path fill="#ed9da7" d="M8 6h16q4 0 4 4v3H4v-3q0-4 4-4Z"/><path d="M10 3v6m12-6v6m-14 9h3m4 0h2m-9 5h3"/><path d="m17 22 2 2 5-6" stroke="#715846"/>',
+    recetas: '<path fill="#f4e2b9" d="M9 21c-8 0-8-12 0-12 2-7 12-7 14 0 8 0 8 12 0 12v6H9Z"/><path d="M9 22h14m-10-4-1-5m7 5 1-5"/><path fill="#e6b47e" d="M9 23h14v4H9Z"/>',
+    compras: '<path fill="#9ec58e" d="M16 15q0-10 10-11 0 10-10 11Z"/><path fill="#eaaa72" d="m8 17-2-10q0-4 4-4 3 0 4 4l2 9Z"/><path d="m7 8 4-2m-3 6 4-2"/><path fill="#ebbf87" d="M4 13h24l-3 15H7Z"/><path d="M11 15a5 5 0 0 0 10 0"/>',
+    guia: '<path fill="#c0d2dd" d="M3 6q7-2 13 2 6-4 13-2v20q-7-2-13 2-6-4-13-2Z"/><path d="M16 9v18m-10-15q4 0 7 2m-7 3q4 0 7 2"/><path fill="#e7a1ab" d="m21 6 5-1v11l-2.5-2-2.5 3Z"/>'
+  };
+  var TABS = [['hoy','Hoy'], ['semana','Semana'], ['recetas','Recetas'], ['compras','Compras'], ['guia','Guía']];
   var mainEl;
   function render() {
     mainEl.dataset.view = ui.tab;
@@ -2143,7 +2151,7 @@
     sheetBody = document.getElementById('sheet-body');
 
     document.getElementById('tabs').innerHTML = TABS.map(function (t) {
-      return '<button class="tab" data-action="tab" data-tab="' + t[0] + '">' + icon(t[2]) + '<span>' + t[1] + '</span></button>';
+      return '<button class="tab" data-action="tab" data-tab="' + t[0] + '">' + '<span class="tab-emblem"><svg viewBox="0 0 32 32" aria-hidden="true">' + TAB_ART[t[0]] + '</svg></span><span>' + t[1] + '</span></button>';
     }).join('');
     document.getElementById('settings-btn').insertAdjacentHTML('afterbegin', icon('settings'));
 
