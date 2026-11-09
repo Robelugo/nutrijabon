@@ -648,7 +648,8 @@
     var h = '<div class="stack">' + weekNav('shop', mon, ui.shopOffset) + shopSwitch();
     if (!n) return h + '<p class="empty">Esta semana no hay nada que adelantar.</p></div>';
     h += '<div class="progress"><div class="progress-top"><span id="prep-count"><b>' + nd + '</b> de ' + n + ' tareas</span><span class="muted" id="prep-pct">' + pct + '%</span></div>' +
-      '<div class="bar"><span id="prep-bar" style="width:' + pct + '%"></span></div></div>';
+      '<div class="bar"><span id="prep-bar" style="width:' + pct + '%"></span></div></div>' +
+      '<button class="btn primary cook-start" data-action="cook-prep">' + icon('pot') + ' Hacer el prep en modo cocina</button>';
     h += '<div class="banner info">' + icon('clock') + '<div>Hecho con el menú de esa semana (incluye tus cambios de platillo). <b>Guárdalo bien:</b> refrigera lo cocido en cuanto se enfríe. ' +
       'Lo de lunes a miércoles va al refri; lo de jueves a domingo, congélalo en porciones y pásalo al refri la noche anterior.</div></div>';
     PREP_SECS.forEach(function (sec) {
@@ -1104,6 +1105,7 @@
       '<div class="sheet-titles"><div class="eyebrow">' + where + '</div><h2 id="sheet-title">' + esc(r.name) + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
       '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + eqChips(m.eq) +
+      '<button class="btn cook-btn" data-action="cook-recipe" data-id="' + r.id + '">' + icon('pot') + ' Modo cocina <span class="small muted">paso a paso, con temporizador</span></button>' +
       (r.extra
         ? '<div class="banner info">' + icon('info') + '<div>Idea extra de NutriJabón con las mismas porciones de tu ' + m.name.toLowerCase() + '. Coméntala con tu nutrióloga.</div></div>'
         : (pd ? '<p class="small muted">En tu plan: ' + pd + '</p>' : '')) +
@@ -1313,8 +1315,182 @@
     return L.join('\n');
   }
 
+  /* ---------------- Modo cocina ----------------
+   * Pantalla completa, un paso a la vez, letra grande, temporizadores y pantalla siempre encendida.
+   * Sirve para una receta o para el prep del domingo (cada paso es una tarea que se palomea). */
+  var cook = null, cookTick = null, wakeLock = null, audioCtx = null;
+  function plainText(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent || ''; }
+  function fmtDur(secs) {
+    if (secs >= 3600) { var h = Math.floor(secs / 3600), m = Math.round((secs % 3600) / 60); return h + ' h' + (m ? ' ' + m + ' min' : ''); }
+    if (secs >= 60) return Math.round(secs / 60) + ' min';
+    return secs + ' s';
+  }
+  function fmtClock(ms) {
+    var s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return (h ? h + ':' + pad(m) : m) + ':' + pad(s % 60);
+  }
+  function findTimes(text) { // “unos 15 minutos”, “6–8 minutos”, “30 segundos”, “2 horas” → segundos (toma el menor de un rango)
+    var out = [], re = /(\d+)(?:\s*(?:a|–|-)\s*\d+)?\s*(minutos?|min\b|horas?|segundos?)/gi, m;
+    while ((m = re.exec(text))) {
+      var n = +m[1], u = m[2].toLowerCase(), secs = u[0] === 'h' ? n * 3600 : u[0] === 's' ? n : n * 60;
+      if (secs > 0 && secs <= 3 * 3600 && out.indexOf(secs) === -1) out.push(secs); // 12 h de remojo no es un temporizador
+    }
+    return out;
+  }
+  function startCook(kind, arg) {
+    var steps = [];
+    if (kind === 'recipe') {
+      var r = RECIPE[arg];
+      steps.push({ intro: true });
+      r.steps.forEach(function (s) { steps.push({ html: s }); });
+      cook = { kind: kind, r: r, steps: steps, i: 0, timers: [], checks: {} };
+    } else {
+      var mon = shopMonday(), wk = keyOf(mon);
+      var tasks = buildPrep(mon, false).filter(function (t) { return ['cook', 'chop', 'snack', 'mar'].indexOf(t.sec) !== -1; });
+      steps.push({ intro: true });
+      tasks.forEach(function (t) { steps.push({ task: t }); });
+      cook = { kind: kind, wk: wk, mon: mon, steps: steps, i: 0, timers: [], checks: {} };
+    }
+    openSheet('cook', []);
+    keepAwake(true);
+    clearInterval(cookTick);
+    cookTick = setInterval(tickTimers, 1000);
+  }
+  function stopCook() {
+    clearInterval(cookTick); cookTick = null;
+    keepAwake(false);
+    cook = null;
+  }
+  function keepAwake(on) {
+    if (!on) { if (wakeLock) { try { wakeLock.release(); } catch (e) { /* ignorar */ } } wakeLock = null; return; }
+    if (!cook) return;
+    if (!('wakeLock' in navigator)) { cook.wake = 'no'; updateWakeNote(); return; }
+    navigator.wakeLock.request('screen').then(function (l) {
+      wakeLock = l; if (cook) { cook.wake = 'on'; updateWakeNote(); }
+      l.addEventListener('release', function () { if (cook && wakeLock === l) { cook.wake = 'off'; updateWakeNote(); } });
+    }, function () { if (cook) { cook.wake = 'no'; updateWakeNote(); } });
+  }
+  function updateWakeNote() {
+    var el = document.getElementById('cook-wake'); if (!el || !cook) return;
+    el.textContent = cook.wake === 'on' ? '☀️ Pantalla encendida' : cook.wake === 'no' ? 'Tu navegador no deja mantener la pantalla encendida' : '';
+  }
+  function stepTitle(st) {
+    if (cook.kind === 'recipe') return st.intro ? 'Antes de empezar' : 'Paso ' + cook.steps.indexOf(st) + ' de ' + (cook.steps.length - 1);
+    if (st.intro) return 'Antes de empezar';
+    var sec = PREP_SECS.filter(function (x) { return x[0] === st.task.sec; })[0];
+    return sec[2].replace(/^Domingo: (.)/, function (x, c) { return c.toUpperCase(); });
+  }
+  function cookSheet() {
+    if (!cook) return '';
+    var st = cook.steps[cook.i], last = cook.i === cook.steps.length - 1, done = cook.kind === 'prep' && st.task && !!(S.prep[cook.wk] || {})[st.task.id];
+    var title = cook.kind === 'recipe' ? cook.r.emoji + ' ' + esc(cook.r.name) : '🍲 Prep del domingo';
+    var body = '', times = [];
+    if (cook.kind === 'recipe' && st.intro) {
+      var r = cook.r;
+      body = '<p class="cook-lead">Junta todo antes de prender la estufa:</p><ul class="plain cook-ings">' + r.ing.map(function (ing, n) {
+        var c = !!cook.checks[n];
+        return '<li><label class="cook-ing' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="cook-ing" data-n="' + n + '"' + (c ? ' checked' : '') + '><span>' + esc(fmtIng(ing)) + '</span></label></li>';
+      }).join('') + '</ul>' +
+        (r.ahead ? '<div class="banner ok">' + icon('clock') + '<div><b>Con anticipación:</b> ' + r.ahead + '</div></div>' : '') +
+        (r.tips || []).map(function (t) { return '<div class="banner leaf">' + icon('leaf') + '<div><b>Ojo vegano:</b> ' + t + '</div></div>'; }).join('');
+    } else if (cook.kind === 'prep' && st.intro) {
+      var n = cook.steps.length - 1, nd = cook.steps.filter(function (x) { return x.task && (S.prep[cook.wk] || {})[x.task.id]; }).length;
+      body = '<p class="cook-lead">' + (n ? n + ' tareas para la semana del ' + rangeText(cook.mon, addDays(cook.mon, 6)) + (nd ? ' (' + nd + ' ya hechas)' : '') + '.' : 'Esta semana no hay nada que adelantar.') + '</p>' +
+        '<ul class="plain out-tips"><li>' + icon('clock', 'ic-xs') + '<span>Empieza por lo que tarda más (leguminosas, arroz y pasta) y pica mientras se cuece.</span></li>' +
+        '<li>' + icon('leaf', 'ic-xs') + '<span>Refrigera lo cocido en cuanto se enfríe. Lo de jueves a domingo, congélalo en porciones.</span></li></ul>';
+    } else if (st.task) {
+      var t = st.task;
+      body = '<p class="cook-task' + (done ? ' is-done' : '') + '">' + (t.emoji ? t.emoji + ' ' : '') + esc(t.title) + '</p>' +
+        '<p class="cook-meta">' + esc(t.meta) + '</p><div class="cook-step">' + t.how + '</div>';
+      times = findTimes(plainText(t.how));
+    } else {
+      body = '<div class="cook-step">' + st.html + '</div>';
+      times = findTimes(plainText(st.html));
+    }
+    var progress = '<div class="cook-dots" aria-hidden="true">' + cook.steps.map(function (x, n) {
+      var cls = n === cook.i ? ' is-on' : (cook.kind === 'prep' && x.task && (S.prep[cook.wk] || {})[x.task.id]) || (cook.kind === 'recipe' && n < cook.i) ? ' is-past' : '';
+      return '<i class="' + cls.trim() + '"></i>';
+    }).join('') + '</div>';
+    var timerBtns = (times.length ? times.map(function (s) {
+      return '<button class="chip-btn cook-tbtn" data-action="cook-timer" data-s="' + s + '">' + icon('clock', 'ic-sm') + ' ' + fmtDur(s) + '</button>';
+    }).join('') : '') +
+      '<details class="cook-more"><summary>Otro temporizador</summary><div class="row-gap">' + [5, 10, 20, 40, 60].map(function (m) {
+        return '<button class="chip-btn" data-action="cook-timer" data-s="' + m * 60 + '">' + m + ' min</button>';
+      }).join('') + '</div></details>';
+    var next = cook.kind === 'prep' && st.task
+      ? (done ? (last ? 'Terminar' : 'Siguiente') : (last ? 'Hecho y terminar' : 'Hecho'))
+      : (last ? '¡Listo!' : st.intro ? 'Empezar' : 'Siguiente');
+    return '<div class="cook-head"><button class="icon-btn" data-action="cook-close" aria-label="Salir del modo cocina">' + icon('x') + '</button>' +
+      '<div class="cook-titles"><div class="eyebrow">Modo cocina · ' + stepTitle(st) + '</div><h2 id="sheet-title">' + title + '</h2></div></div>' +
+      progress + '<div id="cook-timers" class="cook-timers" aria-live="polite">' + timersHtml() + '</div>' +
+      '<div class="cook-main" aria-live="polite">' + body + '<div class="cook-tools">' + timerBtns + '</div></div>' +
+      '<div class="cook-nav"><span id="cook-wake" class="cook-wake small muted"></span>' +
+      '<button class="btn" data-action="cook-prev"' + (cook.i ? '' : ' disabled') + '>' + icon('left') + ' Anterior</button>' +
+      '<button class="btn primary" data-action="cook-next">' + next + ' ' + (last ? icon('check') : icon('right')) + '</button></div>';
+  }
+  function timersHtml() {
+    if (!cook || !cook.timers.length) return '';
+    var now = Date.now();
+    return cook.timers.map(function (t) {
+      var left = t.end - now, over = left <= 0;
+      return '<span class="cook-timer' + (over ? ' is-done' : '') + '">' + icon('clock', 'ic-sm') + '<b>' + (over ? '¡Tiempo!' : fmtClock(left)) + '</b>' +
+        '<span class="small">' + esc(t.label) + '</span><button class="cook-tx" data-action="cook-timer-off" data-id="' + t.id + '" aria-label="Quitar temporizador">' + icon('x') + '</button></span>';
+    }).join('') + '<span class="small muted cook-tnote">Deja la app abierta para que suene.</span>';
+  }
+  function tickTimers() {
+    if (!cook) return;
+    var now = Date.now();
+    cook.timers.forEach(function (t) { if (!t.rang && t.end <= now) { t.rang = true; ring(t); } });
+    var el = document.getElementById('cook-timers'); if (el) el.innerHTML = timersHtml();
+  }
+  function addTimer(secs) {
+    if (!cook) return;
+    try { // el sonido se “desbloquea” con este toque
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch (e) { audioCtx = null; }
+    var st = cook.steps[cook.i], label = cook.kind === 'recipe' ? (st.intro ? fmtDur(secs) : 'Paso ' + cook.i + ' · ' + fmtDur(secs)) : (st.task ? st.task.title + ' · ' : '') + fmtDur(secs);
+    cook.timers.push({ id: 't' + Date.now(), label: label, end: Date.now() + secs * 1000 });
+    tickTimers();
+    toast('Temporizador de ' + fmtDur(secs));
+  }
+  function ring(t) {
+    toast('⏱ ¡Tiempo! ' + t.label);
+    if (navigator.vibrate) { try { navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) { /* ignorar */ } }
+    if (!audioCtx) return;
+    try {
+      [0, 0.45, 0.9].forEach(function (at) {
+        var o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + at;
+        o.type = 'square'; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + 0.4);
+      });
+    } catch (e) { /* sin sonido */ }
+  }
+  // byButton: solo el botón “Hecho · siguiente” palomea y termina; deslizar o las flechas solo navegan
+  function cookGo(d, byButton) {
+    if (!cook) return;
+    var st = cook.steps[cook.i], last = cook.i === cook.steps.length - 1;
+    if (d > 0 && byButton && cook.kind === 'prep' && st.task) {
+      S.prep[cook.wk] = S.prep[cook.wk] || {};
+      S.prep[cook.wk][st.task.id] = true; save();
+    }
+    if (d > 0 && last) { if (byButton) finishCook(); return; }
+    if (d < 0 && cook.i === 0) return;
+    cook.i = Math.max(0, Math.min(cook.steps.length - 1, cook.i + d));
+    renderSheet(); sheetBox.scrollTop = 0; updateWakeNote();
+  }
+  function finishCook() {
+    var kind = cook.kind, done = S.prep[cook.wk] || {};
+    var tasks = cook.steps.filter(function (x) { return x.task; }), nd = tasks.filter(function (x) { return done[x.task.id]; }).length;
+    closeSheet();
+    toast(kind === 'recipe' ? '¡Buen provecho! Márcala cuando la comas ✓'
+      : nd === tasks.length ? '¡Prep listo! Tu semana ya está adelantada 🎉' : 'Llevas ' + nd + ' de ' + tasks.length + ' tareas del domingo');
+  }
+  function runningTimers() { return cook ? cook.timers.filter(function (t) { return t.end > Date.now(); }).length : 0; }
+
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -1326,10 +1502,20 @@
     sheetBox.focus({ preventScroll: true });
     if (!wasOpen) { try { history.pushState({ njSheet: 1 }, ''); } catch (e) { /* ignorar */ } }
   }
-  function renderSheet() { if (sheet) sheetBody.innerHTML = SHEETS[sheet.type].apply(null, sheet.args); }
+  function renderSheet() {
+    if (!sheet) return;
+    var isCook = sheet.type === 'cook';
+    sheetBox.classList.toggle('is-cook', isCook); sheetEl.classList.toggle('cook', isCook);
+    sheetBody.innerHTML = SHEETS[sheet.type].apply(null, sheet.args);
+    if (isCook) updateWakeNote();
+  }
   function closeSheet(fromPop) {
     if (!sheet) return;
     if (sheet.type === 'onboarding') { S.settings.onboarded = true; save(); }
+    var wasCook = sheet.type === 'cook';
+    if (wasCook) stopCook();
+    sheetBox.classList.remove('is-cook'); sheetEl.classList.remove('cook');
+    if (wasCook && ui.tab === 'compras') setTimeout(render, 0); // refleja lo palomeado en el prep
     sheet = null;
     sheetEl.hidden = true;
     document.body.classList.remove('no-scroll');
@@ -1429,6 +1615,18 @@
       case 'mark-med': setMark('tk', ds.k, ds.id, ds.v === '1'); break;
       case 'why': setWhy(ds.kind, ds.k, ds.id, ds.r); break;
       case 'open-out': openSheet('out', [ds.meal]); break;
+      case 'cook-recipe': startCook('recipe', ds.id); break;
+      case 'cook-prep': startCook('prep'); break;
+      case 'cook-next': cookGo(1, true); break;
+      case 'cook-prev': cookGo(-1); break;
+      case 'cook-timer': addTimer(+ds.s); break;
+      case 'cook-timer-off':
+        if (cook) { cook.timers = cook.timers.filter(function (t) { return t.id !== ds.id; }); tickTimers(); }
+        break;
+      case 'cook-close':
+        if (runningTimers() && !window.confirm('Tienes un temporizador corriendo. ¿Salir del modo cocina?')) break;
+        closeSheet(); if (ui.tab === 'compras') render();
+        break;
       case 'meds-seen': S.settings.medsSeen = true; save(); render(); break;
       case 'med-add': addMed(); break;
       case 'med-del': delMed(ds.id); break;
@@ -1497,6 +1695,9 @@
       if (!el.value) return;
       if (el.value === MEAL[id].time) delete S.settings.times[id]; else S.settings.times[id] = el.value;
       save();
+    } else if (t === 'cook-ing') {
+      if (cook) cook.checks[el.dataset.n] = el.checked;
+      el.closest('.cook-ing').classList.toggle('is-checked', el.checked);
     } else if (t === 'prep') {
       var pw = el.dataset.wk, pid = el.dataset.id;
       S.prep[pw] = S.prep[pw] || {};
@@ -1549,11 +1750,27 @@
       if (id) ui.open[id] = e.target.open;
     }, true);
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && sheet) closeSheet();
+      if (cook && sheet && sheet.type === 'cook' && !/INPUT|TEXTAREA|SELECT/.test((e.target || {}).tagName || '')) {
+        if (e.key === 'ArrowRight') { e.preventDefault(); cookGo(1); return; }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); cookGo(-1); return; }
+      }
+      if (e.key === 'Escape' && sheet) { if (sheet.type === 'cook' && runningTimers() && !window.confirm('Tienes un temporizador corriendo. ¿Salir del modo cocina?')) return; closeSheet(); }
       if (e.key === 'Enter' && e.target && e.target.id === 'med-name') { e.preventDefault(); addMed(); }
     });
     window.addEventListener('popstate', function () { if (sheet) closeSheet(true); });
-    document.addEventListener('visibilitychange', function () { if (!document.hidden && !sheet) render(); });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && !sheet) render();
+      if (!document.hidden && cook) { keepAwake(true); tickTimers(); } // al volver: pantalla encendida y avisa si ya sonó
+    });
+    // Modo cocina: deslizar a la izquierda/derecha cambia de paso
+    var touchX = null, touchY = null;
+    sheetEl.addEventListener('touchstart', function (e) { if (cook) { touchX = e.touches[0].clientX; touchY = e.touches[0].clientY; } }, { passive: true });
+    sheetEl.addEventListener('touchend', function (e) {
+      if (!cook || touchX == null) return;
+      var dx = e.changedTouches[0].clientX - touchX, dy = e.changedTouches[0].clientY - touchY;
+      touchX = null;
+      if (Math.abs(dx) > 70 && Math.abs(dy) < 50) cookGo(dx < 0 ? 1 : -1);
+    }, { passive: true });
     setInterval(function () { if (ui.tab === 'hoy' && !sheet && !document.hidden) render(); }, 60000);
 
     window.addEventListener('beforeinstallprompt', function (e) {
