@@ -414,13 +414,45 @@
    * Registro diario rápido (1–5) de energía, hambre entre comidas y digestión, más una nota.
    * Se guarda en days[k].ck = { e, h, d, n } y sale en el resumen para la revisión. */
   var CHECKS = [
-    { id: 'e', name: 'Energía', q: '¿Cómo estuvo tu energía?', color: 'yellow', emo: ['😴', '🥱', '🙂', '😀', '⚡'], lab: ['Muy baja', 'Baja', 'Normal', 'Buena', 'Mucha'] },
-    { id: 'h', name: 'Hambre', q: '¿Cuánta hambre tuviste entre comidas?', color: 'orange', emo: ['😌', '🙂', '😐', '😋', '😫'], lab: ['Nada', 'Poca', 'Normal', 'Bastante', 'Mucha'] },
-    { id: 'd', name: 'Digestión', q: '¿Cómo estuvo tu digestión?', color: 'green', emo: ['😣', '😕', '😐', '🙂', '😊'], lab: ['Muy mal', 'Mal', 'Regular', 'Bien', 'Muy bien'] }
+    { id: 'e', name: 'Energía', q: '¿Cómo estuvo tu energía?', color: 'yellow', lab: ['Muy baja', 'Baja', 'Normal', 'Buena', 'Mucha'] },
+    { id: 'h', name: 'Hambre', q: '¿Cuánta hambre tuviste entre comidas?', color: 'orange', lab: ['Nada', 'Poca', 'Normal', 'Bastante', 'Mucha'] },
+    { id: 'd', name: 'Digestión', q: '¿Cómo estuvo tu digestión?', color: 'green', lab: ['Muy mal', 'Mal', 'Regular', 'Bien', 'Muy bien'] }
   ];
   var CHECK = {}; CHECKS.forEach(function (c) { CHECK[c.id] = c; });
   function ckOf(k) { return dayRec(k).ck || {}; }
   function ckDone(k) { var c = ckOf(k); return CHECKS.every(function (x) { return c[x.id]; }); }
+  // Eye and mouth shapes are shared across the three five-point scales.
+  var catEyes = {
+    sleepy: 'M9 17q2 2 4 0m6 0q2 2 4 0',
+    low: 'M9 17h4m6 0h4',
+    open: 'M11 16v2m10-2v2',
+    bright: 'M11 15v3m10-3v3',
+    happy: 'M9 17q2-4 4 0m6 0q2-4 4 0',
+    tense: 'm9 15 4 2-4 1m14-3-4 2 4 1'
+  };
+  var catMouths = {
+    calm: 'M13 22q3 2 6 0', flat: 'M14 22h4',
+    smile: 'M12 21q4 6 8 0', grin: 'M12 21h8q-4 9-8 0Z',
+    small: 'M15 23a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
+    round: 'M14 23a2 2 0 1 0 4 0a2 2 0 1 0-4 0',
+    wide: 'M13 23a3 3 0 1 0 6 0a3 3 0 1 0-6 0',
+    frown: 'M12 24q4-6 8 0', uneven: 'm13 23 6-2'
+  };
+  var catScales = {
+    e: [['sleepy','small'], ['low','flat'], ['open','calm'], ['bright','smile'], ['happy','grin']],
+    h: [['sleepy','calm'], ['low','calm'], ['open','small'], ['bright','round'], ['open','wide']],
+    d: [['tense','frown'], ['low','uneven'], ['open','flat'], ['open','smile'], ['happy','grin']]
+  };
+  function checkinCat(field, level) {
+    var face = catScales[field][level];
+    return '<svg viewBox="0 0 32 32" class="checkin-cat" aria-hidden="true">' +
+      '<path fill="#f4b768" d="M4 14 4 3q0-1 1 0l7 5q4-1 8 0l7-5q1-1 1 0v11c4 9-2 15-12 15S0 23 4 14Z"/>' +
+      '<path fill="#e89184" d="m6 6 4 3-4 2zm20 0-4 3 4 2z"/>' +
+      '<path fill="#dc914b" d="m12 8 2 4 1-4 2 5 2-5z"/>' +
+      '<g fill="none" stroke="#38251c" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="' + catEyes[face[0]] + '"/><path d="' + catMouths[face[1]] + '"/></g>' +
+      '<path fill="#92563e" d="M14 19h4l-2 2z"/><path d="m3 20 4 1m18 0 4-1" stroke="#996443" stroke-linecap="round"/></svg>';
+  }
   function checkinCard(k, isToday) {
     var c = ckOf(k), done = ckDone(k);
     return '<section class="card checkin" id="checkin"><div class="recap-head"><h3 class="card-title">' + icon('sun') + (isToday ? ' ¿Cómo te sentiste hoy?' : ' ¿Cómo te sentiste ese día?') + '</h3>' +
@@ -430,8 +462,8 @@
         var v = c[x.id];
         return '<div class="ck-row" style="--ckc:var(--' + x.color + ')"><div class="ck-q"><b>' + x.name + '</b> <span class="small muted">' + x.q + '</span>' +
           '<span class="ck-val">' + (v ? x.lab[v - 1] : '') + '</span></div>' +
-          '<div class="ck-opts" role="radiogroup" aria-label="' + x.name + '">' + x.emo.map(function (e, i) {
-            return '<button role="radio" class="ck-opt" aria-checked="' + (v === i + 1) + '" aria-label="' + x.name + ': ' + x.lab[i] + '" title="' + x.lab[i] + '" data-action="ck" data-k="' + k + '" data-f="' + x.id + '" data-v="' + (i + 1) + '">' + e + '</button>';
+          '<div class="ck-opts" role="radiogroup" aria-label="' + x.name + '">' + x.lab.map(function (label, i) {
+            return '<button role="radio" class="ck-opt" aria-checked="' + (v === i + 1) + '" aria-label="' + x.name + ': ' + x.lab[i] + '" title="' + x.lab[i] + '" data-action="ck" data-k="' + k + '" data-f="' + x.id + '" data-v="' + (i + 1) + '">' + checkinCat(x.id, i) + '<span>' + label + '</span></button>';
           }).join('') + '</div></div>';
       }).join('') +
       '<label class="ck-note"><span class="small muted">Algo más (opcional)</span><textarea rows="2" maxlength="300" data-input="ck-note" data-k="' + k + '" placeholder="Ej.: sentí inflamación después de la comida">' + esc(c.n || '') + '</textarea></label></section>';

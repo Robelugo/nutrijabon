@@ -198,3 +198,22 @@ main { padding-top:22px; }
   .settings-button { padding-inline:9px; gap:5px; }
   .masthead-brand img { width:38px; }
 }
+
+/* Label every level so the face is an additional cue. */
+.ck-opts { gap:4px; }
+.ck-opt {
+  position:relative; height:auto; min-height:72px; padding:6px 1px;
+  grid-template-rows:34px 1fr; align-items:start; gap:4px;
+  color:var(--text-2); filter:none; opacity:1;
+  font:750 clamp(10px,2.8vw,13px)/1.15 var(--font-body);
+}
+.checkin-cat { width:34px; height:34px; }
+.ck-opt[aria-checked=true] {
+  background:var(--surface-2); border-color:var(--ckc); color:var(--text);
+  box-shadow:inset 0 0 0 1px var(--ckc); transform:none;
+}
+.ck-opt[aria-checked=true]::after {
+  content:"✓"; position:absolute; top:2px; right:2px; border-radius:50%;
+  width:14px; height:14px; background:var(--ckc); color:var(--ink);
+  font:900 11px/14px var(--font-body);
+}
