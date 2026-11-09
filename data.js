@@ -259,6 +259,51 @@
     { id: 'desp', name: 'Despensa y condimentos', emoji: '🧂' }
   ];
 
+  /* Prep del domingo: qué se puede adelantar de la semana.
+   * n = nombre exacto del ingrediente en las recetas; las cantidades salen del menú de esa semana.
+   * dry = tazas en seco por cada taza cocida (aprox.); dryG = gramos en seco por taza cocida. */
+  var PREP = {
+    soak: [
+      { n: 'Lenteja cocida', name: 'Lentejas' },
+      { n: 'Frijol cocido', name: 'Frijoles' },
+      { n: 'Garbanzo cocido', name: 'Garbanzos' }
+    ],
+    cook: [
+      { n: 'Lenteja cocida', name: 'Lentejas', how: 'Ya remojadas, cuécelas con agua y ½ cebolla.', dry: 0.4 },
+      { n: 'Frijol cocido', name: 'Frijoles', how: 'Ya remojados, cuécelos (en olla exprés es más rápido).', dry: 0.4 },
+      { n: 'Garbanzo cocido', name: 'Garbanzos', how: 'Ya remojados, cuécelos; o usa de lata, bien enjuagados.', dry: 0.4 },
+      { n: 'Arroz salvaje cocido', name: 'Arroz salvaje', how: 'Cuécelo según el empaque.', dry: 0.3 },
+      { n: 'Arroz cocido', name: 'Arroz', how: 'Cuécelo según el empaque.', dry: 0.33 },
+      { n: 'Arroz integral cocido', name: 'Arroz integral', how: 'Cuécelo según el empaque.', dry: 0.33 },
+      { n: 'Pasta cocida', name: 'Pasta', how: 'Cuécela al dente y escúrrela bien; se recalienta en un minuto.', dryG: 50 },
+      { n: 'Quinoa', name: 'Quinoa', how: 'Enjuágala y cuécela con el doble de agua unos 15 minutos.' },
+      { n: 'Brócoli cocido', name: 'Brócoli', how: 'Cuécelo al vapor 4–5 minutos.' }
+    ],
+    chop: [
+      { n: CEBOLLA, name: 'Cebolla', how: 'Pícala y guárdala en un frasco cerrado.' },
+      { n: 'Pimiento de color', name: 'Pimiento', how: 'Córtalo en tiras.' },
+      { n: 'Zanahoria', name: 'Zanahoria', how: 'Pícala o rállala.' },
+      { n: 'Ajo', name: 'Ajo', how: 'Pela los dientes y guárdalos en un frasco.' },
+      { n: 'Cilantro', name: 'Cilantro', how: 'Lávalo, sécalo bien y guárdalo envuelto en papel.' },
+      { n: 'Perejil', name: 'Perejil', how: 'Lávalo, sécalo bien y guárdalo envuelto en papel.' },
+      { n: 'Espinaca', name: 'Espinaca', how: 'Lávala y sécala bien.' }
+    ],
+    // snacks que se arman completos (receta entera)
+    snack: [
+      { id: 'mix-pre', how: 'Arma los tuppers: cereal, dátiles y nueces.' },
+      { id: 'bolitas-amaranto', how: 'Haz las bolitas y congélalas; pásalas al refri la noche anterior.' },
+      { id: 'x-palomitas', how: 'Prepara las palomitas y guárdalas en bolsitas con los dátiles y las almendras.' },
+      { id: 'x-uvas-almendras', how: 'Lava las uvas y congélalas.' }
+    ],
+    // nueces y semillas que conviene separar en porciones
+    portion: [
+      { n: 'Cacahuate', name: 'Cacahuates' },
+      { n: 'Nuez', name: 'Nueces' },
+      { n: 'Almendra', name: 'Almendras' },
+      { n: 'Pistache', name: 'Pistaches' }
+    ]
+  };
+
   // Lista de equivalentes, solo alimentos veganos. Tercer valor = aviso de etiqueta.
   var ETQ = 'revisa la etiqueta';
   var EQUIV = {
@@ -360,7 +405,7 @@
   ];
 
   window.NJ_DATA = {
-    GROUPS: GROUPS, MEALS: MEALS, WEEK: WEEK, RECIPES: RECIPES, SHOP_CATS: SHOP_CATS,
+    GROUPS: GROUPS, MEALS: MEALS, WEEK: WEEK, RECIPES: RECIPES, SHOP_CATS: SHOP_CATS, PREP: PREP,
     EQUIV: EQUIV, REMOVED: REMOVED, FRUIT_IDEAS: FRUIT_IDEAS, TIPS: TIPS,
     PLAN: { assigned: '2026-11-08', review: '2026-12-18' }
   };

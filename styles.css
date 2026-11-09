@@ -479,6 +479,22 @@ main {
 .print-only { display: none; }
 .notes-print { white-space: pre-wrap; }
 @media (max-width: 360px) { .stat b { font-size: 24px; } .stat span { font-size: 11px; } }
+/* Compras: Lista | Prep del domingo */
+.segmented.switch { margin-top: 0; }
+.segmented.switch button { white-space: nowrap; font-size: 14.5px; gap: 6px; padding: 10px 6px; }
+.segmented.switch button[aria-selected="true"] { background: var(--yellow); color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); --ic-line: var(--ink); }
+.segmented.switch button .ic { width: 22px; height: 22px; }
+.prep-list li { display: flex; align-items: center; gap: 8px; border-top: 2px dashed var(--line-soft); }
+.prep-list li:first-child { border-top: 0; }
+.prep-list .shop-item { flex: 1; min-width: 0; border-top: 0; align-items: flex-start; }
+.prep-list li:first-child .shop-item { padding-top: 2px; }
+.prep-list .shop-item input { margin-top: 2px; }
+.pi-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pi-txt .si-name { font-weight: 850; }
+.pi-meta { font-size: 13.5px; font-weight: 800; color: var(--text-2); }
+.pi-how { font-size: 13.5px; color: var(--muted); line-height: 1.35; }
+.prep-item.is-checked .pi-meta, .prep-item.is-checked .pi-how { opacity: .55; }
+.pi-link { flex: none; padding: 6px 9px; }
 .med-list { display: flex; flex-direction: column; gap: 10px; }
 .med-row { padding: 10px 10px 12px 12px; border: 2px solid var(--line); border-left: 8px solid var(--mc); border-radius: 18px; background: var(--surface); }
 .med-head { display: flex; align-items: center; gap: 10px; }

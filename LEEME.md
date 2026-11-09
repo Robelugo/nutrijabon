@@ -11,6 +11,7 @@ App para seguir tu plan de alimentación **vegano** día por día. Funciona en A
 - **Cambiar platillo**: intercambia cualquier comida por otra opción del mismo tiempo (todas tienen las mismas porciones). Incluye ideas extra veganas.
 - **Recetas**: las 22 recetas de tu plan más 12 ideas extra, con ingredientes, pasos y avisos de etiqueta ("ojo vegano").
 - **Deja listo para mañana**: te recuerda remojar leguminosas o marinar tofu y seitán la noche anterior.
+- **Prep del domingo** (Compras → Prep del domingo): con el menú de esa semana arma las tareas para adelantar: sábado en la noche remojar leguminosas; domingo cocinar en tanda (con cantidades cocidas y aprox. en seco), lavar y picar, dejar listos los snacks y marinar para lunes a miércoles; miércoles en la noche marinar para jueves a domingo. Cada tarea se palomea, Hoy avisa el sábado, domingo y miércoles, y los recordatorios del calendario incluyen esas tres sesiones. Las reglas están en `PREP` dentro de `data.js`.
 - **Compras**: lista semanal calculada con tu menú real (cambios de platillos y días de descanso incluidos); se puede compartir por WhatsApp.
 - **Guía**: equivalentes **solo veganos** (se quitaron 32 alimentos de origen animal de la lista original), tips veganos y ajustes (días de ejercicio y horarios).
 - **Recordatorios**: descarga un archivo de calendario (.ics) con cada comida, el platillo que toca y un aviso a tu hora (pre-entreno solo en días de ejercicio). Lo maneja el calendario del equipo, así que no necesita servidor. Dura hasta la revisión.
