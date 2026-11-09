@@ -766,10 +766,39 @@
     return { items: order, trainDays: trainDays };
   }
   function shopMonday() { return addDays(mondayOf(today()), ui.shopOffset * 7); }
+  var SECTION_EMBLEMS = {
+    fru: '<path fill="#ef998d" d="M15 11c-8-5-15 5-9 14 3 5 6 1 9 2 6 4 12-3 12-10 0-6-7-9-12-6Z"/><path fill="#85ae75" d="M15 10q1-9 11-7-2 7-11 7Z"/><path fill="none" d="M14 11q1-5-3-8M8 17q0-2 2-3"/>',
+    ver: '<path fill="#91bb79" d="M18 15q-1-8 2-12 4 2 2 8 2-7 7-7 1 7-7 11Z"/><path fill="#f5ae69" d="M4 28q2-10 9-18 4-4 9 0t0 9Q13 26 4 28Z"/><path fill="none" d="m13 14 3 3m-7 2 3 2"/>',
+    pro: '<path fill="#df946f" d="M4 16C0 8 10 2 15 8c3 4-4 5-3 10 1 7-6 8-8-2Z"/><path fill="#a8b78a" d="M17 17c2-7 13-7 13 0-1 4-6 3-7 7-3 8-10 2-6-7Z"/><path fill="none" d="M7 12q0-3 4-4m8 13q0-3 4-4"/>',
+    cer: '<path fill="#e5bb76" d="M3 22Q7 8 20 4c8-2 12 4 7 11-4 7-13 13-21 14-4 0-5-3-3-7Z"/><path fill="none" d="m12 12 4 5m2-10 4 5M7 18l4 4"/>',
+    lec: '<path fill="#c5dce0" d="m9 4 12 0 4 7v17H6V11Z"/><path fill="#8db2b6" d="m21 4 4 7v17h-5V12Z"/><path fill="#f0d9a9" d="M10 17q7-5 7 1-1 6-7 5Z"/><path fill="none" d="M7 11h13M10 7h8"/>',
+    gra: '<path fill="#9dbb79" d="M9 8c1-6 9-8 12 0 1 5 7 10 6 15-2 9-20 9-22 0-1-6 3-9 4-15Z"/><path fill="#e6ca83" d="M11 11c1-6 7-6 8 0 1 6 7 10 4 14-4 5-14 4-15-1-1-4 2-8 3-13Z"/><path fill="#b77a5a" d="M20 21a4 4 0 1 1-8 0 4 4 0 1 1 8 0Z"/>',
+    desp: '<path fill="#b4c5be" d="M7 8h18v4l2 3-1 13H6L5 15l2-3Z"/><path fill="#deb68a" d="M6 4h20v5H6Z"/><path fill="#f5dfac" d="M7 16h18v8H7Z"/><path fill="none" d="M11 5v3m5-3v3m5-3v3m-9 12h8"/>',
+    ex: '<path fill="#dca6ac" d="M4 6h5v13H4Zm9 0h5v13h-5Z"/><path fill="none" d="M9 12h4"/><path fill="#e8bc70" d="M26 12c-5 6-1 13 5 12-7 9-19 2-15-5 2-4 5-6 10-7Z"/>',
+    plan: '<path fill="#ead7b3" d="M28 16a12 12 0 1 1-24 0 12 12 0 1 1 24 0Z"/><path fill="#a5bd89" d="M16 7a9 9 0 0 1 9 9h-9Z"/><path fill="#e8a887" d="M25 18q-1 6-7 7v-7Z"/><path fill="none" d="M13 8q-5 1-5 7"/>',
+    eq: '<path fill="#95b781" d="M4 17Q1 7 14 5q0 10-10 12Z"/><path fill="#e7b57b" d="M18 27q-5-4 0-8c4-3 5 0 8-2 7-2 4 8-1 10-3 1-5 2-7 0Z"/><path fill="none" d="M18 7h9l-3-3m3 3-3 3M13 24H4l3-3m-3 3 3 3"/>',
+    tips: '<path fill="#e9c47a" d="M8 14a8 8 0 1 1 16 0c0 4-4 6-5 10h-7c0-3-4-6-4-10Z"/><path fill="#9ebc83" d="M14 19q-4-8 6-9 0 7-6 9Z"/><path fill="none" d="M13 27h6M3 13h2m22 0h2M6 5l2 2m16 0 2-2"/>',
+    fuera: '<path fill="#e9c09a" d="M5 12h22v16H5Z"/><path fill="#ef9ea2" d="m3 12 4-8h18l4 8q-2 5-6 1-4 4-7 0-4 4-7 0-4 3-6-1Z"/><path fill="none" d="M10 18h4v5h-4Zm9 10V18h5v10"/>',
+    ajustes: '<path fill="#bad0d2" d="M4 5h24v22H4Z"/><path fill="none" d="M8 11h16M8 20h16"/><path fill="#f2c67b" d="M15 11a3 3 0 1 1-6 0 3 3 0 1 1 6 0Zm8 9a3 3 0 1 1-6 0 3 3 0 1 1 6 0Z"/>',
+    tomas: '<path fill="#f2d9a2" d="M7 8h17v4l2 2v14H5V14l2-2Z"/><path fill="#a2bdb8" d="M7 3h17v6H7Z"/><path fill="#e5a2a8" d="m11 19 3-3a3 3 0 0 1 5 5l-3 3a3 3 0 0 1-5-5Z"/><path fill="none" d="m13 17 5 5"/>',
+    avisos: '<path fill="#eab965" d="M5 22q4-4 4-10a7 7 0 0 1 14 0q0 6 4 10Z"/><path fill="#d99ba0" d="M13 25h6q-3 7-6 0Z"/><path fill="none" d="M4 8 2 12m26-4 2 4M15 3h2"/>',
+    respaldo: '<path fill="#a4bfd0" d="M3 5h22v15H3Z"/><path fill="#dfc3a0" d="M1 24h18l-2 3H5Z"/><path fill="#efc27b" d="M19 13h10v15H19Z"/><path fill="none" d="M8 14h10m-4-4 4 4-4 4m9 7h2"/>',
+    instalar: '<path fill="#a5bfc1" d="M8 3h17v26H8Z"/><path fill="#f5dfaf" d="M11 7h11v16H11Z"/><path fill="none" d="M16 10v9m-4-4 4 4 4-4m-5 10h3"/>',
+    list: '<path fill="#edd6aa" d="M6 5h21v24H6Z"/><path fill="#edad98" d="M11 3h11v5H11Z"/><path fill="none" d="m9 14 2 2 3-4m2 3h7m-14 7 2 2 3-4m2 3h7"/>',
+    pot: '<path fill="#e5ae80" d="M5 15h22v7q0 6-6 6H11q-6 0-6-6Z"/><path fill="#a9c4b8" d="M3 14q2-6 13-6t13 6Z"/><path fill="none" d="M13 6h6M2 18h3m22 0h3m-20 0v4"/>',
+    moon: '<path fill="#e7be75" d="M19 4Q8 19 26 23C12 35 0 19 8 9q4-5 11-5Z"/><path fill="#e49da1" d="m25 4 1 4 4 1-4 1-1 4-1-4-3-1 3-1Z"/>',
+    knife: '<path fill="#d4c29e" d="M3 9h23v18H3Z"/><path fill="#c6d6d3" d="M7 19 20 6l3 3-9 12Z"/><path fill="#d99079" d="m20 6 4-4 4 4-5 4Z"/>',
+    home: '<path fill="#efc89b" d="M6 13h20v15H6Z"/><path fill="#d99789" d="m2 14 14-12 14 12-3 2-11-9-11 9Z"/><path fill="none" d="M10 20h12m-10 1v4h4v-4m3 0v4"/>'
+  };
+  function emblem(id) {
+    return '<svg class="section-emblem" viewBox="0 0 32 32" aria-hidden="true">' + SECTION_EMBLEMS[id] + '</svg>';
+  }
+
+
   function shopSwitch() {
     return '<div class="segmented switch" role="tablist" aria-label="Compras o prep">' +
-      '<button role="tab" aria-selected="' + (ui.shopView !== 'prep') + '" data-action="shop-view" data-v="list">' + icon('cart') + ' Lista</button>' +
-      '<button role="tab" aria-selected="' + (ui.shopView === 'prep') + '" data-action="shop-view" data-v="prep">' + icon('pot') + ' Prep del domingo</button></div>';
+      '<button role="tab" aria-selected="' + (ui.shopView !== 'prep') + '" data-action="shop-view" data-v="list">' + emblem('list') + ' Lista</button>' +
+      '<button role="tab" aria-selected="' + (ui.shopView === 'prep') + '" data-action="shop-view" data-v="prep">' + emblem('pot') + ' Prep del domingo</button></div>';
   }
   function viewCompras() {
     var mon = shopMonday(), wk = keyOf(mon);
@@ -784,23 +813,23 @@
       '<div class="row-gap"><button class="chip-btn" data-action="shop-share">' + icon('share', 'ic-sm') + ' Compartir</button>' +
       '<button class="chip-btn" data-action="shop-clear">Desmarcar todo</button></div></div>';
     if (!Object.keys(S.settings.pantry || {}).length) {
-      h += '<p class="small muted center">Toca ' + icon('home', 'ic-sm') + ' en lo que siempre tienes en casa (sal, aceite, especias) y dejará de aparecer en la lista.</p>';
+      h += '<p class="small muted center">Toca ' + emblem('home') + ' en lo que siempre tienes en casa (sal, aceite, especias) y dejará de aparecer en la lista.</p>';
     }
     D.SHOP_CATS.forEach(function (cat) {
       var list = items.filter(function (i) { return i.c === cat.id; }).sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); });
       if (!list.length) return;
       var group = 'shop-' + cat.id;
       var expanded = ui.open[group] === undefined ? cat === D.SHOP_CATS[0] : ui.open[group];
-      h += '<details class="card acc" data-acc="' + group + '"' + (expanded ? ' open' : '') + '><summary><span>' + icon(FOOD_SYMBOLS[cat.emoji]) + ' ' + cat.name + '</span>' + icon('down', 'chev') + '</summary><ul class="shop-list">'  +
+      h += '<details class="card acc" data-acc="' + group + '"' + (expanded ? ' open' : '') + '><summary><span>' + emblem(cat.id) + ' ' + cat.name + '</span>' + icon('down', 'chev') + '</summary><ul class="shop-list">'  +
         list.map(function (i) {
           var c = !!checked[i.n];
           return '<li class="shop-li"><label class="shop-item' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="shop" data-wk="' + wk + '" data-n="' + esc(i.n) + '"' + (c ? ' checked' : '') + '>' +
             '<span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span></label>' +
-            '<button class="pantry-btn" data-action="pantry" data-n="' + esc(i.n) + '" aria-label="Siempre tengo en casa: ' + esc(i.n) + '" title="Siempre tengo en casa">' + icon('home', 'ic-sm') + '</button></li>';
+            '<button class="pantry-btn" data-action="pantry" data-n="' + esc(i.n) + '" aria-label="Siempre tengo en casa: ' + esc(i.n) + '" title="Siempre tengo en casa">' + emblem('home') + '</button></li>';
         }).join('') + '</ul></details>';
     });
     if (home.length) {
-      h += '<details class="card pantry-card"><summary><span class="emoji">' + icon('home', 'ic-sm') + '</span> Siempre en casa (' + home.length + ')' + icon('down', 'chev') + '</summary>' +
+      h += '<details class="card pantry-card"><summary><span class="emoji">' + emblem('home') + '</span> Siempre en casa (' + home.length + ')' + icon('down', 'chev') + '</summary>' +
         '<p class="small muted">No aparecen en la lista ni cuando la compartes. Toca “Ya no” si se te acaba algo.</p><ul class="plain pantry-list">' +
         home.sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); }).map(function (i) {
           return '<li><span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span>' +
@@ -827,8 +856,8 @@
     ['sat', 'moon', 'Sábado en la noche: remoja'],
     ['cook', 'pot', 'Domingo: cocina en tanda'],
     ['chop', 'knife', 'Domingo: lava y pica'],
-    ['snack', 'nut', 'Domingo: deja listos tus snacks'],
-    ['mar', 'jar', 'Domingo: marina para lunes a miércoles'],
+    ['snack', 'gra', 'Domingo: deja listos tus snacks'],
+    ['mar', 'desp', 'Domingo: marina para lunes a miércoles'],
     ['wed', 'moon', 'Miércoles en la noche: marina para jueves a domingo']
   ];
   function listText(a, conj) { return a.length > 1 ? a.slice(0, -1).join(', ') + ' ' + (conj || 'y') + ' ' + a[a.length - 1] : a[0] || ''; }
@@ -911,12 +940,12 @@
     if (!n) return h + '<p class="empty">Esta semana no hay nada que adelantar.</p></div>';
     h += '<div class="progress"><div class="progress-top"><span id="prep-count"><b>' + nd + '</b> de ' + n + ' tareas</span><span class="muted" id="prep-pct">' + pct + '%</span></div>' +
       '<div class="bar"><span id="prep-bar" style="width:' + pct + '%"></span></div></div>' +
-      '<button class="btn primary cook-start" data-action="cook-prep">' + icon('pot') + ' Hacer el prep en modo cocina</button>';
+      '<button class="btn primary cook-start" data-action="cook-prep">' + emblem('pot') + ' Hacer el prep en modo cocina</button>';
     h += '<div class="banner info">' + icon('clock') + '<div>Hecho con el menú de esa semana (incluye tus cambios de platillo). <b>Guárdalo bien:</b> refrigera lo cocido en cuanto se enfríe. ' +
       'Lo de lunes a miércoles va al refri; lo de jueves a domingo, congélalo en porciones y pásalo al refri la noche anterior.</div></div>';
     PREP_SECS.forEach(function (sec) {
       var list = tasks.filter(function (t) { return t.sec === sec[0]; }); if (!list.length) return;
-      h += '<section class="card"><h3 class="card-title"><span class="emoji">' + icon(sec[1]) + '</span> ' + sec[2] + '</h3><ul class="shop-list prep-list">' +
+      h += '<section class="card"><h3 class="card-title"><span class="emoji">' + emblem(sec[1]) + '</span> ' + sec[2] + '</h3><ul class="shop-list prep-list">' +
         list.map(function (t) {
           var c = !!done[t.id];
           return '<li><label class="shop-item prep-item' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="prep" data-wk="' + wk + '" data-id="' + esc(t.id) + '"' + (c ? ' checked' : '') + '>' +
@@ -1005,17 +1034,17 @@
   }
   function viewGuia() {
     return '<div class="stack"><h2 class="page-title">Guía</h2>' +
-      accordion('ex', icon('dumbbell') + 'Ejercicio vs. descanso', exHtml()) +
-      accordion('plan', icon('clock') + 'Tu día en porciones', planHtml()) +
-      accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
-      accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
-      accordion('fuera', icon('fork') + 'Comer fuera', outHtml()) +
+      accordion('ex', emblem('ex') + 'Ejercicio vs. descanso', exHtml()) +
+      accordion('plan', emblem('plan') + 'Tu día en porciones', planHtml()) +
+      accordion('eq', emblem('eq') + 'Equivalentes veganos', eqHtml()) +
+      accordion('tips', emblem('tips') + 'Tips veganos', tipsHtml()) +
+      accordion('fuera', emblem('fuera') + 'Comer fuera', outHtml()) +
       '<h3 class="section-heading">Preferencias y datos</h3>' +
-      accordion('ajustes', icon('settings') + 'Ajustes', settingsHtml()) +
-      accordion('tomas', icon('pill') + 'Vitaminas y medicamentos', medsHtml()) +
-      accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
-      accordion('respaldo', icon('cassette') + 'Respaldo y otros equipos', backupHtml()) +
-      accordion('instalar', icon('download') + 'Instalar en tus dispositivos', installHtml()) +
+      accordion('ajustes', emblem('ajustes') + 'Ajustes', settingsHtml()) +
+      accordion('tomas', emblem('tomas') + 'Vitaminas y medicamentos', medsHtml()) +
+      accordion('avisos', emblem('avisos') + 'Recordatorios', remindHtml()) +
+      accordion('respaldo', emblem('respaldo') + 'Respaldo y otros equipos', backupHtml()) +
+      accordion('instalar', emblem('instalar') + 'Instalar en tus dispositivos', installHtml()) +
       '<p class="small muted center">Basado en el plan de tu nutrióloga del 8 nov 2026 · Próxima revisión: 18 dic 2026.<br>NutriJabón te ayuda a seguir tu plan; no sustituye la consulta profesional.</p></div>';
   }
   function exHtml() {

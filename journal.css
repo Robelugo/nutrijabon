@@ -232,3 +232,32 @@ main { padding-top:22px; }
   .tab-emblem { width:32px; height:32px; flex:none; }
   .tab[aria-current=page] .tab-emblem { background:#493822; box-shadow:none; }
 }
+
+/* Shelf labels and guide illustrations share an ink outline on a paper ground. */
+.section-emblem {
+  box-sizing:content-box; display:inline-block; vertical-align:middle; flex:none;
+  width:30px; height:30px; padding:4px; border-radius:10px;
+  background:#f1e3ca; stroke:#433126; stroke-width:1.65;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+[data-view=compras] summary > span:first-child,
+[data-view=guia] .acc > summary > span:first-child { display:inline-flex; align-items:center; gap:11px; }
+[data-view=compras] .card-title .emoji:has(.section-emblem) { width:auto; }
+[data-view=compras] .segmented .section-emblem,.cook-start .section-emblem {
+  width:23px; height:23px; padding:2px; background:transparent;
+}
+[data-view=compras] .pantry-btn { width:40px; height:40px; }
+[data-view=compras] .pantry-btn .section-emblem,
+[data-view=compras] .small .section-emblem { width:22px; height:22px; padding:3px; background:#e9d8b8; border-radius:7px; }
+[data-view=guia] .acc-body .emoji.big .planner-icon,
+[data-view=guia] .ex-col h4 .planner-icon {
+  background:#f1e3ca; color:#493629; border-radius:8px; padding:4px;
+  box-sizing:content-box;
+}
+:is([data-view=compras],[data-view=guia]) .planner-icon:not(.chev):has(path[fill]) > path:not([fill]) {
+  stroke:#73553d;
+}
+:is([data-view=compras],[data-view=guia]) .acc > summary > .chev {
+  width:18px; height:18px; padding:3px; box-sizing:content-box;
+  border-radius:50%; background:var(--surface-2); color:var(--text-2);
+}
