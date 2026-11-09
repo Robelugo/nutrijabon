@@ -14,6 +14,7 @@ App para seguir tu plan de alimentación **vegano** día por día. Funciona en A
 - **Compras**: lista semanal calculada con tu menú real (cambios de platillos y días de descanso incluidos); se puede compartir por WhatsApp.
 - **Guía**: equivalentes **solo veganos** (se quitaron 32 alimentos de origen animal de la lista original), tips veganos y ajustes (días de ejercicio y horarios).
 - **Recordatorios**: descarga un archivo de calendario (.ics) con cada comida, el platillo que toca y un aviso a tu hora (pre-entreno solo en días de ejercicio). Lo maneja el calendario del equipo, así que no necesita servidor. Dura hasta la revisión.
+- **Progreso**: en Semana ves el porcentaje de comidas marcadas, tu racha de días completos y cuántos días faltan para la revisión. El **resumen para tu revisión** junta todo (por tiempo de comida, por semana, platillos cambiados y tus preguntas) para compartirlo o imprimirlo en PDF.
 - **Respaldo**: guarda tus datos en un archivo `.json` y cárgalo en otro equipo (reemplaza lo que haya ahí).
 
 Tus datos (marcas, cambios, ajustes) se guardan solo en cada dispositivo; usa el respaldo para pasarlos de uno a otro.

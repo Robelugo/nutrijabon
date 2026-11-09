@@ -117,6 +117,8 @@
     download: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="g" d="M12 17.6l-5-5.2h3.2V3h3.6v9.4H17Z"/>',
     upload: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="p" d="M12 2.6l5 5.2h-3.2v9.4h-3.6V7.8H7Z"/>',
     bell: '<circle class="o" cx="12" cy="2.9" r="1.5"/><path class="p" d="M9.5 17.6a2.5 2.5 0 0 0 5 0Z"/><path class="y" d="M12 3.6a6.2 6.2 0 0 0-6.2 6.2v5.2h12.4V9.8A6.2 6.2 0 0 0 12 3.6Z"/><path class="sc" d="M8.6 12.6V10a3.5 3.5 0 0 1 2.1-3.2"/><rect class="o" x="3.4" y="14.6" width="17.2" height="3.2" rx="1.6"/><path d="M1.8 9.4a10 10 0 0 1 2.3-5M22.2 9.4a10 10 0 0 0-2.3-5"/>',
+    star: '<path class="y" d="M12 2.4l2.7 6.48 7 .57-5.33 4.57L18 20.85l-6-3.65-6 3.65 1.63-6.83-5.33-4.57 7-.57Z"/><circle class="p n" cx="12" cy="12.9" r="2.1"/>',
+    clipboard: '<rect class="c" x="4.2" y="3.6" width="15.6" height="18.4" rx="2.6"/><rect class="p n" x="7.6" y="9.4" width="8.8" height="2.4" rx="1.2"/><rect class="g n" x="7.6" y="13.2" width="5.6" height="2.4" rx="1.2"/><rect class="o n" x="7.6" y="17" width="7.4" height="2.4" rx="1.2"/><rect class="b" x="8.2" y="1.8" width="7.6" height="4" rx="1.5"/>',
     cassette: '<rect class="o" x="1.8" y="4.4" width="20.4" height="15.2" rx="2.6"/><rect class="p n" x="3.4" y="6" width="17.2" height="2.4" rx="1"/><rect class="c" x="4.4" y="8.4" width="15.2" height="6.4" rx="3.2"/><circle class="k n" cx="8.4" cy="11.6" r="1.8"/><circle class="k n" cx="15.6" cy="11.6" r="1.8"/><circle class="c n" cx="8.4" cy="11.6" r=".7"/><circle class="c n" cx="15.6" cy="11.6" r=".7"/><path d="M10.6 11.6h2.8"/><path class="y" d="M6.2 19.6l1.5-3.4h8.6l1.5 3.4Z"/>',
     // Glifos: trazos gruesos y redondos que toman el color del texto
     check: '<path d="M20 6 9 17l-5-5"/>',
@@ -175,6 +177,73 @@
     return out.join(', ');
   }
 
+  /* ---------------- Progreso ----------------
+   * Cuenta desde el inicio del plan hasta hoy. De hoy solo cuentan las comidas
+   * que ya pasaron de hora o que ya marcaste, para no bajar tu porcentaje en la mañana. */
+  function nowMin() { var n = new Date(); return n.getHours() * 60 + n.getMinutes(); }
+  function isFullDay(k) { return MEALS.every(function (m) { return isSkipped(k, m) || isDone(k, m.id); }); }
+  function rangeStats(from, to) {
+    var start = fromKey(D.PLAN.assigned), t = today(), tk = keyOf(t), nm = nowMin();
+    if (from < start) from = start;
+    if (to > t) to = t;
+    var st = { from: from, to: to, days: 0, due: 0, done: 0, full: 0, train: 0, meal: {}, swaps: {} };
+    MEALS.forEach(function (m) { st.meal[m.id] = { due: 0, done: 0 }; });
+    for (var d = from; d <= to; d = addDays(d, 1)) {
+      var k = keyOf(d);
+      st.days++;
+      if (isTraining(k)) st.train++;
+      if (isFullDay(k)) st.full++;
+      MEALS.forEach(function (m) {
+        if (isSkipped(k, m)) return;
+        var dn = isDone(k, m.id);
+        if (k === tk && !dn && toMin(mealTime(m.id)) > nm) return;
+        st.meal[m.id].due++; st.due++;
+        if (dn) { st.meal[m.id].done++; st.done++; }
+      });
+      var sw = dayRec(k).sw || {};
+      Object.keys(sw).forEach(function (mid) {
+        if (RECIPE[sw[mid]] && sw[mid] !== defaultRecipe(k, mid)) st.swaps[sw[mid]] = (st.swaps[sw[mid]] || 0) + 1;
+      });
+    }
+    st.pct = st.due ? Math.round(st.done / st.due * 100) : null;
+    return st;
+  }
+  function streak() { // días completos seguidos; hoy no rompe la racha mientras no termine
+    var start = fromKey(D.PLAN.assigned), d = today(), n = 0;
+    if (!isFullDay(keyOf(d))) d = addDays(d, -1);
+    while (d >= start && isFullDay(keyOf(d))) { n++; d = addDays(d, -1); }
+    return n;
+  }
+  function daysToReview() { return dayDiff(fromKey(D.PLAN.review), today()); }
+  function pctText(st) { return st.pct === null ? '—' : st.pct + '%'; }
+  function rangeText(a, b) {
+    return a.getMonth() === b.getMonth()
+      ? (a.getDate() === b.getDate() ? '' : a.getDate() + ' – ') + b.getDate() + ' ' + MONTHS_ABBR[b.getMonth()]
+      : a.getDate() + ' ' + MONTHS_ABBR[a.getMonth()] + ' – ' + b.getDate() + ' ' + MONTHS_ABBR[b.getMonth()];
+  }
+  function statTile(color, big, label) {
+    return '<div class="stat" style="--sc:var(--' + color + ')"><b>' + big + '</b><span>' + label + '</span></div>';
+  }
+  function reviewTile() {
+    var n = daysToReview(), rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, '');
+    if (n > 1) return statTile('blue', n, 'días para tu revisión (' + rev + ')');
+    if (n === 1) return statTile('blue', '1', 'día: tu revisión es mañana');
+    if (n === 0) return statTile('blue', '¡Hoy!', 'es tu revisión');
+    return statTile('blue', '✓', 'revisión del ' + rev);
+  }
+  function progressCard(mon) {
+    var sun = addDays(mon, 6), start = fromKey(D.PLAN.assigned), t = today();
+    var weekTile, st = null;
+    if (mon > t) weekTile = statTile('yellow', '—', 'la semana aún no empieza');
+    else if (sun < start) weekTile = statTile('yellow', '—', 'antes de tu plan');
+    else { st = rangeStats(mon, sun); weekTile = statTile('yellow', pctText(st), 'de las comidas de ' + weekLabel(ui.weekOffset).toLowerCase()); }
+    var s = streak();
+    return '<section class="card progress-card"><h3 class="card-title">' + icon('star') + ' Tu progreso</h3>' +
+      '<div class="stats">' + weekTile + statTile('pink', s, s === 1 ? 'día completo seguido' : 'días completos seguidos') + reviewTile() + '</div>' +
+      (st && st.due ? '<p class="small muted">' + st.done + ' de ' + st.due + ' comidas marcadas hasta hoy.</p>' : '') +
+      '<div><button class="btn" data-action="open-report">' + icon('clipboard') + ' Resumen para tu revisión</button></div></section>';
+  }
+
   /* ---------------- Vista: Hoy ---------------- */
   function viewHoy() {
     var d = viewDate(), k = keyOf(d), isToday = k === keyOf(today());
@@ -208,6 +277,12 @@
     h += train
       ? '<div class="banner ok">' + icon('dumbbell') + '<div><b>Día de ejercicio:</b> incluye tu pre-entreno (' + esc(pre.name) + ') antes de entrenar.</div></div>'
       : '<div class="banner warn">' + icon('ban') + '<div><b>Día de descanso: no comas el pre-entreno</b> (' + esc(pre.name) + '). Son 1 fruta, 1 cereal y 1 grasa con proteína menos. Todo lo demás sigue igual.</div></div>';
+
+    var toRev = daysToReview();
+    if (isToday && toRev >= 0 && toRev <= 7) {
+      h += '<div class="banner info">' + icon('clipboard') + '<div><b>' + (toRev === 0 ? 'Hoy es tu revisión.' : toRev === 1 ? 'Mañana es tu revisión.' : 'Tu revisión es en ' + toRev + ' días.') + '</b> ' +
+        '<button class="link-btn" data-action="open-report">Ve tu resumen</button> para llevarlo.</div></div>';
+    }
 
     h += '<div class="progress"><div class="progress-top"><span><b>' + done + '</b> de ' + active.length + ' comidas</span>' +
       '<span class="muted">' + (done === active.length && done ? '¡Día completo! 🎉' : pct + '%') + '</span></div>' +
@@ -285,7 +360,7 @@
     var mon = addDays(mondayOf(today()), ui.weekOffset * 7), tk = keyOf(today());
     var days = [0, 1, 2, 3, 4, 5, 6].map(function (i) { return addDays(mon, i); });
     var nTrain = days.filter(function (d) { return isTraining(keyOf(d)); }).length;
-    var h = '<div class="stack">' + weekNav('week', mon, ui.weekOffset);
+    var h = '<div class="stack">' + weekNav('week', mon, ui.weekOffset) + progressCard(mon);
     h += '<p class="hint center">' + nTrain + (nTrain === 1 ? ' día' : ' días') + ' de ejercicio · ' + (7 - nTrain) + ' de descanso. Toca la etiqueta de un día para cambiarlo.</p>';
     h += '<div class="week-grid">' + days.map(function (d) {
       var k = keyOf(d), train = isTraining(k);
@@ -392,18 +467,20 @@
       lines.push('', cat.emoji + ' ' + cat.name.toUpperCase());
       list.forEach(function (i) { lines.push('• ' + i.n + (i.qty !== 'al gusto' ? ' — ' + i.qty : '')); });
     });
-    var text = lines.join('\n');
-    if (navigator.share) {
-      navigator.share({ title: 'Lista de compras', text: text }).catch(function () { /* cancelado */ });
-    } else if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(function () { toast('Lista copiada'); }, function () { fallbackCopy(text); });
-    } else fallbackCopy(text);
+    shareText('Lista de compras', lines.join('\n'), 'Lista copiada');
   }
-  function fallbackCopy(text) {
+  function shareText(title, text, copiedMsg) {
+    if (navigator.share) {
+      navigator.share({ title: title, text: text }).catch(function () { /* cancelado */ });
+    } else if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(function () { toast(copiedMsg); }, function () { fallbackCopy(text, copiedMsg); });
+    } else fallbackCopy(text, copiedMsg);
+  }
+  function fallbackCopy(text, copiedMsg) {
     var ta = document.createElement('textarea');
     ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); toast('Lista copiada'); } catch (e) { toast('No se pudo copiar'); }
+    try { document.execCommand('copy'); toast(copiedMsg); } catch (e) { toast('No se pudo copiar'); }
     document.body.removeChild(ta);
   }
 
@@ -605,6 +682,7 @@
     });
     if (LEADS.some(function (l) { return l[0] === st.remindLead; })) out.settings.remindLead = st.remindLead;
     if (KEY_RE.test(st.lastBackup)) out.settings.lastBackup = st.lastBackup;
+    if (typeof st.notes === 'string' && st.notes) out.settings.notes = st.notes.slice(0, 2000);
     out.settings.onboarded = true;
     if (isObj(d.days)) Object.keys(d.days).forEach(function (k) {
       var r = d.days[k], o = {};
@@ -737,8 +815,80 @@
       '<div class="sheet-actions"><button class="btn primary" data-action="finish-onboarding">Empezar</button></div>';
   }
 
+  /* Resumen para la revisión con la nutrióloga */
+  function reportData() {
+    var start = fromKey(D.PLAN.assigned), t = today();
+    var all = rangeStats(start, t), weeks = [];
+    for (var mon = mondayOf(start); mon <= t; mon = addDays(mon, 7)) {
+      var w = rangeStats(mon, addDays(mon, 6));
+      if (w.days) weeks.push(w);
+    }
+    var swaps = Object.keys(all.swaps).map(function (id) { return { r: RECIPE[id], n: all.swaps[id] }; })
+      .sort(function (a, b) { return b.n - a.n || a.r.name.localeCompare(b.r.name, 'es'); }).slice(0, 5);
+    return { all: all, weeks: weeks, swaps: swaps, streak: streak(), started: t >= start };
+  }
+  function countText(x) { return x.done + ' de ' + x.due + (x.due ? ' · ' + Math.round(x.done / x.due * 100) + '%' : ''); }
+  function barHtml(x, label) {
+    var p = x.due ? Math.round(x.done / x.due * 100) : 0;
+    return '<div class="bar" role="progressbar" aria-label="' + label + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p + '"><span style="width:' + p + '%"></span></div>';
+  }
+  function reportSheet() {
+    var R = reportData(), a = R.all, rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, ''), notes = S.settings.notes || '';
+    var head = '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--blue)">' + icon('clipboard') + '</span>' +
+      '<div class="sheet-titles"><div class="eyebrow">Para tu revisión · ' + rev + '</div><h2 id="sheet-title">Tu resumen</h2></div>' +
+      '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>';
+    if (!R.started) {
+      return head + '<div class="sheet-content"><p>Tu plan empieza el ' + shortDate(D.PLAN.assigned) + '. Desde ese día verás aquí tu avance.</p></div>';
+    }
+    var h = head + '<div class="sheet-content">' +
+      '<p class="small muted">Plan vegano del ' + rangeText(a.from, a.to) + ' ' + a.to.getFullYear() + ' · ' + a.days + (a.days === 1 ? ' día' : ' días') +
+      '. Se basa en lo que marcaste en este dispositivo.</p>' +
+      '<div class="stats">' + statTile('yellow', pctText(a), 'de las comidas marcadas') +
+      statTile('green', a.full + '<small>/' + a.days + '</small>', 'días completos') +
+      statTile('pink', R.streak, R.streak === 1 ? 'día seguido' : 'días seguidos') + '</div>' +
+      '<p class="small">' + a.done + ' de ' + a.due + ' comidas que ya tocaban · ' + a.train + ' ' + (a.train === 1 ? 'día' : 'días') + ' de ejercicio y ' + (a.days - a.train) + ' de descanso.</p>' +
+      '<h3 class="sec-title">Por tiempo de comida</h3><ul class="plain meter-list">' + sortedMeals().map(function (m) {
+        var x = a.meal[m.id];
+        return '<li style="--mc:var(--m-' + m.id + ')"><div class="meter-top"><b>' + m.name + '</b>' + (m.trainingOnly ? ' <span class="badge">días de ejercicio</span>' : '') +
+          '<span class="muted">' + countText(x) + '</span></div>' + barHtml(x, m.name) + '</li>';
+      }).join('') + '</ul>' +
+      '<h3 class="sec-title">Por semana</h3><ul class="plain meter-list weeks">' + R.weeks.map(function (w) {
+        var lbl = rangeText(w.from, w.to);
+        return '<li><div class="meter-top"><b>' + lbl + '</b><span class="muted">' + countText(w) + '</span></div>' + barHtml(w, lbl) + '</li>';
+      }).join('') + '</ul>' +
+      '<h3 class="sec-title">Platillos que elegiste en lugar del plan</h3>' +
+      (R.swaps.length ? '<ul class="plain swap-list">' + R.swaps.map(function (x) {
+        return '<li><span class="roundel sm" style="--mc:var(--m-' + x.r.meal + ')">' + x.r.emoji + '</span><span>' + esc(x.r.name) + '</span><b>×' + x.n + '</b></li>';
+      }).join('') + '</ul>' : '<p class="small muted">Seguiste los platillos de tu plan.</p>') +
+      '<h3 class="sec-title"><label for="notes">Preguntas para tu nutrióloga</label></h3>' +
+      '<textarea id="notes" class="notes no-print" rows="4" data-input="notes" placeholder="Ej.: ¿En días de descanso solo quito el pre-entreno?">' + esc(notes) + '</textarea>' +
+      '<p id="notes-print" class="print-only notes-print">' + esc(notes) + '</p>' +
+      '<p class="small muted no-print">Se guardan solo aquí y salen en el resumen que compartas o imprimas.</p>' +
+      '</div>' +
+      '<div class="sheet-actions"><button class="btn" data-action="report-share">' + icon('share') + ' Compartir</button>' +
+      '<button class="btn primary" data-action="report-print">' + icon('download') + ' Imprimir o PDF</button></div>';
+    return h;
+  }
+  function reportText() {
+    var R = reportData(), a = R.all;
+    var L = ['Resumen NutriJabón · plan vegano', 'Del ' + rangeText(a.from, a.to) + ' ' + a.to.getFullYear() + ' (' + a.days + (a.days === 1 ? ' día' : ' días') + ')', '',
+      'Comidas marcadas: ' + a.done + ' de ' + a.due + (a.due ? ' (' + pctText(a) + ')' : ''),
+      'Días completos: ' + a.full + ' de ' + a.days + ' · Racha actual: ' + R.streak,
+      'Días de ejercicio: ' + a.train + ' · Descanso: ' + (a.days - a.train), '', 'Por tiempo de comida:'];
+    sortedMeals().forEach(function (m) { L.push('• ' + m.name + (m.trainingOnly ? ' (días de ejercicio)' : '') + ': ' + countText(a.meal[m.id])); });
+    L.push('', 'Por semana:');
+    R.weeks.forEach(function (w) { L.push('• ' + rangeText(w.from, w.to) + ': ' + countText(w)); });
+    if (R.swaps.length) {
+      L.push('', 'Platillos que elegí en lugar del plan:');
+      R.swaps.forEach(function (x) { L.push('• ' + x.r.name + ' ×' + x.n); });
+    }
+    var notes = (S.settings.notes || '').trim();
+    if (notes) L.push('', 'Preguntas:', notes);
+    return L.join('\n');
+  }
+
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -854,6 +1004,9 @@
       case 'add-calendar': addToCalendar(); break;
       case 'backup-save': saveBackup(); break;
       case 'backup-send': sendBackup(); break;
+      case 'open-report': openSheet('report', []); break;
+      case 'report-share': shareText('Resumen NutriJabón', reportText(), 'Resumen copiado'); break;
+      case 'report-print': window.print(); break;
       case 'reset-times': S.settings.times = {}; save(); render(); toast('Horarios del plan restaurados'); break;
       case 'reset-all':
         if (window.confirm('¿Borrar tus marcas de comidas, cambios de platillos y la lista de compras? Tus días de ejercicio y horarios se quedan.')) {
@@ -872,6 +1025,13 @@
     var el = e.target, t = el.dataset && el.dataset.input;
     if (t === 'rq') { ui.rQuery = el.value; document.getElementById('recipe-results').innerHTML = recipeResults(); }
     else if (t === 'eq') { ui.eqQuery = el.value; document.getElementById('eq-results').innerHTML = eqResults(); }
+    else if (t === 'notes') {
+      S.settings.notes = el.value.slice(0, 2000);
+      if (!S.settings.notes) delete S.settings.notes;
+      save();
+      var np = document.getElementById('notes-print');
+      if (np) np.textContent = el.value;
+    }
   }
   function onChange(e) {
     var el = e.target, t = el.dataset && el.dataset.input;

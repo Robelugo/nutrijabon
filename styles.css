@@ -423,6 +423,26 @@ main {
 .file-btn { position: relative; cursor: pointer; }
 .file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
 .file-btn:focus-within { outline: 3px solid var(--blue); outline-offset: 3px; }
+/* Progreso y resumen */
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--sc, var(--yellow)); color: var(--ink); border: 2px solid var(--line); border-radius: 18px; padding: 10px 6px 9px; text-align: center; box-shadow: 2px 2px 0 var(--hard); min-width: 0; }
+.stat b { display: block; font-family: var(--font-display); font-weight: 900; font-size: 29px; line-height: 1.05; font-variation-settings: "SOFT" 100, "WONK" 1; }
+.stat b small { font-size: 17px; }
+.stat span { display: block; font-size: 12px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
+.progress-card { display: flex; flex-direction: column; gap: 12px; }
+.progress-card .card-title { margin-bottom: 0; }
+.progress-card .card-title .ic { width: 24px; height: 24px; }
+.meter-list { display: flex; flex-direction: column; gap: 10px; }
+.meter-top { display: flex; align-items: baseline; gap: 6px; font-size: 14.5px; flex-wrap: wrap; }
+.meter-top .muted { margin-left: auto; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.meter-list .bar { margin-top: 5px; height: 14px; }
+.meter-list li[style] .bar span { background: var(--mc); }
+.swap-list li { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 14.5px; }
+.swap-list li b { margin-left: auto; font-family: var(--font-display); font-weight: 900; }
+.notes { width: 100%; resize: vertical; min-height: 96px; padding: 12px 14px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 15px; }
+.print-only { display: none; }
+.notes-print { white-space: pre-wrap; }
+@media (max-width: 360px) { .stat b { font-size: 24px; } .stat span { font-size: 11px; } }
 .install-list li { padding: 11px 14px; border: 2px solid var(--line); border-radius: 18px; }
 .install-list li + li { margin-top: 10px; }
 .install-list li.is-mine { background: var(--ok-bg); color: var(--ok-text); }
@@ -488,3 +508,22 @@ main {
   opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* Impresión: solo la hoja abierta (el resumen), en papel claro */
+@media print {
+  :root {
+    --bg: #fff; --surface: #fff; --surface-2: #f3ead6; --text: #1c1917; --text-2: #3d3630; --muted: #5c5248;
+    --line: #1c1917; --line-soft: #d6c7a6; --hard: #1c1917; --title-face: var(--pink); --title-side: var(--ink);
+    color-scheme: light;
+  }
+  @page { margin: 14mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; animation: none !important; }
+  body, body.no-scroll { background: #fff; overflow: visible; }
+  .app, .toast, .no-print, .sheet-actions, .sheet-head .icon-btn { display: none !important; }
+  .print-only { display: block; }
+  .sheet-backdrop { position: static; display: block; padding: 0; background: none; }
+  .sheet { max-width: none; max-height: none; overflow: visible; border: 0; border-radius: 0; box-shadow: none; }
+  .sheet-head { position: static; padding: 26px 0 12px; }
+  .sheet-content { padding: 14px 0 0; }
+  .meter-list li, .stats { break-inside: avoid; }
+}
