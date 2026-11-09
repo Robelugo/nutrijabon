@@ -99,56 +99,67 @@
     }).join('') + '</div>';
   }
 
-  /* ---------------- Íconos (estilo calcomanía setentera) ----------------
-   * Ilustrados: formas planas con relleno de color y contorno grueso.
-   * Clases de relleno: y amarillo, p rosa, o naranja, g verde, b azul, r rojo, c crema, k tinta;
-   * n = sin contorno, mid/thick = contorno más grueso, sc = trazo crema. */
   var ICONS = {
-    sun: '<path class="o" d="M20 12A3.2 3.2 0 0 1 17.66 17.66A3.2 3.2 0 0 1 12 20A3.2 3.2 0 0 1 6.34 17.66A3.2 3.2 0 0 1 4 12A3.2 3.2 0 0 1 6.34 6.34A3.2 3.2 0 0 1 12 4A3.2 3.2 0 0 1 17.66 6.34A3.2 3.2 0 0 1 20 12Z"/><circle class="y" cx="12" cy="12" r="4.3"/>',
-    calendar: '<rect class="c" x="3" y="5" width="18" height="16" rx="3"/><path class="p" d="M3 10.5V8a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v2.5Z"/><path d="M8 2.8v4M16 2.8v4"/><circle class="g n" cx="8" cy="15.6" r="1.6"/><circle class="o n" cx="12" cy="15.6" r="1.6"/><circle class="b n" cx="16" cy="15.6" r="1.6"/>',
-    book: '<path d="M8.5 8.2c-1-1.2 1-2.3 0-3.5M12 8.2c-1-1.2 1-2.3 0-3.5M15.5 8.2c-1-1.2 1-2.3 0-3.5"/><path class="g" d="M3 11h18a9 9 0 0 1-18 0Z"/><path d="M5.6 15.2h12.8"/>',
-    cart: '<path d="M7.5 10a4.5 4.5 0 0 1 9 0"/><path class="o" d="M4 11h16l-1.7 8.6a2 2 0 0 1-2 1.6H7.7a2 2 0 0 1-2-1.6Z"/><rect class="y" x="2.5" y="8.6" width="19" height="3.4" rx="1.7"/><path d="M9.5 14.2v4M12 14.2v4M14.5 14.2v4"/>',
-    guide: '<path class="p" d="M12 7C10 5.2 6.5 4.6 2.5 5.2v13.6c4-.6 7.5 0 9.5 1.8Z"/><path class="b" d="M12 7c2-1.8 5.5-2.4 9.5-1.8v13.6c-4-.6-7.5 0-9.5 1.8Z"/>',
-    // Ajustes: patita de gato (naranja, con cojincitos rosas) sosteniendo una llave azul.
-    // La silueta se arma con círculos: primero contorno (k mid) y encima el relleno (o n).
-    paw: '<g transform="rotate(-45 12 12)"><rect class="b" x="3" y="10.4" width="16.5" height="3.2" rx="1.6"/><path class="b" d="M23.49 10.7A4.2 4.2 0 1 0 23.49 13.3H20.6V10.7Z"/></g>' +
-      '<circle class="k mid" cx="7.3" cy="17.4" r="3.87"/><circle class="k mid" cx="4.2" cy="14.56" r="1.42"/><circle class="k mid" cx="6.18" cy="13.19" r="1.42"/><circle class="k mid" cx="8.5" cy="13.19" r="1.42"/><circle class="k mid" cx="10.48" cy="14.65" r="1.42"/>' +
-      '<circle class="o n" cx="7.3" cy="17.4" r="3.87"/><circle class="o n" cx="4.2" cy="14.56" r="1.42"/><circle class="o n" cx="6.18" cy="13.19" r="1.42"/><circle class="o n" cx="8.5" cy="13.19" r="1.42"/><circle class="o n" cx="10.48" cy="14.65" r="1.42"/>' +
-      '<path class="p n" transform="translate(7.3 17.4) scale(.86)" d="M0-.3c-1.5 0-2.6 1.3-2.6 2.3 0 .8.7 1.1 1.4.9.5-.1.8-.3 1.2-.3s.7.2 1.2.3c.7.2 1.4-.1 1.4-.9 0-1-1.1-2.3-2.6-2.3Z"/>' +
-      '<circle class="p n" cx="4.3" cy="14.78" r=".82"/><circle class="p n" cx="6.22" cy="13.44" r=".82"/><circle class="p n" cx="8.47" cy="13.44" r=".82"/><circle class="p n" cx="10.39" cy="14.86" r=".82"/>',
-    swap: '<path class="p" d="M3 5.2h11V2.6l6.6 4.1-6.6 4.1V8.2H3Z"/><path class="b" d="M21 15.8H10v-2.6l-6.6 4.1 6.6 4.1v-2.6h11Z"/>',
-    dumbbell: '<rect class="k" x="7" y="10.8" width="10" height="2.4" rx="1"/><rect class="p" x="1.4" y="9" width="2.6" height="6" rx="1.1"/><rect class="p" x="20" y="9" width="2.6" height="6" rx="1.1"/><rect class="p" x="3.7" y="6.4" width="4" height="11.2" rx="1.8"/><rect class="p" x="16.3" y="6.4" width="4" height="11.2" rx="1.8"/>',
-    moon: '<path class="y" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M18.6 2.6v4M16.6 4.6h4"/>',
-    clock: '<circle class="o" cx="12" cy="12" r="9.6"/><circle class="c" cx="12" cy="12" r="6.6"/><path d="M12 8.3V12l2.6 1.6"/>',
-    search: '<path class="thick" d="M15.6 15.6l5 5"/><circle class="b" cx="10.5" cy="10.5" r="6.6"/><path class="sc" d="M7.5 9.4a3.3 3.3 0 0 1 2.5-2.5"/>',
-    share: '<rect class="o" x="4" y="10.2" width="16" height="10.8" rx="2.2"/><path class="y" d="M12 2.6l4.8 5h-2.9v6.8h-3.8V7.6H7.2Z"/>',
-    info: '<circle class="b" cx="12" cy="12" r="9.6"/><circle class="c n" cx="12" cy="7.6" r="1.6"/><rect class="c n" x="10.7" y="10.3" width="2.6" height="7.4" rx="1.3"/>',
-    alert: '<path class="y" d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path class="mid" d="M12 9.2v4.4"/><circle class="k n" cx="12" cy="17.2" r="1.4"/>',
-    ban: '<circle class="r" cx="12" cy="12" r="9.6"/><circle class="c" cx="12" cy="12" r="5.8"/><rect class="r" x="6.2" y="10.6" width="11.6" height="2.8" rx="1" transform="rotate(-45 12 12)"/>',
-    leaf: '<path class="g" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/>',
-    download: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="g" d="M12 17.6l-5-5.2h3.2V3h3.6v9.4H17Z"/>',
-    upload: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="p" d="M12 2.6l5 5.2h-3.2v9.4h-3.6V7.8H7Z"/>',
-    bell: '<circle class="o" cx="12" cy="2.9" r="1.5"/><path class="p" d="M9.5 17.6a2.5 2.5 0 0 0 5 0Z"/><path class="y" d="M12 3.6a6.2 6.2 0 0 0-6.2 6.2v5.2h12.4V9.8A6.2 6.2 0 0 0 12 3.6Z"/><path class="sc" d="M8.6 12.6V10a3.5 3.5 0 0 1 2.1-3.2"/><rect class="o" x="3.4" y="14.6" width="17.2" height="3.2" rx="1.6"/><path d="M1.8 9.4a10 10 0 0 1 2.3-5M22.2 9.4a10 10 0 0 0-2.3-5"/>',
-    fork: '<circle class="b" cx="12" cy="12.4" r="6.2"/><circle class="c" cx="12" cy="12.4" r="3.4"/>' +
-      '<path d="M1.6 2.8v4.4M3 2.8v4.4M4.4 2.8v4.4M1.6 7.2a1.4 1.4 0 0 0 2.8 0"/><path class="mid" d="M3 8.8v12.4"/>' +
-      '<path class="y" d="M20.3 2.8c1.8 1.3 2.3 4.4 2.1 8.2h-2.1Z"/><path class="mid" d="M21.35 11v10.2"/>',
-    pot: '<path d="M3.6 13H1.6M20.4 13h2"/><path class="o" d="M4 10.6h16v6.6a3.6 3.6 0 0 1-3.6 3.6H7.6A3.6 3.6 0 0 1 4 17.2Z"/>' +
-      '<path class="y" d="M6 8.4a6 4.2 0 0 1 12 0Z"/><rect class="y" x="2.6" y="8.2" width="18.8" height="3" rx="1.5"/><circle class="p" cx="12" cy="3.4" r="1.4"/><path class="sc" d="M7.2 14v3.2"/>',
-    pill: '<g transform="rotate(-40 12 12)"><path class="p" d="M12 7.6H6.4a4.4 4.4 0 0 0 0 8.8H12Z"/><path class="y" d="M12 7.6h5.6a4.4 4.4 0 0 1 0 8.8H12Z"/><path class="sc" d="M5.6 10.2h3"/></g><path d="M20.4 3.2v2.6M19.1 4.5h2.6"/>',
-    star: '<path class="y" d="M12 2.4l2.7 6.48 7 .57-5.33 4.57L18 20.85l-6-3.65-6 3.65 1.63-6.83-5.33-4.57 7-.57Z"/><circle class="p n" cx="12" cy="12.9" r="2.1"/>',
-    clipboard: '<rect class="c" x="4.2" y="3.6" width="15.6" height="18.4" rx="2.6"/><rect class="p n" x="7.6" y="9.4" width="8.8" height="2.4" rx="1.2"/><rect class="g n" x="7.6" y="13.2" width="5.6" height="2.4" rx="1.2"/><rect class="o n" x="7.6" y="17" width="7.4" height="2.4" rx="1.2"/><rect class="b" x="8.2" y="1.8" width="7.6" height="4" rx="1.5"/>',
-    cassette: '<rect class="o" x="1.8" y="4.4" width="20.4" height="15.2" rx="2.6"/><rect class="p n" x="3.4" y="6" width="17.2" height="2.4" rx="1"/><rect class="c" x="4.4" y="8.4" width="15.2" height="6.4" rx="3.2"/><circle class="k n" cx="8.4" cy="11.6" r="1.8"/><circle class="k n" cx="15.6" cy="11.6" r="1.8"/><circle class="c n" cx="8.4" cy="11.6" r=".7"/><circle class="c n" cx="15.6" cy="11.6" r=".7"/><path d="M10.6 11.6h2.8"/><path class="y" d="M6.2 19.6l1.5-3.4h8.6l1.5 3.4Z"/>',
-    // Glifos: trazos gruesos y redondos que toman el color del texto
-    settings: '<path d="M3 6h3m6 0h9M3 12h9m6 0h3M3 18h2m6 0h10"/><circle cx="9" cy="6" r="2.6"/><circle cx="15" cy="12" r="2.6"/><circle cx="8" cy="18" r="2.6"/>',
-    check: '<path d="M20 6 9 17l-5-5"/>',
-    left: '<path d="m15 18-6-6 6-6"/>',
-    right: '<path d="m9 18 6-6-6-6"/>',
-    down: '<path d="m6 9 6 6 6-6"/>',
-    x: '<path d="M18 6 6 18M6 6l12 12"/>'
+    pasta: '<path fill="#e9bf7f" d="M2 13h20q-1 8-10 8T2 13Z"/><path d="M6 12q0-9 3-9t2 5q-2 6 0 5m2-1q3-12 5-7t-1 7"/>',
+    sushi: '<path fill="#eda897" d="M3 8q0-5 9-5t9 5v8q0 5-9 5t-9-5Z"/><path d="M3 8q2 6 9 5t9-5m-12 0q3-3 6 0-3 3-6 0Z"/>',
+    taco: '<path fill="#efbf7e" d="M2 17q0-14 11-14 8 0 9 12-8 6-20 2Z"/><path d="M4 15q1-9 10-10m-7 8 2-1m4-3 2 1"/>',
+    avocado: '<path fill="#a3c47c" d="M7 8q1-6 5-6t5 6c1 4 4 5 4 9 0 7-18 7-18 0 0-4 3-6 4-9Z"/><path d="M15 16a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>',
+    lemon: '<path fill="#f7ce68" d="M3 15C1 11 6 5 11 4q4-2 7 0l2-1 1 3c3 7-6 15-13 14l-3 1-1-3Z"/><path d="M7 14q0-4 4-6"/>',
+    sun: '<path fill="#ffd571" d="M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.5 5.5 7 7m10 10 1.5 1.5m0-13L17 7M7 17l-1.5 1.5"/>',
+    calendar: '<path fill="#f29aa9" d="M5 5h14q1 0 1 2v12q0 2-2 2H6q-2 0-2-2V7q0-2 1-2Z"/><path d="M4 9h16M8 3v4m8-4v4M8 13h2m3 0h2m-7 4h2"/>',
+    book: '<path fill="#a6c991" d="M3 11h18q-1 8-9 8t-9-8Z"/><path d="M8 8q-2-2 0-5m4 5q-2-2 0-5m4 5q-2-2 0-5M8 20h8"/>',
+    cart: '<path fill="#f3bc77" d="M2 9h20l-3 11H5Z"/><path d="m6 9 4-6m8 6-4-6M9 13l1 4m5-4-1 4"/>',
+    guide: '<path fill="#a8bdd9" d="M2 5q6-2 10 1 4-3 10-1v14q-6-2-10 1-4-3-10-1Z"/><path d="M12 6v14"/>',
+    swap: '<path d="M3 7h16l-4-4m6 14H5l4 4"/>',
+    dumbbell: '<path fill="#e9a1ac" d="M4 7h4v10H4Zm12 0h4v10h-4Z"/><path d="M8 12h8M2 10v4m20-4v4"/>',
+    moon: '<path fill="#f5cb73" d="M19 16A9 9 0 0 1 8 4a9 9 0 1 0 11 12Z"/>',
+    clock: '<path fill="#efd0a0" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="M12 7v5l4 2"/>',
+    search: '<path fill="#a9c5d9" d="M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/><path d="m16 16 5 5"/>',
+    share: '<path fill="#eeb384" d="M7 10H4v10h16V10h-3"/><path d="m8 8 4-4 4 4m-4-4v10"/>',
+    info: '<path fill="#99c2d6" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="M12 11v5m0-9v.2"/>',
+    alert: '<path fill="#f4cb74" d="m12 3 10 17H2Z"/><path d="M12 9v4m0 3v.2"/>',
+    ban: '<path fill="#e8a591" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/><path d="m6 6 12 12"/>',
+    leaf: '<path fill="#a6c795" d="M5 17C0 8 11 5 21 3c0 11-5 19-16 14Z"/><path d="M4 21 15 10"/>',
+    download: '<path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/>',
+    upload: '<path d="M12 16V4m-5 5 5-5 5 5M4 17v4h16v-4"/>',
+    bell: '<path fill="#f2c779" d="M4 17h16l-2-4V9a6 6 0 0 0-12 0v4Z"/><path d="M9 20q3 3 6 0"/>',
+    fork: '<path d="M4 3v6q3 4 6 0V3M7 3v18M18 3q-5 3-5 10h5m0-10v18"/>',
+    pot: '<path fill="#d4ba8a" d="M4 10h16v7q0 3-3 3H7q-3 0-3-3Z"/><path d="M3 10h18M8 7q4-4 8 0m-6-3h4M1 13h2m18 0h2"/>',
+    pill: '<path fill="#f1a5af" d="M4 12 12 4a5.6 5.6 0 0 1 8 8l-8 8a5.6 5.6 0 0 1-8-8Z"/><path d="m8 8 8 8"/>',
+    star: '<path fill="#f5cd70" d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/>',
+    clipboard: '<path fill="#a9c5c4" d="M8 5H5v16h14V5h-3"/><path d="M9 5h6V3H9Zm-1 7 2 2 5-5m-7 8h7"/>',
+    cassette: '<path fill="#c8aecb" d="M3 5h18v15H3Zm6 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm10 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"/><path d="M7 10h10M7 16h10"/>',
+    heart: '<path fill="#f0a1ab" d="M12 20 4 12C-1 4 8 0 12 7c4-7 13-3 8 5Z"/>',
+    dislike: '<path fill="#d2ad98" d="M15 4H6q-2 0-2 2l-2 8h7l-1 5q0 3 3 1l5-7V5Z"/><path d="M18 4h3v11h-3"/>',
+    home: '<path fill="#edca98" d="m2 11 10-8 10 8h-3v10H5V11Z"/><path d="M9 20v-7h6v7"/>',
+    apple: '<path fill="#eca09b" d="M12 8c-8-5-13 5-6 12 2 2 4 0 6 0s4 2 6 0c7-7 2-17-6-12Z"/><path d="M12 8q0-4-3-6m4 4q3-4 6-3"/>',
+    bean: '<path fill="#d2ab8b" d="M5 9c0-7 12-8 13-1 1 4 5 4 3 8-4 9-19 5-17-2q0-3 4-3Z"/><path d="M8 16q5 2 6-3"/>',
+    grain: '<path fill="#e8c878" d="M7 17q-6-1-4-7 5 1 4 7Zm4-5q-5-2-3-7 4 1 3 7Zm4-5q-1-5 4-5 2 3-4 5Zm-5 8q3-5 9-2-1 5-9 2Z"/><path d="m5 21 13-16"/>',
+    milk: '<path fill="#a6c6db" d="M8 3h8l2 6v12H6V9Z"/><path d="M6 9h12M9 3h7"/>',
+    nut: '<path fill="#dcb489" d="M4 16C4 8 10 4 19 2c3 9-1 17-8 19-4 1-7-1-7-5Z"/><path d="M7 18q4-3 8-11"/>',
+    jar: '<path fill="#c6b09e" d="M7 3h10v4l2 3v10H5V10l2-3Z"/><path d="M7 7h10m-9 5h8m-8 3h8"/>',
+    cup: '<path fill="#ccb199" d="M3 7h14v7q0 5-7 5t-7-5Z"/><path d="M17 9h3q4 5-3 6M5 21h12"/>',
+    tag: '<path fill="#e5ba82" d="m2 13 10-10h9v9L11 22Z"/><path d="M16 7h.2"/>',
+    chat: '<path fill="#c6b6d4" d="M3 4h18v14H9l-6 4Z"/><path d="M7 10h10m-10 4h6"/>',
+    box: '<path fill="#dabb91" d="m3 7 9-4 9 4v11l-9 4-9-4Z"/><path d="m3 8 9 4 9-4m-9 4v9"/>',
+    bag: '<path fill="#e4aeaa" d="M5 8h14l2 13H3Z"/><path d="M8 9V7a4 4 0 0 1 8 0v2"/>',
+    knife: '<path fill="#b6c7c8" d="M3 2 15 13l-4 3Q3 10 3 2Z"/><path d="m14 13 6 6-2 2-6-6"/>',
+    store: '<path fill="#ecb68b" d="m3 10 2-6h14l2 6q-2 4-5 1-4 3-8 0-3 3-5-1Z"/><path d="M5 11v10h14V11M9 21v-6h5v6"/>',
+    thermo: '<path fill="#e7ad9c" d="M9 14V5a3 3 0 0 1 6 0v9a5 5 0 1 1-6 0Z"/><path d="M12 8v9"/>',
+    mountain: '<path fill="#a9c4ba" d="m2 20 9-16 11 16Z"/><path d="m9 10 3 2 2-2"/>',
+    check: '<path d="M4 12l5 5L20 6"/>',
+    left: '<path d="m15 5-7 7 7 7"/>',
+    right: '<path d="m9 5 7 7-7 7"/>',
+    down: '<path d="m5 9 7 7 7-7"/>',
+    x: '<path d="M6 6l12 12M18 6 6 18"/>',
+    settings: '<path d="M12 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm-7 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/><path d="M3 6h3m6 0h9M3 12h9m6 0h3M3 18h2m6 0h10"/>'
   };
-  var GLYPHS = { settings: 1, check: 1, left: 1, right: 1, down: 1, x: 1 };
   function icon(name, cls) {
-    return '<svg class="ic ' + (GLYPHS[name] ? 'glyph' : 'art') + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
+    return '<svg class="ic planner-icon' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[name] + '</svg>';
+  }
+  var FOOD_SYMBOLS = {"🍎":"apple","🥬":"leaf","🫘":"bean","🌾":"grain","🥛":"milk","🥑":"avocado","🧂":"jar","🍲":"pot","🌮":"taco","🍣":"sushi","🍝":"pasta","🥡":"box","☕":"cup","🏪":"store","💊":"pill","🌰":"nut","🍋":"lemon","🏷️":"tag"};
+  function dishThumb(r) {
+    return '<img class="dish-thumb" src="art/' + r.id + '.jpg" alt="" loading="lazy">';
   }
 
   /* ---------------- Lógica del plan ---------------- */
@@ -185,12 +196,12 @@
   function medMark(k, id) { var r = dayRec(k); return r.tk ? r.tk[id] : undefined; }
   // Gustos por receta: 1 = me gusta, -1 = no me gusta (en settings.taste)
   function tasteOf(id) { return (S.settings.taste || {})[id] || 0; }
-  function tasteNote(id) { var t = tasteOf(id); return t === 1 ? ' · ❤️ te gusta' : t === -1 ? ' · 👎 no te gusta' : ''; }
+  function tasteNote(id) { var t = tasteOf(id); return t === 1 ? ' · ' + icon('heart', 'ic-sm') + ' te gusta' : t === -1 ? ' · ' + icon('dislike', 'ic-sm') + ' no te gusta' : ''; }
   function tasteBtns(id) {
     var t = tasteOf(id);
     return '<div class="taste row-gap" role="group" aria-label="¿Te gusta este platillo?">' +
-      '<button class="chip-btn taste-btn" aria-pressed="' + (t === 1) + '" data-action="taste" data-id="' + id + '" data-v="1">❤️ Me gusta</button>' +
-      '<button class="chip-btn taste-btn" aria-pressed="' + (t === -1) + '" data-action="taste" data-id="' + id + '" data-v="-1">👎 No me gusta</button></div>';
+      '<button class="chip-btn taste-btn" aria-pressed="' + (t === 1) + '" data-action="taste" data-id="' + id + '" data-v="1">' + icon('heart', 'ic-sm') + ' Me gusta</button>' +
+      '<button class="chip-btn taste-btn" aria-pressed="' + (t === -1) + '" data-action="taste" data-id="' + id + '" data-v="-1">' + icon('dislike', 'ic-sm') + ' No me gusta</button></div>';
   }
   function setTaste(id, v) {
     S.settings.taste = S.settings.taste || {};
@@ -206,8 +217,8 @@
     var favs = tasteList(1), nos = tasteList(-1);
     if (!favs.length && !nos.length) return '';
     return '<h3 class="sec-title">Tus gustos</h3>' +
-      (favs.length ? '<p class="small"><b>❤️ Te gustan:</b> ' + esc(favs.join(', ')) + '.</p>' : '') +
-      (nos.length ? '<p class="small"><b>👎 No te gustan:</b> ' + esc(nos.join(', ')) + '.</p>' : '');
+      (favs.length ? '<p class="small"><b>' + icon('heart', 'ic-sm') + ' Te gustan:</b> ' + esc(favs.join(', ')) + '.</p>' : '') +
+      (nos.length ? '<p class="small"><b>' + icon('dislike', 'ic-sm') + ' No te gustan:</b> ' + esc(nos.join(', ')) + '.</p>' : '');
   }
   // Tomas del pre-entreno que también van en días de descanso (p. ej. la vitamina)
   function restMeds() { return (S.settings.meds || []).filter(function (md) { return md.meal === 'pre' && md.when === 'all'; }); }
@@ -217,9 +228,9 @@
   }
   // ¿Por qué no se cumplió? Se guarda en why (comidas) y twhy (vitaminas/medicamentos)
   var REASONS = {
-    meal: [['fuera', '🍽️', 'Comí fuera'], ['tiempo', '⏰', 'No tuve tiempo'], ['hambre', '😶', 'Sin hambre'],
-      ['otra', '🔁', 'Comí otra cosa'], ['olvido', '💭', 'Se me olvidó'], ['otro', '🤷', 'Otro motivo']],
-    med: [['olvido', '💭', 'Se me olvidó'], ['acabo', '📦', 'Se me acabó'], ['traia', '👜', 'Fuera de casa'], ['otro', '🤷', 'Otro motivo']]
+    meal: [['fuera', 'fork', 'Comí fuera'], ['tiempo', 'clock', 'No tuve tiempo'], ['hambre', 'book', 'Sin hambre'],
+      ['otra', 'swap', 'Comí otra cosa'], ['olvido', 'chat', 'Se me olvidó'], ['otro', 'info', 'Otro motivo']],
+    med: [['olvido', 'chat', 'Se me olvidó'], ['acabo', 'box', 'Se me acabó'], ['traia', 'bag', 'Fuera de casa'], ['otro', 'info', 'Otro motivo']]
   };
   var REASON_TEXT = { meal: {}, med: {} };
   ['meal', 'med'].forEach(function (kind) { REASONS[kind].forEach(function (x) { REASON_TEXT[kind][x[0]] = x[2]; }); });
@@ -373,11 +384,11 @@
       statTile('green', st.full + '<small>/' + st.days + '</small>', 'días completos') +
       (R.meds.due ? statTile('pink', Math.round(R.meds.done / R.meds.due * 100) + '%', 'vitaminas y medicamentos') : statTile('pink', st.miss, st.miss === 1 ? 'comida no cumplida' : 'comidas no cumplidas'));
     var lines = [];
-    if (R.best && R.best.p > 0) lines.push('<li>⭐ <span>Lo mejor: <b>' + R.best.m.name + '</b> (' + R.best.x.done + ' de ' + R.best.x.due + ')</span></li>');
-    if (R.worst && R.worst !== R.best && R.worst.p < 1) lines.push('<li>🧗 <span>Lo que más costó: <b>' + R.worst.m.name + '</b> (' + R.worst.x.done + ' de ' + R.worst.x.due + ')</span></li>');
-    if (R.top) lines.push('<li>💬 <span>Razón más común: <b>' + lowerFirst(REASON_TEXT.meal[R.top[0]]) + '</b> (' + R.top[1] + (R.top[1] === 1 ? ' vez' : ' veces') + ')</span></li>');
+    if (R.best && R.best.p > 0) lines.push('<li>' + icon('star', 'ic-sm') + ' <span>Lo mejor: <b>' + R.best.m.name + '</b> (' + R.best.x.done + ' de ' + R.best.x.due + ')</span></li>');
+    if (R.worst && R.worst !== R.best && R.worst.p < 1) lines.push('<li>' + icon('mountain', 'ic-sm') + ' <span>Lo que más costó: <b>' + R.worst.m.name + '</b> (' + R.worst.x.done + ' de ' + R.worst.x.due + ')</span></li>');
+    if (R.top) lines.push('<li>' + icon('chat', 'ic-sm') + ' <span>Razón más común: <b>' + lowerFirst(REASON_TEXT.meal[R.top[0]]) + '</b> (' + R.top[1] + (R.top[1] === 1 ? ' vez' : ' veces') + ')</span></li>');
     var C = checkStats(R.mon, addDays(R.mon, 6));
-    if (C.days >= 3) lines.push('<li>🌡️ <span>' + CHECKS.map(function (x) { var a = avg(C.f[x.id]); return x.name + ' <b>' + (a === null ? '—' : a.toFixed(1)) + '</b>'; }).join(' · ') + ' <span class="muted">(de 5, ' + C.days + ' días)</span></span></li>');
+    if (C.days >= 3) lines.push('<li>' + icon('thermo', 'ic-sm') + ' <span>' + CHECKS.map(function (x) { var a = avg(C.f[x.id]); return x.name + ' <b>' + (a === null ? '—' : a.toFixed(1)) + '</b>'; }).join(' · ') + ' <span class="muted">(de 5, ' + C.days + ' días)</span></span></li>');
     var T = R.top && R.top[1] >= 2 && RECAP_TIPS[R.top[0]];
     if (T) {
       tip = T[0];
@@ -565,7 +576,7 @@
     }
 
     h += '<div class="progress"><div class="progress-top"><span><b>' + done + '</b> de ' + active.length + ' comidas' + (missed ? ' · ' + missed + ' no' : '') + '</span>' +
-      '<span class="muted">' + (isFullDay(k) && done ? '¡Día completo! 🎉' : pct + '%') + '</span></div>' +
+      '<span class="muted">' + (isFullDay(k) && done ? '¡Día completo!' : pct + '%') + '</span></div>' +
       '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><span style="width:' + pct + '%"></span></div></div>';
 
     h += '<ol class="meals">' + meals.filter(function (m) { return !next || m.id !== next.id; }).map(function (m) { return mealItem(k, m, null); }).join('') + '</ol>';
@@ -580,7 +591,7 @@
       h += '<section class="card"><h3 class="card-title">' + icon('clock') + ' Deja listo para mañana (' + DAY_NAMES[wd(tm)].toLowerCase() + ')</h3><ul class="plain">' +
         prep.map(function (x) {
           return '<li><button class="link-row" data-action="open-recipe" data-id="' + x.r.id + '" data-k="' + tmk + '" data-meal="' + x.m.id + '">' +
-            '<span class="roundel sm" style="--mc:var(--m-' + x.m.id + ')">' + x.r.emoji + '</span><span><b>' + x.m.name + ': ' + esc(x.r.name) + '</b><br><span class="small muted">' + x.r.ahead + '</span></span></button></li>';
+            '<span class="roundel sm" style="--mc:var(--m-' + x.m.id + ')">' + dishThumb(x.r) + '</span><span><b>' + x.m.name + ': ' + esc(x.r.name) + '</b><br><span class="small muted">' + x.r.ahead + '</span></span></button></li>';
         }).join('') + '</ul></section>';
     }
 
@@ -604,7 +615,7 @@
     if (isSkipped(k, m)) {
       return '<li class="meal is-skipped"><article class="meal-card"' + mc + '><div class="meal-main">' +
         '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span><span class="badge warn">No toca hoy</span></div>' +
-        '<div class="dish struck"><span class="roundel">' + r.emoji + '</span><span>' + esc(r.name) + '</span></div>' +
+        '<div class="dish struck"><span class="roundel">' + dishThumb(r) + '</span><span>' + esc(r.name) + '</span></div>' +
         '<p class="small muted">Solo en días de ejercicio. <button class="link-btn" data-action="set-ex" data-v="1">¿Sí hiciste ejercicio?</button></p>' +
         '</div></article>' + medRows(k, m, meds, true) + '</li>';
     }
@@ -613,7 +624,7 @@
       (missed ? '<span class="badge miss">No cumplí</span>' : '') +
       (m.trainingOnly ? '<span class="badge">Antes de entrenar</span>' : '') +
       (rid !== defaultRecipe(k, m.id) ? '<span class="badge">Cambiado</span>' : '') +
-      (tasteOf(rid) === 1 ? '<span class="badge">❤️ Favorita</span>' : tasteOf(rid) === -1 ? '<span class="badge">👎 No te gusta</span>' : '') +
+      (tasteOf(rid) === 1 ? '<span class="badge">' + icon('heart', 'ic-sm') + ' Favorita</span>' : tasteOf(rid) === -1 ? '<span class="badge">' + icon('dislike', 'ic-sm') + ' No te gusta</span>' : '') +
       (r.extra ? '<span class="badge">Idea extra</span>' : '');
     var foldKey = 'meal-' + k + '-' + m.id;
     var summary = isNext ? '' : '<details class="timeline-item" data-acc="' + foldKey + '"' + (ui.open[foldKey] ? ' open' : '') + '><summary><time>' + t + '</time><span class="timeline-label"><small>' + m.name + '</small><b>' + esc(r.name) + '</b></span>' +
@@ -621,7 +632,7 @@
     return '<li class="meal' + (done ? ' is-done' : '') + (missed ? ' is-missed' : '') + (isNext ? ' is-next' : '') + '">' +
       summary + '<article class="meal-card"' + mc + '><div class="meal-main">' + (isNext ? dishArt(r) : '') +
       '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span>' + badges + '</div>' +
-      '<button class="dish" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"><span class="roundel">' + r.emoji + '</span><span class="dish-name">' + esc(r.name) + '</span>' + icon('right', 'ic-sm') + '</button>' +
+      '<button class="dish" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"><span class="roundel">' + dishThumb(r) + '</span><span class="dish-name">' + esc(r.name) + '</span>' + icon('right', 'ic-sm') + '</button>' +
       eqChips(m.eq) +
       '<div class="meal-actions"><button class="chip-btn" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '">' + icon('book', 'ic-sm') + ' Ver receta</button>' +
       '<button class="chip-btn" data-action="open-swap" data-k="' + k + '" data-meal="' + m.id + '">' + icon('swap', 'ic-sm') + ' Cambiar</button></div>' +
@@ -634,7 +645,7 @@
     return '<div class="why" role="group" aria-label="¿Por qué no se cumplió?"><span class="why-q">¿Por qué?</span>' +
       REASONS[kind].map(function (x) {
         return '<button class="why-chip" aria-pressed="' + (cur === x[0]) + '" data-action="why" data-kind="' + kind + '" data-k="' + k + '" data-id="' + id + '" data-r="' + x[0] + '">' +
-          '<span aria-hidden="true">' + x[1] + '</span> ' + x[2] + '</button>';
+          '<span aria-hidden="true">' + icon(x[1], 'ic-sm') + '</span> ' + x[2] + '</button>';
       }).join('') +
       (kind === 'meal' && cur === 'fuera' ? '<button class="link-btn why-link" data-action="open-out" data-meal="' + id + '">Qué pedir la próxima vez que comas fuera</button>' : '') +
       '</div>';
@@ -694,7 +705,7 @@
           var r = RECIPE[recipeId(k, m.id)], sk = isSkipped(k, m), dn = isDone(k, m.id), ms = isMissed(k, m.id);
           var meds = medsFor(k, m.id), medTitle = meds.map(function (md) { return md.name; }).join(', ');
           return '<li><button style="--mc:var(--m-' + m.id + ')" class="mini' + (sk ? ' is-skipped' : '') + (dn ? ' is-done' : '') + (ms ? ' is-missed' : '') + '" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"' + (sk ? ' title="No toca: día de descanso"' : '') + '>' +
-            '<span class="t">' + mealTime(m.id) + '</span><span class="n"><span class="emoji">' + r.emoji + '</span> ' + esc(r.name) + '</span>' +
+            '<span class="t">' + mealTime(m.id) + '</span><span class="n"><span class="emoji">' + dishThumb(r) + '</span> ' + esc(r.name) + '</span>' +
             (meds.length ? '<span class="mini-med" title="' + esc(medTitle) + '">' + icon('pill', 'ic-sm') + '<span class="sr-only">' + esc(medTitle) + '</span></span>' : '') +
             (dn ? icon('check', 'ic-sm ok') : ms ? '<span class="mini-miss" title="No cumplí' + (whyOf(k, 'why', m.id) ? ': ' + REASON_TEXT.meal[whyOf(k, 'why', m.id)] : '') + '">' + icon('x', 'ic-sm miss') + '</span>' : '') + '</button></li>';
         }).join('') + '</ul></article>';
@@ -704,7 +715,7 @@
 
   /* ---------------- Vista: Recetas ---------------- */
   function viewRecetas() {
-    var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; })).concat([['fav', '❤️ Favoritas']]);
+    var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; })).concat([['fav', icon('heart', 'ic-sm') + ' Favoritas']]);
     return '<div class="stack"><header class="catalog-head"><h2 class="page-title">Recetas</h2></header>' +
       '<label class="search">' + icon('search') + '<input type="search" placeholder="Busca un platillo o ingrediente…" value="' + esc(ui.rQuery) + '" data-input="rq" aria-label="Buscar recetas"></label>' +
       '<div class="chip-row">' + filters.map(function (f) {
@@ -720,14 +731,14 @@
         (!q || norm(r.name + ' ' + r.ing.map(function (i) { return i.n + ' ' + (i.t || ''); }).join(' ')).indexOf(q) !== -1);
     });
     if (!list.length) return ui.rFilter === 'fav'
-      ? '<p class="empty">Aún no tienes favoritas. Abre una receta y toca ❤️ Me gusta.</p>'
+      ? '<p class="empty">Aún no tienes favoritas. Abre una receta y toca ' + icon('heart', 'ic-sm') + ' Me gusta.</p>'
       : '<p class="empty">No encontré recetas con eso. Prueba con otro ingrediente.</p>';
     return MEALS.filter(function (m) { return list.some(function (r) { return r.meal === m.id; }); }).map(function (m) {
       return '<section class="recipe-group"><h3 class="group-title">' + m.name + ' <span class="muted small">· ' + eqList(m.eq).join(' · ') + '</span></h3>' +
         '<div class="recipe-grid">' + list.filter(function (r) { return r.meal === m.id; }).map(function (r) {
           var pd = planDays(r);
           return '<button class="recipe-card" style="--mc:var(--m-' + r.meal + ')" data-action="open-recipe" data-id="' + r.id + '">' + dishArt(r) +
-            '<span class="rc-name">' + esc(r.name) + (tasteOf(r.id) === 1 ? ' ❤️' : tasteOf(r.id) === -1 ? ' 👎' : '') + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
+            '<span class="rc-name">' + esc(r.name) + (tasteOf(r.id) === 1 ? ' ' + icon('heart', 'ic-sm') + '<span class="sr-only"> Favorita</span>' : tasteOf(r.id) === -1 ? ' ' + icon('dislike', 'ic-sm') + '<span class="sr-only"> No te gusta</span>' : '') + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
         }).join('') + '</div></section>';
     }).join('');
   }
@@ -773,23 +784,23 @@
       '<div class="row-gap"><button class="chip-btn" data-action="shop-share">' + icon('share', 'ic-sm') + ' Compartir</button>' +
       '<button class="chip-btn" data-action="shop-clear">Desmarcar todo</button></div></div>';
     if (!Object.keys(S.settings.pantry || {}).length) {
-      h += '<p class="small muted center">Toca 🏠 en lo que siempre tienes en casa (sal, aceite, especias) y dejará de aparecer en la lista.</p>';
+      h += '<p class="small muted center">Toca ' + icon('home', 'ic-sm') + ' en lo que siempre tienes en casa (sal, aceite, especias) y dejará de aparecer en la lista.</p>';
     }
     D.SHOP_CATS.forEach(function (cat) {
       var list = items.filter(function (i) { return i.c === cat.id; }).sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); });
       if (!list.length) return;
       var group = 'shop-' + cat.id;
       var expanded = ui.open[group] === undefined ? cat === D.SHOP_CATS[0] : ui.open[group];
-      h += '<details class="card acc" data-acc="' + group + '"' + (expanded ? ' open' : '') + '><summary><span>' + cat.emoji + ' ' + cat.name + '</span>' + icon('down', 'chev') + '</summary><ul class="shop-list">'  +
+      h += '<details class="card acc" data-acc="' + group + '"' + (expanded ? ' open' : '') + '><summary><span>' + icon(FOOD_SYMBOLS[cat.emoji]) + ' ' + cat.name + '</span>' + icon('down', 'chev') + '</summary><ul class="shop-list">'  +
         list.map(function (i) {
           var c = !!checked[i.n];
           return '<li class="shop-li"><label class="shop-item' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="shop" data-wk="' + wk + '" data-n="' + esc(i.n) + '"' + (c ? ' checked' : '') + '>' +
             '<span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span></label>' +
-            '<button class="pantry-btn" data-action="pantry" data-n="' + esc(i.n) + '" aria-label="Siempre tengo en casa: ' + esc(i.n) + '" title="Siempre tengo en casa">🏠</button></li>';
+            '<button class="pantry-btn" data-action="pantry" data-n="' + esc(i.n) + '" aria-label="Siempre tengo en casa: ' + esc(i.n) + '" title="Siempre tengo en casa">' + icon('home', 'ic-sm') + '</button></li>';
         }).join('') + '</ul></details>';
     });
     if (home.length) {
-      h += '<details class="card pantry-card"><summary><span class="emoji">🏠</span> Siempre en casa (' + home.length + ')' + icon('down', 'chev') + '</summary>' +
+      h += '<details class="card pantry-card"><summary><span class="emoji">' + icon('home', 'ic-sm') + '</span> Siempre en casa (' + home.length + ')' + icon('down', 'chev') + '</summary>' +
         '<p class="small muted">No aparecen en la lista ni cuando la compartes. Toca “Ya no” si se te acaba algo.</p><ul class="plain pantry-list">' +
         home.sort(function (a, b) { return a.n.localeCompare(b.n, 'es'); }).map(function (i) {
           return '<li><span class="si-name">' + esc(i.n) + '</span><span class="si-qty">' + esc(i.qty) + '</span>' +
@@ -813,12 +824,12 @@
    * y miércoles en la noche (marinar jue–dom). Las reglas están en D.PREP. */
   var DAY_SHORT = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
   var PREP_SECS = [
-    ['sat', '🌙', 'Sábado en la noche: remoja'],
-    ['cook', '🍲', 'Domingo: cocina en tanda'],
-    ['chop', '🔪', 'Domingo: lava y pica'],
-    ['snack', '🥜', 'Domingo: deja listos tus snacks'],
-    ['mar', '🫙', 'Domingo: marina para lunes a miércoles'],
-    ['wed', '🌙', 'Miércoles en la noche: marina para jueves a domingo']
+    ['sat', 'moon', 'Sábado en la noche: remoja'],
+    ['cook', 'pot', 'Domingo: cocina en tanda'],
+    ['chop', 'knife', 'Domingo: lava y pica'],
+    ['snack', 'nut', 'Domingo: deja listos tus snacks'],
+    ['mar', 'jar', 'Domingo: marina para lunes a miércoles'],
+    ['wed', 'moon', 'Miércoles en la noche: marina para jueves a domingo']
   ];
   function listText(a, conj) { return a.length > 1 ? a.slice(0, -1).join(', ') + ' ' + (conj || 'y') + ' ' + a[a.length - 1] : a[0] || ''; }
   function daysText(days) { return listText(days.slice().sort().map(function (i) { return DAY_SHORT[i]; })); }
@@ -867,7 +878,7 @@
     P.snack.forEach(function (s) {
       var us = uses.filter(function (u) { return u.r.id === s.id; }); if (!us.length) return;
       var r = RECIPE[s.id]; covered[s.id] = true;
-      add('snack', s.id, r.name, '×' + us.length + ' · ' + daysText(uniq(us.map(function (u) { return u.i; }))), s.how, { emoji: r.emoji, rid: r.id });
+      add('snack', s.id, r.name, '×' + us.length + ' · ' + daysText(uniq(us.map(function (u) { return u.i; }))), s.how, { rid: r.id });
     });
     P.portion.forEach(function (p) {
       var a = agg[p.n]; if (!a) return;
@@ -888,7 +899,7 @@
       var g = mar[key], r = g.r, pro = r.ing.filter(function (x) { return x.c === 'pro'; })[0];
       var step = r.steps.filter(function (s) { return /marin/i.test(s); })[0] || r.ahead;
       add(g.sec, r.id, r.name, (pro ? fmtIng(pro) + ' ' : '') + '×' + g.days.length + ' · ' + daysText(g.days),
-        step + ' Una porción por tupper.', { emoji: r.emoji, rid: r.id });
+        step + ' Una porción por tupper.', { rid: r.id });
     });
     return tasks;
   }
@@ -905,11 +916,11 @@
       'Lo de lunes a miércoles va al refri; lo de jueves a domingo, congélalo en porciones y pásalo al refri la noche anterior.</div></div>';
     PREP_SECS.forEach(function (sec) {
       var list = tasks.filter(function (t) { return t.sec === sec[0]; }); if (!list.length) return;
-      h += '<section class="card"><h3 class="card-title"><span class="emoji">' + sec[1] + '</span> ' + sec[2] + '</h3><ul class="shop-list prep-list">' +
+      h += '<section class="card"><h3 class="card-title"><span class="emoji">' + icon(sec[1]) + '</span> ' + sec[2] + '</h3><ul class="shop-list prep-list">' +
         list.map(function (t) {
           var c = !!done[t.id];
           return '<li><label class="shop-item prep-item' + (c ? ' is-checked' : '') + '"><input type="checkbox" data-input="prep" data-wk="' + wk + '" data-id="' + esc(t.id) + '"' + (c ? ' checked' : '') + '>' +
-            '<span class="pi-txt"><span class="si-name">' + (t.emoji ? t.emoji + ' ' : '') + esc(t.title) + '</span><span class="pi-meta">' + esc(t.meta) + '</span><span class="pi-how">' + t.how + '</span></span></label>' +
+            '<span class="pi-txt"><span class="si-name">' + (t.rid ? dishThumb(RECIPE[t.rid]) + ' ' : '') + esc(t.title) + '</span><span class="pi-meta">' + esc(t.meta) + '</span><span class="pi-how">' + t.how + '</span></span></label>' +
             (t.rid ? '<button class="chip-btn pi-link" data-action="open-recipe" data-id="' + t.rid + '" aria-label="Ver receta: ' + esc(t.title) + '">' + icon('book', 'ic-sm') + '</button>' : '') + '</li>';
         }).join('') + '</ul></section>';
     });
@@ -921,7 +932,7 @@
     var pct = all.length ? Math.round(n / all.length * 100) : 0;
     var c = document.getElementById('prep-count'), p = document.getElementById('prep-pct'), b = document.getElementById('prep-bar');
     if (c) c.innerHTML = '<b>' + n + '</b> de ' + all.length + ' tareas';
-    if (p) p.textContent = n === all.length ? '¡Listo! 🎉' : pct + '%';
+    if (p) p.textContent = n === all.length ? '¡Listo!' : pct + '%';
     if (b) b.style.width = pct + '%';
   }
   // Aviso en Hoy: sábado (remojar), domingo (prep) y miércoles (marinar)
@@ -1008,7 +1019,7 @@
       '<p class="small muted center">Basado en el plan de tu nutrióloga del 8 nov 2026 · Próxima revisión: 18 dic 2026.<br>NutriJabón te ayuda a seguir tu plan; no sustituye la consulta profesional.</p></div>';
   }
   function exHtml() {
-    var pres = D.RECIPES.filter(function (r) { return r.meal === 'pre' && !r.extra; }).map(function (r) { return r.emoji + ' ' + esc(r.name); });
+    var pres = D.RECIPES.filter(function (r) { return r.meal === 'pre' && !r.extra; }).map(function (r) { return dishThumb(r) + ' ' + esc(r.name); });
     var mode = ui.guideMode || (isTraining(keyOf(today())) ? 'train' : 'rest');
     return '<div class="guide-picker" role="group" aria-label="Consultar tipo de día">' +
       ['train', 'rest'].map(function (v) { return '<button data-action="guide-mode" data-v="' + v + '" aria-pressed="' + (mode === v) + '">' + (v === 'train' ? 'Ejercicio' : 'Descanso') + '</button>'; }).join('') +
@@ -1057,7 +1068,7 @@
   }
   function tipsHtml() {
     return '<ul class="plain tips">' + D.TIPS.map(function (t) {
-      return '<li><span class="emoji big">' + t.e + '</span><div><b>' + t.t + '</b><p>' + t.d + '</p></div></li>';
+      return '<li><span class="emoji big">' + icon(FOOD_SYMBOLS[t.e]) + '</span><div><b>' + t.t + '</b><p>' + t.d + '</p></div></li>';
     }).join('') + '</ul>';
   }
   function dayChips() {
@@ -1411,7 +1422,7 @@
     return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
   }
   function installHtml() {
-    if (isStandalone()) return '<p>✅ Ya estás usando NutriJabón como app instalada. Funciona sin internet.</p>';
+    if (isStandalone()) return '<p>' + icon('check') + ' Ya estás usando NutriJabón como app instalada. Funciona sin internet.</p>';
     var os = detectOS();
     var rows = [
       ['android', 'Android', 'En Chrome, abre el menú ⋮ y toca <b>Instalar app</b> (o <b>Agregar a la pantalla principal</b>).'],
@@ -1443,7 +1454,7 @@
       actions = '<button class="btn primary" data-action="use-today" data-id="' + r.id + '">' + icon('calendar') + ' Usar en ' + m.name.toLowerCase() + ' de hoy</button>';
     }
     var where = ctx.k && ctx.mode === 'day' ? m.name + ' · ' + DAY_NAMES[wd(fromKey(ctx.k))] + ' ' + fromKey(ctx.k).getDate() : m.name;
-    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + r.meal + ')">' + r.emoji + '</span>' +
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + r.meal + ')">' + dishThumb(r) + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">' + where + '</div><h2 id="sheet-title">' + esc(r.name) + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
       '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + dishArt(r) + eqChips(m.eq) +
@@ -1468,7 +1479,7 @@
     function row(r) {
       return '<div class="option' + (r.id === cur ? ' is-current' : '') + '">' +
         '<button class="option-main" data-action="choose-swap" data-k="' + k + '" data-meal="' + mealId + '" data-id="' + r.id + '">' +
-        '<span class="roundel">' + r.emoji + '</span><span class="option-text"><b>' + esc(r.name) + '</b><span class="small muted">' +
+        '<span class="roundel">' + dishThumb(r) + '</span><span class="option-text"><b>' + esc(r.name) + '</b><span class="small muted">' +
         (r.id === def ? 'El de tu plan para este día' : r.extra ? 'Idea extra' : 'Otra opción de tu plan') + tasteNote(r.id) + '</span></span>' +
         (r.id === cur ? '<span class="current-mark" aria-label="Elegido">' + icon('check') + '</span>' : '') + '</button>' +
         '<button class="icon-btn" data-action="preview-recipe" data-k="' + k + '" data-id="' + r.id + '" aria-label="Ver receta de ' + esc(r.name) + '">' + icon('book') + '</button></div>';
@@ -1527,7 +1538,7 @@
       '<ul class="plain out-tips">' + D.EAT_OUT.tips.map(function (t) { return '<li>' + icon('leaf', 'ic-xs') + '<span>' + t + '</span></li>'; }).join('') + '</ul>' +
       '<div class="out-places">' + places.map(function (p, i) {
         var plan = outPlan(p, m);
-        return '<details class="out-place"' + (i === 0 ? ' open' : '') + '><summary><span class="emoji">' + p.emoji + '</span><b>' + p.name + '</b>' + icon('down', 'chev') + '</summary>' +
+        return '<details class="out-place"' + (i === 0 ? ' open' : '') + '><summary><span class="emoji">' + icon(FOOD_SYMBOLS[p.emoji]) + '</span><b>' + p.name + '</b>' + icon('down', 'chev') + '</summary>' +
           '<div class="out-body"><p>' + p.order + '</p><h4 class="sec-title">Para cubrir tu ' + m.name.toLowerCase() + '</h4><ul class="plain out-items">' +
           plan.items.map(function (it) {
             return '<li>' + dot(it.g) + '<div><b>' + esc(it.text) + '</b> <span class="muted small">= ' + eqText(it.g, it.n) + '</span>' +
@@ -1589,10 +1600,10 @@
     if (!a.miss) return '';
     var w = whyCounts(a, 'meal'), given = w.reduce(function (s, e) { return s + e[1]; }, 0), none = a.miss - given;
     var emoji = {}; REASONS.meal.forEach(function (x) { emoji[x[0]] = x[1]; });
-    var rows = w.map(function (e) { return [emoji[e[0]] + ' ' + REASON_TEXT.meal[e[0]], e[1]]; });
+    var rows = w.map(function (e) { return [REASON_TEXT.meal[e[0]], e[1], emoji[e[0]]]; });
     if (none) rows.push(['Sin razón anotada', none]);
     return '<h3 class="sec-title">¿Por qué no se cumplieron?</h3><ul class="plain meter-list reasons">' + rows.map(function (row) {
-      return '<li style="--mc:var(--red)"><div class="meter-top"><b>' + row[0] + '</b><span class="muted">' + row[1] + ' de ' + a.miss + '</span></div>' +
+      return '<li style="--mc:var(--red)"><div class="meter-top"><b>' + (row[2] ? icon(row[2], 'ic-sm') + ' ' : '') + row[0] + '</b><span class="muted">' + row[1] + ' de ' + a.miss + '</span></div>' +
         barHtml({ done: row[1], due: a.miss }, row[0]) + '</li>';
     }).join('') + '</ul>';
   }
@@ -1633,7 +1644,7 @@
       }).join('') + '</ul>' +
       '<h3 class="sec-title">Platillos que elegiste en lugar del plan</h3>' +
       (R.swaps.length ? '<ul class="plain swap-list">' + R.swaps.map(function (x) {
-        return '<li><span class="roundel sm" style="--mc:var(--m-' + x.r.meal + ')">' + x.r.emoji + '</span><span>' + esc(x.r.name) + '</span><b>×' + x.n + '</b></li>';
+        return '<li><span class="roundel sm" style="--mc:var(--m-' + x.r.meal + ')">' + dishThumb(x.r) + '</span><span>' + esc(x.r.name) + '</span><b>×' + x.n + '</b></li>';
       }).join('') + '</ul>' : '<p class="small muted">Seguiste los platillos de tu plan.</p>') +
       tastesHtml() +
       '<h3 class="sec-title"><label for="notes">Preguntas para tu nutrióloga</label></h3>' +
@@ -1744,7 +1755,7 @@
   }
   function updateWakeNote() {
     var el = document.getElementById('cook-wake'); if (!el || !cook) return;
-    el.textContent = cook.wake === 'on' ? '☀️ Pantalla encendida' : cook.wake === 'no' ? 'Tu navegador no deja mantener la pantalla encendida' : '';
+    el.textContent = cook.wake === 'on' ? 'Pantalla encendida' : cook.wake === 'no' ? 'Tu navegador no deja mantener la pantalla encendida' : '';
   }
   function stepTitle(st) {
     if (cook.kind === 'recipe') return st.intro ? 'Antes de empezar' : 'Paso ' + cook.steps.indexOf(st) + ' de ' + (cook.steps.length - 1);
@@ -1755,7 +1766,7 @@
   function cookSheet() {
     if (!cook) return '';
     var st = cook.steps[cook.i], last = cook.i === cook.steps.length - 1, done = cook.kind === 'prep' && st.task && !!(S.prep[cook.wk] || {})[st.task.id];
-    var title = cook.kind === 'recipe' ? cook.r.emoji + ' ' + esc(cook.r.name) : '🍲 Prep del domingo';
+    var title = cook.kind === 'recipe' ? dishThumb(cook.r) + ' ' + esc(cook.r.name) : icon('pot') + ' Prep del domingo';
     var body = '', times = [];
     if (cook.kind === 'recipe' && st.intro) {
       var r = cook.r;
@@ -1772,7 +1783,7 @@
         '<li>' + icon('leaf', 'ic-xs') + '<span>Refrigera lo cocido en cuanto se enfríe. Lo de jueves a domingo, congélalo en porciones.</span></li></ul>';
     } else if (st.task) {
       var t = st.task;
-      body = '<p class="cook-task' + (done ? ' is-done' : '') + '">' + (t.emoji ? t.emoji + ' ' : '') + esc(t.title) + '</p>' +
+      body = '<p class="cook-task' + (done ? ' is-done' : '') + '">' + (t.rid ? dishThumb(RECIPE[t.rid]) + ' ' : '') + esc(t.title) + '</p>' +
         '<p class="cook-meta">' + esc(t.meta) + '</p><div class="cook-step">' + t.how + '</div>';
       times = findTimes(plainText(t.how));
     } else {
@@ -1827,7 +1838,7 @@
     toast('Temporizador de ' + fmtDur(secs));
   }
   function ring(t) {
-    toast('⏱ ¡Tiempo! ' + t.label);
+    toast('¡Tiempo! ' + t.label);
     if (navigator.vibrate) { try { navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) { /* ignorar */ } }
     if (!audioCtx) return;
     try {
@@ -1857,7 +1868,7 @@
     var tasks = cook.steps.filter(function (x) { return x.task; }), nd = tasks.filter(function (x) { return done[x.task.id]; }).length;
     closeSheet();
     toast(kind === 'recipe' ? '¡Buen provecho! Márcala cuando la comas ✓'
-      : nd === tasks.length ? '¡Prep listo! Tu semana ya está adelantada 🎉' : 'Llevas ' + nd + ' de ' + tasks.length + ' tareas del domingo');
+      : nd === tasks.length ? '¡Prep listo! Tu semana ya está adelantada' : 'Llevas ' + nd + ' de ' + tasks.length + ' tareas del domingo');
   }
   function runningTimers() { return cook ? cook.timers.filter(function (t) { return t.end > Date.now(); }).length : 0; }
 
@@ -1914,7 +1925,7 @@
     });
     if (sheet) renderSheet();
     render();
-    if (v && !wasFull && isFullDay(k)) toast('¡Día completo! 🎉');
+    if (v && !wasFull && isFullDay(k)) toast('¡Día completo!');
     else if (v === false && (field === 'tk' ? medMark(k, id) : markOf(k, id)) === false) toast('Anotado. Si quieres, elige por qué');
   }
   function setWhy(kind, k, id, reason) {

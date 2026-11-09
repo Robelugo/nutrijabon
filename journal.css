@@ -217,3 +217,8 @@ main { padding-top:22px; }
   width:14px; height:14px; background:var(--ckc); color:var(--ink);
   font:900 11px/14px var(--font-body);
 }
+.tab .planner-icon { transition:background .15s; }
+.tab[aria-current=page] .planner-icon { background:#443624; }
+.pantry-btn { filter:none; opacity:1; }
+.emoji.big .planner-icon { width:30px; height:30px; }
+@media(min-width:960px){.tab[aria-current=page] .planner-icon { background:transparent; }}
