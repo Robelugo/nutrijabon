@@ -1,6 +1,7 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v5';
+var CACHE = 'nutrijabon-v6';
 var FONT_CACHE = 'nutrijabon-fonts-v1';
+var FILES_CACHE = 'nutrijabon-files'; // archivos que arma la app (recordatorios .ics)
 var FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 var ASSETS = [
   './', './index.html', './styles.css', './data.js', './app.js', './manifest.webmanifest',
@@ -16,7 +17,7 @@ self.addEventListener('install', function (e) {
 
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (keys) {
-    return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== FONT_CACHE; }).map(function (k) { return caches.delete(k); }));
+    return Promise.all(keys.filter(function (k) { return k !== CACHE && k !== FONT_CACHE && k !== FILES_CACHE; }).map(function (k) { return caches.delete(k); }));
   }).then(function () { return self.clients.claim(); }));
 });
 

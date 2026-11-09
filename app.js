@@ -115,6 +115,9 @@
     ban: '<circle class="r" cx="12" cy="12" r="9.6"/><circle class="c" cx="12" cy="12" r="5.8"/><rect class="r" x="6.2" y="10.6" width="11.6" height="2.8" rx="1" transform="rotate(-45 12 12)"/>',
     leaf: '<path class="g" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10Z"/><path d="M2 21c0-3 1.9-5.4 5.1-6C9.5 14.5 12 13 13 12"/>',
     download: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="g" d="M12 17.6l-5-5.2h3.2V3h3.6v9.4H17Z"/>',
+    upload: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="p" d="M12 2.6l5 5.2h-3.2v9.4h-3.6V7.8H7Z"/>',
+    bell: '<circle class="o" cx="12" cy="2.9" r="1.5"/><path class="p" d="M9.5 17.6a2.5 2.5 0 0 0 5 0Z"/><path class="y" d="M12 3.6a6.2 6.2 0 0 0-6.2 6.2v5.2h12.4V9.8A6.2 6.2 0 0 0 12 3.6Z"/><path class="sc" d="M8.6 12.6V10a3.5 3.5 0 0 1 2.1-3.2"/><rect class="o" x="3.4" y="14.6" width="17.2" height="3.2" rx="1.6"/><path d="M1.8 9.4a10 10 0 0 1 2.3-5M22.2 9.4a10 10 0 0 0-2.3-5"/>',
+    cassette: '<rect class="o" x="1.8" y="4.4" width="20.4" height="15.2" rx="2.6"/><rect class="p n" x="3.4" y="6" width="17.2" height="2.4" rx="1"/><rect class="c" x="4.4" y="8.4" width="15.2" height="6.4" rx="3.2"/><circle class="k n" cx="8.4" cy="11.6" r="1.8"/><circle class="k n" cx="15.6" cy="11.6" r="1.8"/><circle class="c n" cx="8.4" cy="11.6" r=".7"/><circle class="c n" cx="15.6" cy="11.6" r=".7"/><path d="M10.6 11.6h2.8"/><path class="y" d="M6.2 19.6l1.5-3.4h8.6l1.5 3.4Z"/>',
     // Glifos: trazos gruesos y redondos que toman el color del texto
     check: '<path d="M20 6 9 17l-5-5"/>',
     left: '<path d="m15 18-6-6 6-6"/>',
@@ -416,6 +419,8 @@
       accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
       accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
       accordion('ajustes', icon('sliders') + 'Ajustes', settingsHtml()) +
+      accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
+      accordion('respaldo', icon('cassette') + 'Respaldo y otros equipos', backupHtml()) +
       accordion('instalar', icon('download') + 'Instalar en tus dispositivos', installHtml()) +
       '<p class="small muted center">Basado en el plan de tu nutrióloga del 8 nov 2026 · Próxima revisión: 18 dic 2026.<br>NutriJabón te ayuda a seguir tu plan; no sustituye la consulta profesional.</p></div>';
   }
@@ -480,8 +485,171 @@
         return '<label class="time-row"><span>' + m.name + '</span><input type="time" value="' + mealTime(m.id) + '" data-input="time" data-meal="' + m.id + '"></label>';
       }).join('') + '</div>' +
       '<div><button class="link-btn" data-action="reset-times">Restaurar horarios del plan</button></div>' +
-      '<h4 class="sec-title">Tus datos</h4><p class="small muted">Todo se guarda solo en este dispositivo; nada se envía a internet.</p>' +
+      '<p class="small">' + icon('bell', 'ic-xs') + ' ¿Quieres avisos a estas horas? <button class="link-btn" data-action="goto-sec" data-sec="avisos">Agrégalos a tu calendario</button></p>' +
+      '<h4 class="sec-title">Tus datos</h4><p class="small muted">Todo se guarda solo en este dispositivo; nada se envía a internet. <button class="link-btn" data-action="goto-sec" data-sec="respaldo">Guarda un respaldo</button> para no perderlo.</p>' +
       '<div><button class="btn danger" data-action="reset-all">Borrar marcas y cambios de platillos</button></div>';
+  }
+  function shortDate(k) { var d = fromKey(k); return d.getDate() + ' ' + MONTHS_ABBR[d.getMonth()] + ' ' + d.getFullYear(); }
+
+  /* ---------------- Recordatorios: archivo de calendario (.ics) ----------------
+   * Un evento semanal por comida y platillo, con aviso. Sin servidor: funciona en
+   * iPhone, Android, Windows y Mac porque el calendario del equipo se encarga de avisar. */
+  var LEADS = [[0, 'A la hora'], [10, '10 min antes'], [15, '15 min antes'], [30, '30 min antes']];
+  var ICS_DAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+  var FILES_CACHE = 'nutrijabon-files';
+  function remindLead() { var v = S.settings.remindLead; return LEADS.some(function (l) { return l[0] === v; }) ? v : 0; }
+  function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+  function icsFold(line) { // líneas de máximo 75 bytes, como pide el formato
+    var out = [], cur = '', n = 0;
+    Array.from(line).forEach(function (ch) {
+      var cp = ch.codePointAt(0), b = cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4;
+      if (n + b > 75) { out.push(cur); cur = ' '; n = 1; }
+      cur += ch; n += b;
+    });
+    out.push(cur);
+    return out.join('\r\n');
+  }
+  function icsLocal(d) { return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + 'T' + pad(d.getHours()) + pad(d.getMinutes()) + '00'; }
+  function appUrl() { return /^https?:$/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : ''; }
+  function buildIcs() {
+    var lead = remindLead(), start = today(), url = appUrl();
+    var until = start <= fromKey(D.PLAN.review) ? ';UNTIL=' + D.PLAN.review.replace(/-/g, '') + 'T235959' : '';
+    var stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+    var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NutriJabon//Plan vegano//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:NutriJabón'];
+    MEALS.forEach(function (m) {
+      var groups = {}, order = [];
+      for (var i = 0; i < 7; i++) {
+        if (m.trainingOnly && S.settings.trainDays.indexOf(i) === -1) continue;
+        var rid = D.WEEK[m.id][i];
+        if (!groups[rid]) { groups[rid] = []; order.push(rid); }
+        groups[rid].push(i);
+      }
+      var t = mealTime(m.id).split(':').map(Number);
+      order.forEach(function (rid) {
+        var days = groups[rid], r = RECIPE[rid], first = start;
+        while (days.indexOf(wd(first)) === -1) first = addDays(first, 1);
+        var s = new Date(first.getFullYear(), first.getMonth(), first.getDate(), t[0], t[1]);
+        var by = days.map(function (i) { return ICS_DAYS[i]; });
+        var desc = 'Toca: ' + eqList(m.eq).join(', ') + '.' + (m.trainingOnly ? '\nSolo en tus días de ejercicio.' : '') +
+          '\nPuedes cambiarlo por otro platillo con las mismas porciones.' + (url ? '\nReceta: ' + url : '');
+        L.push('BEGIN:VEVENT', 'UID:nj-' + m.id + '-' + by.join('') + '@nutrijabon', 'DTSTAMP:' + stamp,
+          'DTSTART:' + icsLocal(s), 'DTEND:' + icsLocal(new Date(s.getTime() + 30 * 6e4)),
+          'RRULE:FREQ=WEEKLY;BYDAY=' + by.join(',') + until,
+          'SUMMARY:' + icsEsc(r.emoji + ' ' + m.name + ': ' + r.name), 'DESCRIPTION:' + icsEsc(desc),
+          'TRANSP:TRANSPARENT', 'CATEGORIES:NutriJabón',
+          'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(m.name + ': ' + r.name), 'TRIGGER:' + (lead ? '-PT' + lead + 'M' : 'PT0S'), 'END:VALARM',
+          'END:VEVENT');
+      });
+    });
+    L.push('END:VCALENDAR');
+    return L.map(icsFold).join('\r\n') + '\r\n';
+  }
+  function downloadFile(name, type, text) {
+    var url = URL.createObjectURL(new Blob([text], { type: type }));
+    var a = document.createElement('a');
+    a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+  }
+  function addToCalendar() {
+    var ics = buildIcs();
+    if (detectOS() !== 'ios') { downloadFile('NutriJabon-recordatorios.ics', 'text/calendar;charset=utf-8', ics); toast('Listo: abre el archivo descargado'); return; }
+    // iPhone/iPad: Safari abre el Calendario con “Agregar todo” cuando visita un .ics real.
+    // El service worker lo sirve desde el caché; si no hay, se usa una dirección data:.
+    var dataUrl = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
+    if (!(window.caches && navigator.serviceWorker && navigator.serviceWorker.controller)) { location.href = dataUrl; return; }
+    caches.open(FILES_CACHE).then(function (c) {
+      return c.put('recordatorios.ics', new Response(ics, { headers: { 'Content-Type': 'text/calendar; charset=utf-8' } }));
+    }).then(function () { location.href = 'recordatorios.ics'; }, function () { location.href = dataUrl; });
+  }
+  function remindHtml() {
+    var os = detectOS(), lead = remindLead(), rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, '');
+    var notes = {
+      ios: 'Se abre tu Calendario: toca <b>Agregar todo</b>.',
+      android: 'Se descarga un archivo: ábrelo y elige tu app de calendario. Si Google Calendar no lo abre, impórtalo desde una computadora en <b>calendar.google.com</b> (Configuración → Importar y exportar) y te llegará al celular.',
+      windows: 'Se descarga un archivo: ábrelo y se agrega a Outlook o a Calendario.',
+      mac: 'Se descarga un archivo: ábrelo y elige en qué calendario guardarlo.'
+    };
+    var train = S.settings.trainDays.map(function (i) { return DAY_ABBR[i].toLowerCase(); });
+    return '<p>Agrega tus comidas a tu calendario: te avisa a la hora de cada una con el platillo que toca ese día. El pre-entreno solo aparece en tus días de ejercicio' +
+      (train.length ? ' (' + train.join(', ') + ')' : '; ahora no tienes ninguno marcado') + '.</p>' +
+      '<label class="time-row lead-row"><span>Avisarme</span><select data-input="lead" aria-label="Cuándo avisarme">' + LEADS.map(function (l) {
+        return '<option value="' + l[0] + '"' + (l[0] === lead ? ' selected' : '') + '>' + l[1] + '</option>';
+      }).join('') + '</select></label>' +
+      '<div><button class="btn primary" data-action="add-calendar">' + icon('bell') + ' Agregar a mi calendario</button></div>' +
+      (notes[os] ? '<div class="banner info">' + icon('info') + '<div>' + notes[os] + '</div></div>' : '') +
+      '<p class="small muted">Usa tus horarios de Ajustes y dura hasta tu revisión del ' + rev + '. Si cambias horarios o días de ejercicio, borra los avisos anteriores y vuelve a agregarlos. Los cambios de un solo día no llegan al calendario.</p>';
+  }
+
+  /* ---------------- Respaldo: pasar tus datos a otro equipo ---------------- */
+  var KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  function backupName() { return 'NutriJabon-respaldo-' + keyOf(today()) + '.json'; }
+  function backupText() { return JSON.stringify({ app: 'nutrijabon', v: 1, exported: new Date().toISOString(), data: S }); }
+  function markBackup() { S.settings.lastBackup = keyOf(today()); save(); render(); }
+  function canShareFiles() {
+    try { return !!(navigator.canShare && navigator.canShare({ files: [new File(['{}'], 'x.json', { type: 'application/json' })] })); } catch (e) { return false; }
+  }
+  function saveBackup() { markBackup(); downloadFile(backupName(), 'application/json', backupText()); toast('Respaldo guardado en Descargas'); }
+  function sendBackup() {
+    var f = new File([backupText()], backupName(), { type: 'application/json' });
+    navigator.share({ files: [f], title: 'Respaldo de NutriJabón' }).then(function () { markBackup(); toast('Respaldo enviado'); }, function () { /* cancelado */ });
+  }
+  function isObj(x) { return !!x && typeof x === 'object' && !Array.isArray(x); }
+  function cleanData(d) { // solo acepta datos con la forma esperada
+    var st = isObj(d.settings) ? d.settings : {}, out = { settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), days: {}, shop: {} };
+    if (Array.isArray(st.trainDays)) {
+      out.settings.trainDays = [0, 1, 2, 3, 4, 5, 6].filter(function (i) { return st.trainDays.indexOf(i) !== -1; });
+    }
+    if (isObj(st.times)) Object.keys(st.times).forEach(function (id) {
+      if (MEAL[id] && /^([01]\d|2[0-3]):[0-5]\d$/.test(st.times[id])) out.settings.times[id] = st.times[id];
+    });
+    if (LEADS.some(function (l) { return l[0] === st.remindLead; })) out.settings.remindLead = st.remindLead;
+    if (KEY_RE.test(st.lastBackup)) out.settings.lastBackup = st.lastBackup;
+    out.settings.onboarded = true;
+    if (isObj(d.days)) Object.keys(d.days).forEach(function (k) {
+      var r = d.days[k], o = {};
+      if (!KEY_RE.test(k) || !isObj(r)) return;
+      if (typeof r.ex === 'boolean') o.ex = r.ex;
+      if (isObj(r.sw)) Object.keys(r.sw).forEach(function (m) {
+        var x = RECIPE[r.sw[m]];
+        if (MEAL[m] && x && x.meal === m) (o.sw = o.sw || {})[m] = x.id;
+      });
+      if (isObj(r.done)) Object.keys(r.done).forEach(function (m) { if (MEAL[m] && r.done[m] === true) (o.done = o.done || {})[m] = true; });
+      if (Object.keys(o).length) out.days[k] = o;
+    });
+    if (isObj(d.shop)) Object.keys(d.shop).forEach(function (wk) {
+      var w = d.shop[wk], o = {};
+      if (!KEY_RE.test(wk) || !isObj(w)) return;
+      Object.keys(w).forEach(function (n) { if (w[n] === true) o[n] = true; });
+      if (Object.keys(o).length) out.shop[wk] = o;
+    });
+    return out;
+  }
+  function importBackup(file) {
+    var rd = new FileReader();
+    rd.onload = function () {
+      var p = null;
+      try { p = JSON.parse(rd.result); } catch (e) { /* no es JSON */ }
+      if (!isObj(p) || p.app !== 'nutrijabon' || !isObj(p.data)) { toast('Ese archivo no es un respaldo de NutriJabón'); return; }
+      var when = new Date(p.exported), wk = isNaN(when) ? '' : ' del ' + shortDate(keyOf(when));
+      if (!window.confirm('¿Cargar el respaldo' + wk + '? Reemplaza las marcas, platillos, lista de compras y ajustes de este dispositivo.')) return;
+      S = cleanData(p.data);
+      save(); render();
+      toast('Respaldo cargado ✓');
+    };
+    rd.onerror = function () { toast('No se pudo leer el archivo'); };
+    rd.readAsText(file);
+  }
+  function backupHtml() {
+    var lb = S.settings.lastBackup;
+    return '<p>Tus marcas, platillos y ajustes se guardan solo en este dispositivo. Guarda un respaldo para pasarlos a otro equipo o por si cambias de celular.</p>' +
+      '<p class="small"><b>Último respaldo:</b> ' + (lb ? shortDate(lb) : 'todavía ninguno') + '</p>' +
+      '<div class="row-gap">' +
+      '<button class="btn primary" data-action="backup-save">' + icon('download') + ' Guardar respaldo</button>' +
+      (canShareFiles() ? '<button class="btn" data-action="backup-send">' + icon('share') + ' Enviar</button>' : '') +
+      '<label class="btn file-btn">' + icon('upload') + ' Cargar respaldo<input type="file" accept=".json,application/json" data-input="backup"></label>' +
+      '</div>' +
+      '<p class="small muted"><b>Para pasarlo a otro equipo:</b> guarda o envía el respaldo (por correo, WhatsApp o AirDrop), abre NutriJabón en el otro equipo y toca <b>Cargar respaldo</b>. Reemplaza lo que haya en ese equipo.</p>';
   }
   var deferredPrompt = null;
   function detectOS() {
@@ -681,12 +849,11 @@
       case 'shop-clear': delete S.shop[keyOf(shopMonday())]; save(); render(); break;
       case 'toggle-train-day': toggleTrainDay(+ds.i); break;
       case 'finish-onboarding': S.settings.onboarded = true; save(); closeSheet(); render(); break;
-      case 'goto-settings': {
-        closeSheet(); ui.open.ajustes = true; setTab('guia');
-        var sec = document.getElementById('sec-ajustes');
-        if (sec) sec.scrollIntoView({ block: 'start' });
-        break;
-      }
+      case 'goto-settings': gotoSection('ajustes'); break;
+      case 'goto-sec': gotoSection(ds.sec); break;
+      case 'add-calendar': addToCalendar(); break;
+      case 'backup-save': saveBackup(); break;
+      case 'backup-send': sendBackup(); break;
       case 'reset-times': S.settings.times = {}; save(); render(); toast('Horarios del plan restaurados'); break;
       case 'reset-all':
         if (window.confirm('¿Borrar tus marcas de comidas, cambios de platillos y la lista de compras? Tus días de ejercicio y horarios se quedan.')) {
@@ -722,7 +889,18 @@
       if (!el.value) return;
       if (el.value === MEAL[id].time) delete S.settings.times[id]; else S.settings.times[id] = el.value;
       save();
+    } else if (t === 'lead') {
+      S.settings.remindLead = +el.value; save();
+    } else if (t === 'backup') {
+      var f = el.files && el.files[0];
+      el.value = '';
+      if (f) importBackup(f);
     }
+  }
+  function gotoSection(id) {
+    closeSheet(); ui.open[id] = true; setTab('guia');
+    var sec = document.getElementById('sec-' + id);
+    if (sec) sec.scrollIntoView({ block: 'start' });
   }
 
   /* ---------------- Inicio ---------------- */
@@ -757,6 +935,11 @@
 
     render();
     if (!S.settings.onboarded) openSheet('onboarding', []);
+
+    // En la app instalada, pide que el navegador no borre los datos por falta de espacio
+    if (isStandalone() && navigator.storage && navigator.storage.persist && navigator.storage.persisted) {
+      navigator.storage.persisted().then(function (p) { return p || navigator.storage.persist(); }).catch(function () { /* ignorar */ });
+    }
 
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
       window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* sin SW */ }); });

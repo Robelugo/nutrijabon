@@ -418,6 +418,11 @@ main {
 .times { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 .time-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 7px 7px 14px; border: 2px solid var(--line); border-radius: 999px; font-size: 14.5px; font-weight: 700; background: var(--surface); }
 .time-row input { border: 1.5px solid var(--line); background: var(--yellow); color: var(--ink); border-radius: 999px; padding: 5px 10px; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.time-row select { border: 1.5px solid var(--line); background: var(--yellow); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 15px; font-weight: 800; cursor: pointer; }
+.lead-row { max-width: 320px; }
+.file-btn { position: relative; cursor: pointer; }
+.file-btn input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; clip: rect(0 0 0 0); }
+.file-btn:focus-within { outline: 3px solid var(--blue); outline-offset: 3px; }
 .install-list li { padding: 11px 14px; border: 2px solid var(--line); border-radius: 18px; }
 .install-list li + li { margin-top: 10px; }
 .install-list li.is-mine { background: var(--ok-bg); color: var(--ok-text); }
