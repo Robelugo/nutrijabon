@@ -25,6 +25,8 @@ App para seguir tu plan de alimentación **vegano** día por día. Funciona en A
 
 Tus datos (marcas, cambios, ajustes) se guardan solo en cada dispositivo; usa el respaldo para pasarlos de uno a otro.
 
+La app no carga nada de otros sitios: las tipografías Fraunces y Nunito vienen incluidas en `fonts/` (subconjunto latino) con su licencia SIL Open Font License 1.1 (`fonts/OFL-*.txt`).
+
 ## Probarla en esta computadora
 
 Doble clic en `index.html`. Funciona en el navegador, pero así **no se puede instalar** ni usar sin internet.
