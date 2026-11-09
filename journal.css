@@ -261,3 +261,19 @@ main { padding-top:22px; }
   width:18px; height:18px; padding:3px; box-sizing:content-box;
   border-radius:50%; background:var(--surface-2); color:var(--text-2);
 }
+
+/* Recipe wayfinding: compact controls, larger meal-section markers. */
+[data-view=recetas] .section-emblem, .sheet-content .section-emblem,
+.sheet-actions .section-emblem, .cook-tools .section-emblem, .cook-timer .section-emblem {
+  width:21px; height:21px; padding:2px; border-radius:7px; flex:none;
+}
+[data-view=recetas] .fchip, .recipe-group-name, .recipe-subtitle {
+  display:inline-flex; align-items:center; gap:7px;
+}
+[data-view=recetas] .fchip { min-height:44px; }
+[data-view=recetas] .fchip .section-emblem { background:transparent; }
+[data-view=recetas] .recipe-group-name .section-emblem, .recipe-subtitle .section-emblem {
+  width:27px; height:27px; padding:4px;
+}
+[data-view=recetas] .rc-name .section-emblem, [data-view=recetas] .badge .section-emblem,
+.sheet-content .eq-chip .section-emblem { width:17px; height:17px; padding:1px; }

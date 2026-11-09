@@ -93,9 +93,9 @@
   function eqText(g, n) { return n + ' ' + (n === 1 ? G[g].one : G[g].many); }
   function eqList(eq) { return G_ORDER.filter(function (g) { return eq[g]; }).map(function (g) { return eqText(g, eq[g]); }); }
   function dot(g) { return '<i class="dot" style="--c:var(--g-' + g + ')"></i>'; }
-  function eqChips(eq) {
+  function eqChips(eq, pictures) {
     return '<div class="eq-chips">' + G_ORDER.filter(function (g) { return eq[g]; }).map(function (g) {
-      return '<span class="eq-chip">' + dot(g) + eqText(g, eq[g]) + '</span>';
+      return '<span class="eq-chip">' + (pictures ? emblem(pictures[g]) : dot(g)) + eqText(g, eq[g]) + '</span>';
     }).join('') + '</div>';
   }
 
@@ -200,8 +200,8 @@
   function tasteBtns(id) {
     var t = tasteOf(id);
     return '<div class="taste row-gap" role="group" aria-label="¿Te gusta este platillo?">' +
-      '<button class="chip-btn taste-btn" aria-pressed="' + (t === 1) + '" data-action="taste" data-id="' + id + '" data-v="1">' + icon('heart', 'ic-sm') + ' Me gusta</button>' +
-      '<button class="chip-btn taste-btn" aria-pressed="' + (t === -1) + '" data-action="taste" data-id="' + id + '" data-v="-1">' + icon('dislike', 'ic-sm') + ' No me gusta</button></div>';
+      '<button class="chip-btn taste-btn" aria-pressed="' + (t === 1) + '" data-action="taste" data-id="' + id + '" data-v="1">' + emblem('fav') + ' Me gusta</button>' +
+      '<button class="chip-btn taste-btn" aria-pressed="' + (t === -1) + '" data-action="taste" data-id="' + id + '" data-v="-1">' + emblem('noTaste') + ' No me gusta</button></div>';
   }
   function setTaste(id, v) {
     S.settings.taste = S.settings.taste || {};
@@ -715,11 +715,11 @@
 
   /* ---------------- Vista: Recetas ---------------- */
   function viewRecetas() {
-    var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; })).concat([['fav', icon('heart', 'ic-sm') + ' Favoritas']]);
+    var filters = [['all', 'Todas']].concat(MEALS.map(function (m) { return [m.id, m.name]; })).concat([['fav', 'Favoritas']]);
     return '<div class="stack"><header class="catalog-head"><h2 class="page-title">Recetas</h2></header>' +
-      '<label class="search">' + icon('search') + '<input type="search" placeholder="Busca un platillo o ingrediente…" value="' + esc(ui.rQuery) + '" data-input="rq" aria-label="Buscar recetas"></label>' +
+      '<label class="search">' + emblem('findDish') + '<input type="search" placeholder="Busca un platillo o ingrediente…" value="' + esc(ui.rQuery) + '" data-input="rq" aria-label="Buscar recetas"></label>' +
       '<div class="chip-row">' + filters.map(function (f) {
-        return '<button class="fchip" aria-pressed="' + (ui.rFilter === f[0]) + '" data-action="rfilter" data-v="' + f[0] + '">' + f[1] + '</button>';
+        return '<button class="fchip" aria-pressed="' + (ui.rFilter === f[0]) + '" data-action="rfilter" data-v="' + f[0] + '">' + emblem(f[0]) + '<span>' + f[1] + '</span></button>';
       }).join('') + '</div>' +
       '<label class="toggle"><input type="checkbox" data-input="extras"' + (ui.extras ? ' checked' : '') + '> Mostrar ideas extra (mismas porciones de tu plan)</label>' +
       '<div id="recipe-results">' + recipeResults() + '</div></div>';
@@ -731,14 +731,14 @@
         (!q || norm(r.name + ' ' + r.ing.map(function (i) { return i.n + ' ' + (i.t || ''); }).join(' ')).indexOf(q) !== -1);
     });
     if (!list.length) return ui.rFilter === 'fav'
-      ? '<p class="empty">Aún no tienes favoritas. Abre una receta y toca ' + icon('heart', 'ic-sm') + ' Me gusta.</p>'
+      ? '<p class="empty">Aún no tienes favoritas. Abre una receta y toca ' + emblem('fav') + ' Me gusta.</p>'
       : '<p class="empty">No encontré recetas con eso. Prueba con otro ingrediente.</p>';
     return MEALS.filter(function (m) { return list.some(function (r) { return r.meal === m.id; }); }).map(function (m) {
-      return '<section class="recipe-group"><h3 class="group-title">' + m.name + ' <span class="muted small">· ' + eqList(m.eq).join(' · ') + '</span></h3>' +
+      return '<section class="recipe-group"><h3 class="group-title">' + '<span class="recipe-group-name">' + emblem(m.id) + m.name + '</span> <span class="muted small">· ' + eqList(m.eq).join(' · ') + '</span></h3>' +
         '<div class="recipe-grid">' + list.filter(function (r) { return r.meal === m.id; }).map(function (r) {
           var pd = planDays(r);
           return '<button class="recipe-card" style="--mc:var(--m-' + r.meal + ')" data-action="open-recipe" data-id="' + r.id + '">' + dishArt(r) +
-            '<span class="rc-name">' + esc(r.name) + (tasteOf(r.id) === 1 ? ' ' + icon('heart', 'ic-sm') + '<span class="sr-only"> Favorita</span>' : tasteOf(r.id) === -1 ? ' ' + icon('dislike', 'ic-sm') + '<span class="sr-only"> No te gusta</span>' : '') + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
+            '<span class="rc-name">' + esc(r.name) + (tasteOf(r.id) === 1 ? ' ' + emblem('fav') + '<span class="sr-only"> Favorita</span>' : tasteOf(r.id) === -1 ? ' ' + emblem('noTaste') + '<span class="sr-only"> No te gusta</span>' : '') + '</span><span class="rc-meta">' + (r.extra ? '<span class="badge">' + emblem('extra') + ' Idea extra</span>' : (pd ? 'En tu plan: ' + pd : '')) + '</span></button>';
         }).join('') + '</div></section>';
     }).join('');
   }
@@ -767,6 +767,20 @@
   }
   function shopMonday() { return addDays(mondayOf(today()), ui.shopOffset * 7); }
   var SECTION_EMBLEMS = {
+    all: '<path fill="#e8bf88" d="M5 4h21v24H5Z"/><path fill="#f5e5be" d="M8 4h17v21H8Z"/><path fill="#e8999d" d="M18 4h5v10l-2-2-3 2Z"/><path fill="none" d="M11 17h9m-9 3h6"/>',
+    pre: '<path fill="#deb28c" d="M3 21q3-12 15-13c5-1 9 2 9 6q-1 8-17 12-9 2-7-5Z"/><path fill="#f5ce64" d="m21 2-8 12h5l-2 8L28 9h-7Z"/><path fill="none" d="m7 20 3-2"/>',
+    des: '<path fill="#efc382" d="M6 15C0 12 3 6 9 5q7-4 15 0c7 2 7 8 2 10v12H6Z"/><path fill="#f6dfab" d="M9 14q-5-4 1-6 6-3 12 0 5 3 1 6v10H9Z"/><path fill="#efa56f" d="M12 17q2-5 7-3-1 6-7 3Z"/>',
+    c1: '<path fill="#eabf9c" d="M20 11h5q6 1 3 7-2 2-7 2Z"/><path fill="#acc8ad" d="M3 10h20v9q0 7-10 7T3 19Z"/><path fill="#eddbac" d="M4 10q8-4 18 0-9 4-18 0Z"/><path fill="none" d="M9 6q-2-2 0-4m6 4q-2-2 0-4M4 28h20"/>',
+    com: '<path fill="#9bbd89" d="M5 16q-4-7 3-8 3-6 8-1 6-5 9 2 6 2 3 7Z"/><path fill="#e9a28c" d="M2 15h28q-1 12-14 12T2 15Z"/><path fill="none" d="m8 20 4 2m1 6h7m-1-17 7-8"/>',
+    c2: '<path fill="#e8999c" d="M5 12c0-6 15-6 16 0 0 6-6 15-9 15S5 19 5 12Z"/><path fill="#9fb883" d="m7 10 3-5 3 3 4-4 2 5-4 3Z"/><path fill="#e5bd81" d="M19 27q-1-9 10-13 2 10-6 14Z"/><path fill="none" d="m9 15 1 1m4 2 1-1m-4 5 1 1m10 2 4-6"/>',
+    cen: '<path fill="#edc975" d="M20 2q-5 8 3 11-7 4-11-3-2-6 8-8Z"/><path fill="#b8c9ca" d="M4 23q2-11 12-11t12 11Z"/><path fill="#e0ac83" d="M2 24h28l-3 4H5Z"/><path fill="none" d="M9 19q1-3 4-4"/>',
+    fav: '<path fill="#d99e81" d="M7 3h18v26l-9-5-9 5Z"/><path fill="#f7c9ba" d="M16 18l-5-5c-3-5 3-8 5-4 3-4 9-1 5 4Z"/>',
+    noTaste: '<path fill="#d2bdad" d="M7 3h18v26l-9-5-9 5Z"/><path fill="none" d="M11 13h10"/>',
+    findDish: '<path fill="#d2ddcc" d="M22 12a9 9 0 1 1-18 0 9 9 0 1 1 18 0Z"/><path fill="#efb584" d="m19 20 3-3 8 9-3 3Z"/><path fill="none" d="M8 12q1-5 5-5"/>',
+    timer: '<path fill="#edb58e" d="M27 18a11 11 0 1 1-22 0 11 11 0 1 1 22 0Z"/><path fill="#f7e7bc" d="M24 18a8 8 0 1 1-16 0 8 8 0 1 1 16 0Z"/><path fill="none" d="M12 3h8m-4 0v4m0 5v6l4 2m3-12 2-3"/>',
+    extra: '<path fill="#ead17e" d="m15 3 3 8 8 3-8 4-3 8-4-8-8-4 8-3Z"/><path fill="#dda6b6" d="m25 18 2 4 4 2-4 2-2 4-2-4-4-2 4-2Z"/>',
+    nutSeed: '<path fill="#e7bc8c" d="M5 24Q2 10 23 3q5 17-9 24-6 3-9-3Z"/><path fill="none" d="M8 24 21 7m-9 12 1-6m3 1 4-2"/>',
+    tofu: '<path fill="#edd6a0" d="m3 12 13-7 13 7v12l-13 5-13-6Z"/><path fill="none" d="m3 12 13 6 13-6m-13 6v11m-9-13 2 1m11 4 2-1"/>',
     fru: '<path fill="#ef998d" d="M15 11c-8-5-15 5-9 14 3 5 6 1 9 2 6 4 12-3 12-10 0-6-7-9-12-6Z"/><path fill="#85ae75" d="M15 10q1-9 11-7-2 7-11 7Z"/><path fill="none" d="M14 11q1-5-3-8M8 17q0-2 2-3"/>',
     ver: '<path fill="#91bb79" d="M18 15q-1-8 2-12 4 2 2 8 2-7 7-7 1 7-7 11Z"/><path fill="#f5ae69" d="M4 28q2-10 9-18 4-4 9 0t0 9Q13 26 4 28Z"/><path fill="none" d="m13 14 3 3m-7 2 3 2"/>',
     pro: '<path fill="#df946f" d="M4 16C0 8 10 2 15 8c3 4-4 5-3 10 1 7-6 8-8-2Z"/><path fill="#a8b78a" d="M17 17c2-7 13-7 13 0-1 4-6 3-7 7-3 8-10 2-6-7Z"/><path fill="none" d="M7 12q0-3 4-4m8 13q0-3 4-4"/>',
@@ -1480,24 +1494,24 @@
       actions = '<button class="btn" data-action="open-swap" data-k="' + ctx.k + '" data-meal="' + r.meal + '">' + icon('left') + ' Opciones</button>' +
         '<button class="btn primary" data-action="choose-swap" data-k="' + ctx.k + '" data-meal="' + r.meal + '" data-id="' + r.id + '">' + icon('check') + ' Elegir este</button>';
     } else {
-      actions = '<button class="btn primary" data-action="use-today" data-id="' + r.id + '">' + icon('calendar') + ' Usar en ' + m.name.toLowerCase() + ' de hoy</button>';
+      actions = '<button class="btn primary" data-action="use-today" data-id="' + r.id + '">' + emblem('list') + ' Usar en ' + m.name.toLowerCase() + ' de hoy</button>';
     }
     var where = ctx.k && ctx.mode === 'day' ? m.name + ' · ' + DAY_NAMES[wd(fromKey(ctx.k))] + ' ' + fromKey(ctx.k).getDate() : m.name;
     return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--m-' + r.meal + ')">' + dishThumb(r) + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">' + where + '</div><h2 id="sheet-title">' + esc(r.name) + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
-      '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + dishArt(r) + eqChips(m.eq) +
-      '<button class="btn cook-btn" data-action="cook-recipe" data-id="' + r.id + '">' + icon('pot') + ' Modo cocina <span class="small muted">paso a paso, con temporizador</span></button>' +
+      '<div class="sheet-content" style="--mc:var(--m-' + r.meal + ')">' + dishArt(r) + eqChips(m.eq, {ver:'ver', fru:'fru', cer:'cer', leg:'pro', pro:'tofu', lec:'lec', gsp:'gra', gcp:'nutSeed'}) +
+      '<button class="btn cook-btn" data-action="cook-recipe" data-id="' + r.id + '">' + emblem('pot') + ' Modo cocina <span class="small muted">paso a paso, con temporizador</span></button>' +
       tasteBtns(r.id) +
       (r.extra
-        ? '<div class="banner info">' + icon('info') + '<div>Idea extra de NutriJabón con las mismas porciones de tu ' + m.name.toLowerCase() + '. Coméntala con tu nutrióloga.</div></div>'
+        ? '<div class="banner info">' + emblem('extra') + '<div>Idea extra de NutriJabón con las mismas porciones de tu ' + m.name.toLowerCase() + '. Coméntala con tu nutrióloga.</div></div>'
         : (pd ? '<p class="small muted">En tu plan: ' + pd + '</p>' : '')) +
-      (r.ahead ? '<div class="banner ok">' + icon('clock') + '<div><b>Con anticipación:</b> ' + r.ahead + '</div></div>' : '') +
-      '<h3 class="sec-title">Ingredientes</h3><ul class="ing-list">' + r.ing.map(function (i) { return '<li>' + esc(fmtIng(i)) + '</li>'; }).join('') + '</ul>' +
-      (r.fruitChoice ? '<div class="fruit-ideas"><div class="small muted">1 porción de fruta puede ser:</div><div class="chips-wrap">' +
+      (r.ahead ? '<div class="banner ok">' + emblem('timer') + '<div><b>Con anticipación:</b> ' + r.ahead + '</div></div>' : '') +
+      '<h3 class="sec-title recipe-subtitle">' + emblem('ver') + 'Ingredientes</h3><ul class="ing-list">' + r.ing.map(function (i) { return '<li>' + esc(fmtIng(i)) + '</li>'; }).join('') + '</ul>' +
+      (r.fruitChoice ? '<div class="fruit-ideas"><div class="small muted">' + emblem('fru') + ' 1 porción de fruta puede ser:</div><div class="chips-wrap">' +
         D.FRUIT_IDEAS.map(function (f) { return '<span class="eq-chip">' + f[0] + ' · ' + f[1] + '</span>'; }).join('') + '</div></div>' : '') +
-      '<h3 class="sec-title">Preparación</h3><ol class="steps">' + r.steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>' +
-      (r.tips || []).map(function (t) { return '<div class="banner leaf">' + icon('leaf') + '<div><b>Ojo vegano:</b> ' + t + '</div></div>'; }).join('') +
+      '<h3 class="sec-title recipe-subtitle">' + emblem('knife') + 'Preparación</h3><ol class="steps">' + r.steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</ol>' +
+      (r.tips || []).map(function (t) { return '<div class="banner leaf">' + emblem('tips') + '<div><b>Ojo vegano:</b> ' + t + '</div></div>'; }).join('') +
       (ctx.mode === 'day' && !(isSkipped(ctx.k, m)) ? outLink(r.meal) : '') +
       '</div><div class="sheet-actions">' + actions + '</div>';
   }
@@ -1824,7 +1838,7 @@
       return '<i class="' + cls.trim() + '"></i>';
     }).join('') + '</div>';
     var timerBtns = (times.length ? times.map(function (s) {
-      return '<button class="chip-btn cook-tbtn" data-action="cook-timer" data-s="' + s + '">' + icon('clock', 'ic-sm') + ' ' + fmtDur(s) + '</button>';
+      return '<button class="chip-btn cook-tbtn" data-action="cook-timer" data-s="' + s + '">' + emblem('timer') + ' ' + fmtDur(s) + '</button>';
     }).join('') : '') +
       '<details class="cook-more"><summary>Otro temporizador</summary><div class="row-gap">' + [5, 10, 20, 40, 60].map(function (m) {
         return '<button class="chip-btn" data-action="cook-timer" data-s="' + m * 60 + '">' + m + ' min</button>';
@@ -1845,7 +1859,7 @@
     var now = Date.now();
     return cook.timers.map(function (t) {
       var left = t.end - now, over = left <= 0;
-      return '<span class="cook-timer' + (over ? ' is-done' : '') + '">' + icon('clock', 'ic-sm') + '<b>' + (over ? '¡Tiempo!' : fmtClock(left)) + '</b>' +
+      return '<span class="cook-timer' + (over ? ' is-done' : '') + '">' + emblem('timer') + '<b>' + (over ? '¡Tiempo!' : fmtClock(left)) + '</b>' +
         '<span class="small">' + esc(t.label) + '</span><button class="cook-tx" data-action="cook-timer-off" data-id="' + t.id + '" aria-label="Quitar temporizador">' + icon('x') + '</button></span>';
     }).join('') + '<span class="small muted cook-tnote">Deja la app abierta para que suene.</span>';
   }
