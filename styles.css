@@ -462,7 +462,7 @@ main {
 /* Progreso y resumen */
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .stat { background: var(--sc, var(--yellow)); color: var(--ink); border: 2px solid var(--line); border-radius: 18px; padding: 10px 6px 9px; text-align: center; box-shadow: 2px 2px 0 var(--hard); min-width: 0; }
-.stat b { display: block; font-family: var(--font-display); font-weight: 900; font-size: 29px; line-height: 1.05; font-variation-settings: "SOFT" 100, "WONK" 1; }
+.stat b { display: block; font-family: var(--font-display); font-weight: 900; font-size: clamp(22px, 6.4vw, 29px); white-space: nowrap; line-height: 1.05; font-variation-settings: "SOFT" 100, "WONK" 1; }
 .stat b small { font-size: 17px; }
 .stat span { display: block; font-size: 12px; font-weight: 800; line-height: 1.2; margin-top: 4px; }
 .progress-card { display: flex; flex-direction: column; gap: 12px; }
@@ -527,6 +527,14 @@ main {
   .cook-step { font-size: 30px; }
   .cook-nav { padding-left: max(16px, calc(50% - 380px)); padding-right: max(16px, calc(50% - 380px)); }
 }
+/* Resumen semanal */
+.recap-card { display: flex; flex-direction: column; gap: 12px; }
+.recap-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.recap-head .card-title { margin-bottom: 0; }
+.recap-head .card-title .ic { width: 24px; height: 24px; }
+.recap-card > .small { margin-top: -8px; }
+.recap-list { display: flex; flex-direction: column; gap: 6px; font-size: 15px; }
+.recap-list li { display: flex; gap: 8px; align-items: flex-start; }
 /* Comer fuera */
 .out-link { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 11px 12px; border: 2px solid var(--line); border-radius: 18px; background: var(--surface-2); box-shadow: 2px 2px 0 var(--hard); }
 .out-link > .ic:first-child { width: 30px; height: 30px; }

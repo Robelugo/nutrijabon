@@ -305,7 +305,79 @@
     return '<section class="card progress-card"><h3 class="card-title">' + icon('star') + ' Tu progreso</h3>' +
       '<div class="stats">' + weekTile + statTile('pink', s, s === 1 ? 'día completo seguido' : 'días completos seguidos') + reviewTile() + '</div>' +
       (st && st.due ? '<p class="small muted">Hasta hoy: ' + markSummary(st) + '.</p>' : '') +
-      '<div><button class="btn" data-action="open-report">' + icon('clipboard') + ' Resumen para tu revisión</button></div></section>';
+      '<div class="row-gap">' + (st && sun < t && st.days >= 3 ? '<button class="btn" data-action="open-recap" data-mon="' + keyOf(mon) + '">' + icon('star') + ' Resumen de esa semana</button>' : '') +
+      '<button class="btn" data-action="open-report">' + icon('clipboard') + ' Resumen para tu revisión</button></div></section>';
+  }
+
+  /* ---------------- Resumen semanal ----------------
+   * El lunes (hasta el miércoles) Hoy muestra cómo te fue la semana pasada y un consejo
+   * según la razón de “no cumplí” que más se repitió. Cualquier semana pasada se ve desde Semana. */
+  var RECAP_TIPS = {
+    fuera: ['Lo que más se repitió fue <b>comer fuera</b>. Antes de salir, revisa qué pedir para cubrir tus porciones.', 'out', 'Qué pedir fuera'],
+    tiempo: ['Lo que más se repitió fue <b>no tener tiempo</b>. Adelantar el domingo te deja solo armar entre semana.', 'prep', 'Ver prep del domingo'],
+    olvido: ['Varias veces <b>se te olvidó</b>. Los avisos del calendario te recuerdan cada comida y tus tomas.', 'avisos', 'Agregar recordatorios'],
+    hambre: ['Lo más común fue <b>no tener hambre</b>. Anótalo en tus preguntas para la revisión.', 'report', 'Abrir mi resumen'],
+    otra: ['Varias veces <b>comiste otra cosa</b>. Con “Cambiar” eliges otro platillo con las mismas porciones.', null, null]
+  };
+  function recapData(mon) {
+    var st = rangeStats(mon, addDays(mon, 6));
+    if (st.days < 3 || !st.due) return null;
+    var prev = rangeStats(addDays(mon, -7), addDays(mon, -1));
+    var meals = MEALS.filter(function (m) { return st.meal[m.id].due; }).map(function (m) {
+      var x = st.meal[m.id]; return { m: m, x: x, p: x.done / x.due };
+    });
+    var best = meals.slice().sort(function (a, b) { return b.p - a.p; })[0], worst = meals.slice().sort(function (a, b) { return a.p - b.p; })[0];
+    var md = { due: 0, done: 0 };
+    Object.keys(st.meds).forEach(function (id) { md.due += st.meds[id].due; md.done += st.meds[id].done; });
+    var top = whyCounts(st, 'meal')[0] || null, outMeal = null;
+    if (top && top[0] === 'fuera') { // la comida donde más pasó
+      outMeal = meals.slice().sort(function (a, b) { return ((b.x.why || {}).fuera || 0) - ((a.x.why || {}).fuera || 0); })[0].m.id;
+    }
+    return {
+      st: st, mon: mon, best: best, worst: worst, meds: md, top: top, outMeal: outMeal,
+      delta: prev.days >= 3 && prev.pct !== null && st.pct !== null ? st.pct - prev.pct : null,
+      unmarked: st.due - st.done - st.miss
+    };
+  }
+  function recapBody(R) {
+    var st = R.st, tip = '', btn = '';
+    var tiles = statTile('yellow', pctText(st), 'de las comidas cumplidas' + (R.delta === null ? '' : R.delta === 0 ? ' · igual que la anterior' : ' · ' + (R.delta > 0 ? '↑ ' : '↓ ') + Math.abs(R.delta) + ' pts')) +
+      statTile('green', st.full + '<small>/' + st.days + '</small>', 'días completos') +
+      (R.meds.due ? statTile('pink', Math.round(R.meds.done / R.meds.due * 100) + '%', 'vitaminas y medicamentos') : statTile('pink', st.miss, st.miss === 1 ? 'comida no cumplida' : 'comidas no cumplidas'));
+    var lines = [];
+    if (R.best && R.best.p > 0) lines.push('<li>⭐ <span>Lo mejor: <b>' + R.best.m.name + '</b> (' + R.best.x.done + ' de ' + R.best.x.due + ')</span></li>');
+    if (R.worst && R.worst !== R.best && R.worst.p < 1) lines.push('<li>🧗 <span>Lo que más costó: <b>' + R.worst.m.name + '</b> (' + R.worst.x.done + ' de ' + R.worst.x.due + ')</span></li>');
+    if (R.top) lines.push('<li>💬 <span>Razón más común: <b>' + lowerFirst(REASON_TEXT.meal[R.top[0]]) + '</b> (' + R.top[1] + (R.top[1] === 1 ? ' vez' : ' veces') + ')</span></li>');
+    var T = R.top && R.top[1] >= 2 && RECAP_TIPS[R.top[0]];
+    if (T) {
+      tip = T[0];
+      if (T[1] === 'out') btn = '<button class="chip-btn" data-action="open-out" data-meal="' + (R.outMeal || 'com') + '">' + icon('fork', 'ic-sm') + ' ' + T[2] + '</button>';
+      else if (T[1] === 'prep') btn = '<button class="chip-btn" data-action="goto-prep">' + icon('pot', 'ic-sm') + ' ' + T[2] + '</button>';
+      else if (T[1] === 'avisos') btn = '<button class="chip-btn" data-action="goto-sec" data-sec="avisos">' + icon('bell', 'ic-sm') + ' ' + T[2] + '</button>';
+      else if (T[1] === 'report') btn = '<button class="chip-btn" data-action="open-report">' + icon('clipboard', 'ic-sm') + ' ' + T[2] + '</button>';
+    } else if (R.unmarked / st.due > 0.3) {
+      tip = 'Varias comidas quedaron <b>sin marcar</b> (' + R.unmarked + '). Marca ✓ o ✗ cada una para que tu resumen sea más preciso.';
+    } else if (st.pct >= 90) {
+      tip = '<b>¡Gran semana!</b> Sigue así.';
+    }
+    return '<div class="stats">' + tiles + '</div>' + (lines.length ? '<ul class="plain recap-list">' + lines.join('') + '</ul>' : '') +
+      (tip ? '<div class="banner leaf">' + icon('leaf') + '<div>' + tip + (btn ? '<div class="banner-actions">' + btn + '</div>' : '') + '</div></div>' : '');
+  }
+  function recapCard() { // en Hoy, lunes a miércoles, hasta que lo cierres
+    var t = today(); if (wd(t) > 2) return '';
+    var mon = addDays(mondayOf(t), -7), wk = keyOf(mon);
+    if (S.settings.recapSeen === wk) return '';
+    var R = recapData(mon); if (!R) return '';
+    return '<section class="card recap-card"><div class="recap-head"><h3 class="card-title">' + icon('star') + ' Tu semana pasada</h3>' +
+      '<button class="icon-btn sm" data-action="recap-seen" data-wk="' + wk + '" aria-label="Cerrar resumen semanal">' + icon('x') + '</button></div>' +
+      '<p class="small muted">' + rangeText(R.st.from, R.st.to) + ' · según lo que marcaste</p>' + recapBody(R) + '</section>';
+  }
+  function recapSheet(monKey) {
+    var mon = fromKey(monKey), R = recapData(mon);
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--yellow)">' + icon('star') + '</span>' +
+      '<div class="sheet-titles"><div class="eyebrow">Resumen semanal</div><h2 id="sheet-title">' + rangeText(mon, addDays(mon, 6)) + '</h2></div>' +
+      '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
+      '<div class="sheet-content">' + (R ? '<p class="small muted">Según lo que marcaste esa semana.</p>' + recapBody(R) : '<p>Esa semana tiene muy pocos días con tu plan para hacer un resumen.</p>') + '</div>';
   }
 
   /* ---------------- Vista: Hoy ---------------- */
@@ -350,7 +422,7 @@
         '<button class="link-btn" data-action="open-report">Ve tu resumen</button> para llevarlo.</div></div>';
     }
 
-    if (isToday) h += prepBanner();
+    if (isToday) h += prepBanner() + recapCard();
 
     if (isToday && !S.settings.medsSeen) {
       h += '<div class="banner info">' + icon('pill') + '<div><b>Nuevo:</b> marca ' + icon('check', 'ic-xs') + ' si cumpliste o ' + icon('x', 'ic-xs') +
@@ -1009,6 +1081,7 @@
     }
     if (st.medsSeen === true) out.settings.medsSeen = true;
     if (st.vitAllDays === true) out.settings.vitAllDays = true;
+    if (KEY_RE.test(st.recapSeen)) out.settings.recapSeen = st.recapSeen;
     out.settings.onboarded = true;
     if (isObj(d.days)) Object.keys(d.days).forEach(function (k) {
       var r = d.days[k], o = {};
@@ -1499,7 +1572,7 @@
   function runningTimers() { return cook ? cook.timers.filter(function (t) { return t.end > Date.now(); }).length : 0; }
 
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -1624,6 +1697,8 @@
       case 'mark-med': setMark('tk', ds.k, ds.id, ds.v === '1'); break;
       case 'why': setWhy(ds.kind, ds.k, ds.id, ds.r); break;
       case 'open-out': openSheet('out', [ds.meal]); break;
+      case 'open-recap': openSheet('recap', [ds.mon]); break;
+      case 'recap-seen': S.settings.recapSeen = ds.wk; save(); render(); break;
       case 'cook-recipe': startCook('recipe', ds.id); break;
       case 'cook-prep': startCook('prep'); break;
       case 'cook-next': cookGo(1, true); break;
