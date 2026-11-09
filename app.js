@@ -157,6 +157,8 @@
     if (r.sw && !Object.keys(r.sw).length) delete r.sw;
     if (r.done && !Object.keys(r.done).length) delete r.done;
     if (r.tk && !Object.keys(r.tk).length) delete r.tk;
+    if (r.why && !Object.keys(r.why).length) delete r.why;
+    if (r.twhy && !Object.keys(r.twhy).length) delete r.twhy;
     if (Object.keys(r).length) S.days[k] = r; else delete S.days[k];
     save();
   }
@@ -173,6 +175,15 @@
     return (S.settings.meds || []).filter(function (md) { return md.meal === mealId && (md.when === 'all' || isTraining(k)); });
   }
   function medMark(k, id) { var r = dayRec(k); return r.tk ? r.tk[id] : undefined; }
+  // ¿Por qué no se cumplió? Se guarda en why (comidas) y twhy (vitaminas/medicamentos)
+  var REASONS = {
+    meal: [['fuera', '🍽️', 'Comí fuera'], ['tiempo', '⏰', 'No tuve tiempo'], ['hambre', '😶', 'Sin hambre'],
+      ['otra', '🔁', 'Comí otra cosa'], ['olvido', '💭', 'Se me olvidó'], ['otro', '🤷', 'Otro motivo']],
+    med: [['olvido', '💭', 'Se me olvidó'], ['acabo', '📦', 'Se me acabó'], ['traia', '👜', 'Fuera de casa'], ['otro', '🤷', 'Otro motivo']]
+  };
+  var REASON_TEXT = { meal: {}, med: {} };
+  ['meal', 'med'].forEach(function (kind) { REASONS[kind].forEach(function (x) { REASON_TEXT[kind][x[0]] = x[2]; }); });
+  function whyOf(k, field, id) { var r = dayRec(k); return r[field] ? r[field][id] : undefined; }
   function dayTotals(k) {
     var t = {};
     MEALS.forEach(function (m) {
@@ -206,7 +217,14 @@
       return (isSkipped(k, m) || isDone(k, m.id)) && medsFor(k, m.id).every(function (md) { return medMark(k, md.id) === true; });
     });
   }
-  function tally(o, mk) { o.due++; if (mk === true) o.done++; else if (mk === false) o.miss++; }
+  function tally(o, mk, why) {
+    o.due++;
+    if (mk === true) o.done++;
+    else if (mk === false) {
+      o.miss++;
+      if (why) { o.why = o.why || {}; o.why[why] = (o.why[why] || 0) + 1; }
+    }
+  }
   function rangeStats(from, to) {
     var start = fromKey(D.PLAN.assigned), t = today(), tk = keyOf(t), nm = nowMin();
     if (from < start) from = start;
@@ -223,12 +241,12 @@
         var later = k === tk && toMin(mealTime(m.id)) > nm; // de hoy, aún no es hora
         medsFor(k, m.id).forEach(function (md) {
           var mm = medMark(k, md.id);
-          if (!(later && mm === undefined)) tally(st.meds[md.id], mm);
+          if (!(later && mm === undefined)) tally(st.meds[md.id], mm, whyOf(k, 'twhy', md.id));
         });
         if (isSkipped(k, m)) return;
-        var mk = markOf(k, m.id);
+        var mk = markOf(k, m.id), why = whyOf(k, 'why', m.id);
         if (later && mk === undefined) return;
-        tally(st.meal[m.id], mk); tally(st, mk);
+        tally(st.meal[m.id], mk, why); tally(st, mk, why);
       });
       var sw = dayRec(k).sw || {};
       Object.keys(sw).forEach(function (mid) {
@@ -378,7 +396,16 @@
       '<div class="meal-actions"><button class="chip-btn" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '">' + icon('book', 'ic-sm') + ' Ver receta</button>' +
       '<button class="chip-btn" data-action="open-swap" data-k="' + k + '" data-meal="' + m.id + '">' + icon('swap', 'ic-sm') + ' Cambiar</button></div>' +
       '</div>' + markBtns(mk, m.name, 'data-action="mark" data-k="' + k + '" data-meal="' + m.id + '"', '') +
+      (missed ? whyChips('meal', k, m.id, whyOf(k, 'why', m.id)) : '') +
       '</article>' + medRows(k, m, meds, false) + '</li>';
+  }
+  // Razones rápidas al marcar ✗ (opcional; tocar la elegida la quita)
+  function whyChips(kind, k, id, cur) {
+    return '<div class="why" role="group" aria-label="¿Por qué no se cumplió?"><span class="why-q">¿Por qué?</span>' +
+      REASONS[kind].map(function (x) {
+        return '<button class="why-chip" aria-pressed="' + (cur === x[0]) + '" data-action="why" data-kind="' + kind + '" data-k="' + k + '" data-id="' + id + '" data-r="' + x[0] + '">' +
+          '<span aria-hidden="true">' + x[1] + '</span> ' + x[2] + '</button>';
+      }).join('') + '</div>';
   }
   // Botones ✓ / ✗: tocar el que ya está marcado lo desmarca
   function markBtns(mk, label, attrs, cls) {
@@ -394,7 +421,8 @@
         '<span class="toma-ic">' + icon('pill') + '</span><span class="toma-txt"><b>' + name + '</b><span class="small muted">' +
         (skipped ? 'A las ' + mealTime(m.id) + ', aunque hoy no toca pre-entreno' : 'Con tu ' + m.name.toLowerCase()) +
         (mm === false ? ' · <b class="miss-text">no cumplí</b>' : '') + '</span></span>' +
-        markBtns(mm, name, 'data-action="mark-med" data-k="' + k + '" data-id="' + md.id + '"', 'sm') + '</li>';
+        markBtns(mm, name, 'data-action="mark-med" data-k="' + k + '" data-id="' + md.id + '"', 'sm') +
+        (mm === false ? whyChips('med', k, md.id, whyOf(k, 'twhy', md.id)) : '') + '</li>';
     }).join('') + '</ul>';
   }
 
@@ -433,7 +461,7 @@
           return '<li><button style="--mc:var(--m-' + m.id + ')" class="mini' + (sk ? ' is-skipped' : '') + (dn ? ' is-done' : '') + (ms ? ' is-missed' : '') + '" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"' + (sk ? ' title="No toca: día de descanso"' : '') + '>' +
             '<span class="t">' + mealTime(m.id) + '</span><span class="n"><span class="emoji">' + r.emoji + '</span> ' + esc(r.name) + '</span>' +
             (meds.length ? '<span class="mini-med" title="' + esc(medTitle) + '">' + icon('pill', 'ic-sm') + '<span class="sr-only">' + esc(medTitle) + '</span></span>' : '') +
-            (dn ? icon('check', 'ic-sm ok') : ms ? icon('x', 'ic-sm miss') : '') + '</button></li>';
+            (dn ? icon('check', 'ic-sm ok') : ms ? '<span class="mini-miss" title="No cumplí' + (whyOf(k, 'why', m.id) ? ': ' + REASON_TEXT.meal[whyOf(k, 'why', m.id)] : '') + '">' + icon('x', 'ic-sm miss') + '</span>' : '') + '</button></li>';
         }).join('') + '</ul></article>';
     }).join('') + '</div></div>';
     return h;
@@ -816,6 +844,9 @@
       });
       if (isObj(r.done)) Object.keys(r.done).forEach(function (m) { if (MEAL[m] && typeof r.done[m] === 'boolean') (o.done = o.done || {})[m] = r.done[m]; });
       if (isObj(r.tk)) Object.keys(r.tk).forEach(function (id) { if (MED_ID.test(id) && typeof r.tk[id] === 'boolean') (o.tk = o.tk || {})[id] = r.tk[id]; });
+      // razones: solo de la lista y solo donde la marca es ✗
+      if (isObj(r.why)) Object.keys(r.why).forEach(function (m) { if (o.done && o.done[m] === false && REASON_TEXT.meal[r.why[m]]) (o.why = o.why || {})[m] = r.why[m]; });
+      if (isObj(r.twhy)) Object.keys(r.twhy).forEach(function (id) { if (o.tk && o.tk[id] === false && REASON_TEXT.med[r.twhy[id]]) (o.twhy = o.twhy || {})[id] = r.twhy[id]; });
       if (Object.keys(o).length) out.days[k] = o;
     });
     if (isObj(d.shop)) Object.keys(d.shop).forEach(function (wk) {
@@ -950,9 +981,28 @@
       .sort(function (a, b) { return b.n - a.n || a.r.name.localeCompare(b.r.name, 'es'); }).slice(0, 5);
     return { all: all, weeks: weeks, swaps: swaps, streak: streak(), started: t >= start };
   }
-  function countText(x) {
+  function countText(x, kind) {
     if (!x.due) return 'aún no toca';
-    return x.done + ' de ' + x.due + (x.due ? ' · ' + Math.round(x.done / x.due * 100) + '%' : '') + (x.miss ? ' · ' + x.miss + ' no' : '');
+    return x.done + ' de ' + x.due + (x.due ? ' · ' + Math.round(x.done / x.due * 100) + '%' : '') + (x.miss ? ' · ' + x.miss + ' no' + (kind ? whyText(x, kind) : '') : '');
+  }
+  function whyCounts(x, kind) { // [[id, n], …] de más a menos
+    return Object.keys(x.why || {}).filter(function (id) { return REASON_TEXT[kind][id]; })
+      .map(function (id) { return [id, x.why[id]]; }).sort(function (a, b) { return b[1] - a[1]; });
+  }
+  function whyText(x, kind) { // “ (comí fuera ×2, se me olvidó)”
+    var w = whyCounts(x, kind).slice(0, 2);
+    return w.length ? ' (' + w.map(function (e) { return lowerFirst(REASON_TEXT[kind][e[0]]) + (e[1] > 1 ? ' ×' + e[1] : ''); }).join(', ') + ')' : '';
+  }
+  function reasonsHtml(a) {
+    if (!a.miss) return '';
+    var w = whyCounts(a, 'meal'), given = w.reduce(function (s, e) { return s + e[1]; }, 0), none = a.miss - given;
+    var emoji = {}; REASONS.meal.forEach(function (x) { emoji[x[0]] = x[1]; });
+    var rows = w.map(function (e) { return [emoji[e[0]] + ' ' + REASON_TEXT.meal[e[0]], e[1]]; });
+    if (none) rows.push(['Sin razón anotada', none]);
+    return '<h3 class="sec-title">¿Por qué no se cumplieron?</h3><ul class="plain meter-list reasons">' + rows.map(function (row) {
+      return '<li style="--mc:var(--red)"><div class="meter-top"><b>' + row[0] + '</b><span class="muted">' + row[1] + ' de ' + a.miss + '</span></div>' +
+        barHtml({ done: row[1], due: a.miss }, row[0]) + '</li>';
+    }).join('') + '</ul>';
   }
   function medLabel(md) { return md.name + ' (con ' + MEAL[md.meal].name.toLowerCase() + (md.when === 'train' ? ', días de ejercicio' : '') + ')'; }
   function medsInReport(a) { return (S.settings.meds || []).filter(function (md) { return a.meds[md.id] && a.meds[md.id].due; }); }
@@ -978,14 +1028,14 @@
       '<h3 class="sec-title">Por tiempo de comida</h3><ul class="plain meter-list">' + sortedMeals().map(function (m) {
         var x = a.meal[m.id];
         return '<li style="--mc:var(--m-' + m.id + ')"><div class="meter-top"><b>' + m.name + '</b>' + (m.trainingOnly ? ' <span class="badge">días de ejercicio</span>' : '') +
-          '<span class="muted">' + countText(x) + '</span></div>' + barHtml(x, m.name) + '</li>';
+          '<span class="muted">' + countText(x, 'meal') + '</span></div>' + barHtml(x, m.name) + '</li>';
       }).join('') + '</ul>' +
       (medsInReport(a).length ? '<h3 class="sec-title">Vitaminas y medicamentos</h3><ul class="plain meter-list">' + medsInReport(a).map(function (md) {
         var x = a.meds[md.id];
         return '<li style="--mc:var(--m-' + md.meal + ')"><div class="meter-top"><b>' + esc(md.name) + '</b> <span class="badge">con ' + MEAL[md.meal].name.toLowerCase() + '</span>' +
-          '<span class="muted">' + countText(x) + '</span></div>' + barHtml(x, esc(md.name)) + '</li>';
+          '<span class="muted">' + countText(x, 'med') + '</span></div>' + barHtml(x, esc(md.name)) + '</li>';
       }).join('') + '</ul>' : '') +
-      '<h3 class="sec-title">Por semana</h3><ul class="plain meter-list weeks">' + R.weeks.map(function (w) {
+      reasonsHtml(a) + '<h3 class="sec-title">Por semana</h3><ul class="plain meter-list weeks">' + R.weeks.map(function (w) {
         var lbl = rangeText(w.from, w.to);
         return '<li><div class="meter-top"><b>' + lbl + '</b><span class="muted">' + countText(w) + '</span></div>' + barHtml(w, lbl) + '</li>';
       }).join('') + '</ul>' +
@@ -1008,11 +1058,17 @@
       'Comidas: ' + markSummary(a) + (a.due ? ' (' + pctText(a) + ')' : ''),
       'Días completos: ' + a.full + ' de ' + a.days + ' · Racha actual: ' + R.streak,
       'Días de ejercicio: ' + a.train + ' · Descanso: ' + (a.days - a.train), '', 'Por tiempo de comida:'];
-    sortedMeals().forEach(function (m) { L.push('• ' + m.name + (m.trainingOnly ? ' (días de ejercicio)' : '') + ': ' + countText(a.meal[m.id])); });
+    sortedMeals().forEach(function (m) { L.push('• ' + m.name + (m.trainingOnly ? ' (días de ejercicio)' : '') + ': ' + countText(a.meal[m.id], 'meal')); });
     var meds = medsInReport(a);
     if (meds.length) {
       L.push('', 'Vitaminas y medicamentos:');
-      meds.forEach(function (md) { L.push('• ' + medLabel(md) + ': ' + countText(a.meds[md.id])); });
+      meds.forEach(function (md) { L.push('• ' + medLabel(md) + ': ' + countText(a.meds[md.id], 'med')); });
+    }
+    if (a.miss) {
+      var w = whyCounts(a, 'meal'), none = a.miss - w.reduce(function (s, e) { return s + e[1]; }, 0);
+      L.push('', '¿Por qué no se cumplieron? (' + a.miss + ')');
+      w.forEach(function (e) { L.push('• ' + REASON_TEXT.meal[e[0]] + ': ' + e[1]); });
+      if (none) L.push('• Sin razón anotada: ' + none);
     }
     L.push('', 'Por semana:');
     R.weeks.forEach(function (w) { L.push('• ' + rangeText(w.from, w.to) + ': ' + countText(w)); });
@@ -1059,14 +1115,25 @@
   // v: true = sí cumplí, false = no cumplí; repetir la misma marca la quita
   function setMark(field, k, id, v) {
     var wasFull = isFullDay(k);
+    var whyField = field === 'tk' ? 'twhy' : 'why';
     setDay(k, function (r) {
       r[field] = r[field] || {};
       if (r[field][id] === v) delete r[field][id]; else r[field][id] = v;
+      if (r[field][id] !== false && r[whyField]) delete r[whyField][id]; // la razón solo vale para ✗
     });
     if (sheet) renderSheet();
     render();
     if (v && !wasFull && isFullDay(k)) toast('¡Día completo! 🎉');
-    else if (v === false && (field === 'tk' ? medMark(k, id) : markOf(k, id)) === false) toast('Anotado como no cumplido');
+    else if (v === false && (field === 'tk' ? medMark(k, id) : markOf(k, id)) === false) toast('Anotado. Si quieres, elige por qué');
+  }
+  function setWhy(kind, k, id, reason) {
+    var field = kind === 'med' ? 'twhy' : 'why';
+    if (!REASON_TEXT[kind][reason]) return;
+    setDay(k, function (r) {
+      r[field] = r[field] || {};
+      if (r[field][id] === reason) delete r[field][id]; else r[field][id] = reason;
+    });
+    render();
   }
   function chooseSwap(k, mealId, id) {
     var def = defaultRecipe(k, mealId);
@@ -1128,6 +1195,7 @@
       case 'toggle-ex': setEx(ds.k, !isTraining(ds.k)); break;
       case 'mark': if (ds.close) closeSheet(); setMark('done', ds.k, ds.meal, ds.v === '1'); break;
       case 'mark-med': setMark('tk', ds.k, ds.id, ds.v === '1'); break;
+      case 'why': setWhy(ds.kind, ds.k, ds.id, ds.r); break;
       case 'meds-seen': S.settings.medsSeen = true; save(); render(); break;
       case 'med-add': addMed(); break;
       case 'med-del': delMed(ds.id); break;

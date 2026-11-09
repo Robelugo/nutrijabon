@@ -316,7 +316,7 @@ main {
 .toma.is-done { background: var(--surface-2); }
 .toma.is-done .toma-txt b { color: var(--muted); }
 .toma.is-missed { background: var(--surface-2); }
-.toma.is-missed .toma-txt b { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+.toma.is-missed .toma-txt > b { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
 .toma-ic { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); border: 2px solid var(--line); --ic-line: var(--line); }
 .toma-ic .ic { width: 22px; height: 22px; }
 .toma-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
@@ -326,6 +326,16 @@ main {
 .mini.is-missed .n { text-decoration: line-through; text-decoration-color: var(--red); color: var(--muted); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .banner-actions { margin-top: 9px; }
+/* Razones de “no cumplí” */
+.why { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; padding-top: 10px; border-top: 2px dashed var(--line-soft); }
+.why-q { grid-column: 1 / -1; font-size: 12.5px; font-weight: 850; color: var(--danger); }
+.why-chip { font-size: 13px; font-weight: 800; padding: 5px 10px; border-radius: 999px; background: var(--surface); color: var(--text); border: 2px solid var(--line); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.why-chip[aria-pressed="true"] { background: var(--red); color: #fffaf0; box-shadow: 2px 2px 0 var(--hard); }
+.meal-card { flex-wrap: wrap; }
+.meal-card > .why { flex-basis: 100%; margin-top: 2px; }
+.toma { flex-wrap: wrap; }
+.toma .why { flex-basis: 100%; margin-top: 2px; }
+.mini-miss { display: inline-flex; }
 /* La comida que toca: líneas de contorno concéntricas (Citroën ’75) */
 .meal.is-next .meal-card { box-shadow: var(--rings); }
 .meal.is-next .meal-clock { background: var(--pressed-bg); color: var(--pressed-fg); border-color: var(--pressed-bg); }
