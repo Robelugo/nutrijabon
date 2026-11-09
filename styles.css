@@ -292,14 +292,40 @@ main {
 .dish .ic { color: var(--muted); margin-left: auto; }
 .dish-name { min-width: 0; }
 .meal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.check {
-  width: 46px; height: 46px; flex: none; border-radius: 50%;
-  border: 2.5px solid var(--line); background: var(--surface); display: grid; place-items: center;
-  color: transparent; transition: background .15s, color .15s;
+/* ¿Cumpliste? ✓ sí / ✗ no */
+.mark { display: flex; flex-direction: column; gap: 8px; flex: none; }
+.mark-btn {
+  width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center;
+  border: 2.5px solid var(--line); background: var(--surface); color: var(--line-soft);
+  transition: background .15s, color .15s;
 }
-.check .ic { width: 22px; height: 22px; stroke-width: 3.4; }
-.check:hover { color: var(--line-soft); }
-.check[aria-checked="true"] { background: var(--green); color: var(--ink); box-shadow: 2px 2px 0 var(--hard); }
+.mark-btn .ic { width: 21px; height: 21px; stroke-width: 3.4; }
+.mark-btn:hover { color: var(--muted); }
+.mark-btn.yes[aria-pressed="true"] { background: var(--green); color: var(--ink); box-shadow: 2px 2px 0 var(--hard); }
+.mark-btn.no[aria-pressed="true"] { background: var(--red); color: #fffaf0; box-shadow: 2px 2px 0 var(--hard); }
+.mark.sm { flex-direction: row; gap: 6px; }
+.mark.sm .mark-btn { width: 38px; height: 38px; }
+.mark.sm .mark-btn .ic { width: 18px; height: 18px; }
+.badge.miss { background: var(--red); color: #fffaf0; border-color: var(--line); }
+.meal.is-missed .meal-card { background: var(--surface-2); box-shadow: none; }
+.meal.is-missed .dish-name { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+.miss-text { color: var(--danger); }
+/* Vitaminas y medicamentos junto a su comida */
+.tomas { margin: 8px 0 0 18px; display: flex; flex-direction: column; gap: 8px; }
+.toma { display: flex; align-items: center; gap: 10px; padding: 7px 7px 7px 10px; background: var(--surface); border: 2px solid var(--line); border-left: 8px solid var(--mc); border-radius: 16px; }
+.toma.is-done { background: var(--surface-2); }
+.toma.is-done .toma-txt b { color: var(--muted); }
+.toma.is-missed { background: var(--surface-2); }
+.toma.is-missed .toma-txt b { text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+.toma-ic { width: 34px; height: 34px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); border: 2px solid var(--line); --ic-line: var(--line); }
+.toma-ic .ic { width: 22px; height: 22px; }
+.toma-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+.toma-txt b { font-size: 15.5px; overflow-wrap: anywhere; }
+.mini-med { display: inline-flex; flex: none; }
+.ic.miss { color: var(--danger); }
+.mini.is-missed .n { text-decoration: line-through; text-decoration-color: var(--red); color: var(--muted); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.banner-actions { margin-top: 9px; }
 /* La comida que toca: líneas de contorno concéntricas (Citroën ’75) */
 .meal.is-next .meal-card { box-shadow: var(--rings); }
 .meal.is-next .meal-clock { background: var(--pressed-bg); color: var(--pressed-fg); border-color: var(--pressed-bg); }
@@ -443,6 +469,18 @@ main {
 .print-only { display: none; }
 .notes-print { white-space: pre-wrap; }
 @media (max-width: 360px) { .stat b { font-size: 24px; } .stat span { font-size: 11px; } }
+.med-list { display: flex; flex-direction: column; gap: 10px; }
+.med-row { padding: 10px 10px 12px 12px; border: 2px solid var(--line); border-left: 8px solid var(--mc); border-radius: 18px; background: var(--surface); }
+.med-head { display: flex; align-items: center; gap: 10px; }
+.med-head b { flex: 1; min-width: 0; font-size: 16.5px; overflow-wrap: anywhere; }
+.icon-btn.sm { width: 34px; height: 34px; box-shadow: none; }
+.icon-btn.sm .ic { width: 16px; height: 16px; }
+.med-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 8px; }
+.med-fields label { display: flex; flex-direction: column; gap: 2px; }
+.med-fields select, .med-form input { width: 100%; border: 2px solid var(--line); background: var(--surface); color: var(--text); border-radius: 12px; padding: 8px 10px; font: inherit; font-size: 15px; }
+.med-form { display: flex; flex-direction: column; gap: 4px; }
+.med-form .med-fields { margin-top: 4px; }
+.med-form > div:last-child { margin-top: 8px; }
 .install-list li { padding: 11px 14px; border: 2px solid var(--line); border-radius: 18px; }
 .install-list li + li { margin-top: 10px; }
 .install-list li.is-mine { background: var(--ok-bg); color: var(--ok-text); }

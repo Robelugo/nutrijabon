@@ -17,7 +17,12 @@
   var MONTHS_ABBR = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
   /* ---------------- Estado ---------------- */
-  var DEFAULT_SETTINGS = { trainDays: [0, 1, 2, 3, 4], times: {}, onboarded: false };
+  // meds: vitaminas y medicamentos (“tomas”). Solo se guardan en el dispositivo, nunca en el código.
+  var DEFAULT_SETTINGS = {
+    trainDays: [0, 1, 2, 3, 4], times: {}, onboarded: false,
+    meds: [{ id: 'vit', name: 'Vitamina', meal: 'pre', when: 'train' }]
+  };
+  function defaults() { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
 
   function load() {
     try {
@@ -25,13 +30,13 @@
       if (raw) {
         var p = JSON.parse(raw);
         return {
-          settings: Object.assign({}, DEFAULT_SETTINGS, p.settings || {}),
+          settings: Object.assign(defaults(), p.settings || {}),
           days: p.days || {},
           shop: p.shop || {}
         };
       }
     } catch (e) { /* almacenamiento no disponible */ }
-    return { settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), days: {}, shop: {} };
+    return { settings: defaults(), days: {}, shop: {} };
   }
   var S = load();
   function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) { /* ignorar */ } }
@@ -117,6 +122,7 @@
     download: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="g" d="M12 17.6l-5-5.2h3.2V3h3.6v9.4H17Z"/>',
     upload: '<rect class="b" x="4" y="14" width="16" height="7" rx="2.2"/><path class="p" d="M12 2.6l5 5.2h-3.2v9.4h-3.6V7.8H7Z"/>',
     bell: '<circle class="o" cx="12" cy="2.9" r="1.5"/><path class="p" d="M9.5 17.6a2.5 2.5 0 0 0 5 0Z"/><path class="y" d="M12 3.6a6.2 6.2 0 0 0-6.2 6.2v5.2h12.4V9.8A6.2 6.2 0 0 0 12 3.6Z"/><path class="sc" d="M8.6 12.6V10a3.5 3.5 0 0 1 2.1-3.2"/><rect class="o" x="3.4" y="14.6" width="17.2" height="3.2" rx="1.6"/><path d="M1.8 9.4a10 10 0 0 1 2.3-5M22.2 9.4a10 10 0 0 0-2.3-5"/>',
+    pill: '<g transform="rotate(-40 12 12)"><path class="p" d="M12 7.6H6.4a4.4 4.4 0 0 0 0 8.8H12Z"/><path class="y" d="M12 7.6h5.6a4.4 4.4 0 0 1 0 8.8H12Z"/><path class="sc" d="M5.6 10.2h3"/></g><path d="M20.4 3.2v2.6M19.1 4.5h2.6"/>',
     star: '<path class="y" d="M12 2.4l2.7 6.48 7 .57-5.33 4.57L18 20.85l-6-3.65-6 3.65 1.63-6.83-5.33-4.57 7-.57Z"/><circle class="p n" cx="12" cy="12.9" r="2.1"/>',
     clipboard: '<rect class="c" x="4.2" y="3.6" width="15.6" height="18.4" rx="2.6"/><rect class="p n" x="7.6" y="9.4" width="8.8" height="2.4" rx="1.2"/><rect class="g n" x="7.6" y="13.2" width="5.6" height="2.4" rx="1.2"/><rect class="o n" x="7.6" y="17" width="7.4" height="2.4" rx="1.2"/><rect class="b" x="8.2" y="1.8" width="7.6" height="4" rx="1.5"/>',
     cassette: '<rect class="o" x="1.8" y="4.4" width="20.4" height="15.2" rx="2.6"/><rect class="p n" x="3.4" y="6" width="17.2" height="2.4" rx="1"/><rect class="c" x="4.4" y="8.4" width="15.2" height="6.4" rx="3.2"/><circle class="k n" cx="8.4" cy="11.6" r="1.8"/><circle class="k n" cx="15.6" cy="11.6" r="1.8"/><circle class="c n" cx="8.4" cy="11.6" r=".7"/><circle class="c n" cx="15.6" cy="11.6" r=".7"/><path d="M10.6 11.6h2.8"/><path class="y" d="M6.2 19.6l1.5-3.4h8.6l1.5 3.4Z"/>',
@@ -144,6 +150,7 @@
     fn(r);
     if (r.sw && !Object.keys(r.sw).length) delete r.sw;
     if (r.done && !Object.keys(r.done).length) delete r.done;
+    if (r.tk && !Object.keys(r.tk).length) delete r.tk;
     if (Object.keys(r).length) S.days[k] = r; else delete S.days[k];
     save();
   }
@@ -152,7 +159,14 @@
   function defaultRecipe(k, mealId) { return D.WEEK[mealId][wd(fromKey(k))]; }
   function recipeId(k, mealId) { var r = dayRec(k); return (r.sw && r.sw[mealId]) || defaultRecipe(k, mealId); }
   function isSkipped(k, m) { return !!m.trainingOnly && !isTraining(k); }
-  function isDone(k, mealId) { var r = dayRec(k); return !!(r.done && r.done[mealId]); }
+  // Marcas: true = sí cumplí, false = no cumplí, sin valor = sin marcar
+  function markOf(k, mealId) { var r = dayRec(k); return r.done ? r.done[mealId] : undefined; }
+  function isDone(k, mealId) { return markOf(k, mealId) === true; }
+  function isMissed(k, mealId) { return markOf(k, mealId) === false; }
+  function medsFor(k, mealId) {
+    return (S.settings.meds || []).filter(function (md) { return md.meal === mealId && (md.when === 'all' || isTraining(k)); });
+  }
+  function medMark(k, id) { var r = dayRec(k); return r.tk ? r.tk[id] : undefined; }
   function dayTotals(k) {
     var t = {};
     MEALS.forEach(function (m) {
@@ -165,7 +179,7 @@
     var now = new Date(), nm = now.getHours() * 60 + now.getMinutes();
     for (var i = 0; i < meals.length; i++) {
       var m = meals[i];
-      if (isSkipped(k, m) || isDone(k, m.id)) continue;
+      if (isSkipped(k, m) || markOf(k, m.id) !== undefined) continue;
       var tm = toMin(mealTime(m.id));
       if (tm >= nm - 90) return { id: m.id, now: tm <= nm };
     }
@@ -181,24 +195,34 @@
    * Cuenta desde el inicio del plan hasta hoy. De hoy solo cuentan las comidas
    * que ya pasaron de hora o que ya marcaste, para no bajar tu porcentaje en la mañana. */
   function nowMin() { var n = new Date(); return n.getHours() * 60 + n.getMinutes(); }
-  function isFullDay(k) { return MEALS.every(function (m) { return isSkipped(k, m) || isDone(k, m.id); }); }
+  function isFullDay(k) {
+    return MEALS.every(function (m) {
+      return (isSkipped(k, m) || isDone(k, m.id)) && medsFor(k, m.id).every(function (md) { return medMark(k, md.id) === true; });
+    });
+  }
+  function tally(o, mk) { o.due++; if (mk === true) o.done++; else if (mk === false) o.miss++; }
   function rangeStats(from, to) {
     var start = fromKey(D.PLAN.assigned), t = today(), tk = keyOf(t), nm = nowMin();
     if (from < start) from = start;
     if (to > t) to = t;
-    var st = { from: from, to: to, days: 0, due: 0, done: 0, full: 0, train: 0, meal: {}, swaps: {} };
-    MEALS.forEach(function (m) { st.meal[m.id] = { due: 0, done: 0 }; });
+    var st = { from: from, to: to, days: 0, due: 0, done: 0, miss: 0, full: 0, train: 0, meal: {}, meds: {}, swaps: {} };
+    MEALS.forEach(function (m) { st.meal[m.id] = { due: 0, done: 0, miss: 0 }; });
+    (S.settings.meds || []).forEach(function (md) { st.meds[md.id] = { due: 0, done: 0, miss: 0 }; });
     for (var d = from; d <= to; d = addDays(d, 1)) {
       var k = keyOf(d);
       st.days++;
       if (isTraining(k)) st.train++;
       if (isFullDay(k)) st.full++;
       MEALS.forEach(function (m) {
+        var later = k === tk && toMin(mealTime(m.id)) > nm; // de hoy, aún no es hora
+        medsFor(k, m.id).forEach(function (md) {
+          var mm = medMark(k, md.id);
+          if (!(later && mm === undefined)) tally(st.meds[md.id], mm);
+        });
         if (isSkipped(k, m)) return;
-        var dn = isDone(k, m.id);
-        if (k === tk && !dn && toMin(mealTime(m.id)) > nm) return;
-        st.meal[m.id].due++; st.due++;
-        if (dn) { st.meal[m.id].done++; st.done++; }
+        var mk = markOf(k, m.id);
+        if (later && mk === undefined) return;
+        tally(st.meal[m.id], mk); tally(st, mk);
       });
       var sw = dayRec(k).sw || {};
       Object.keys(sw).forEach(function (mid) {
@@ -213,6 +237,10 @@
     if (!isFullDay(keyOf(d))) d = addDays(d, -1);
     while (d >= start && isFullDay(keyOf(d))) { n++; d = addDays(d, -1); }
     return n;
+  }
+  function markSummary(x) { // “36 de 38 cumplidas · 1 no · 1 sin marcar”
+    var un = x.due - x.done - x.miss;
+    return x.done + ' de ' + x.due + ' cumplidas' + (x.miss ? ' · ' + x.miss + ' no' : '') + (un ? ' · ' + un + ' sin marcar' : '');
   }
   function daysToReview() { return dayDiff(fromKey(D.PLAN.review), today()); }
   function pctText(st) { return st.pct === null ? '—' : st.pct + '%'; }
@@ -236,11 +264,11 @@
     var weekTile, st = null;
     if (mon > t) weekTile = statTile('yellow', '—', 'la semana aún no empieza');
     else if (sun < start) weekTile = statTile('yellow', '—', 'antes de tu plan');
-    else { st = rangeStats(mon, sun); weekTile = statTile('yellow', pctText(st), 'de las comidas de ' + weekLabel(ui.weekOffset).toLowerCase()); }
+    else { st = rangeStats(mon, sun); weekTile = statTile('yellow', pctText(st), 'de las comidas cumplidas ' + weekLabel(ui.weekOffset).toLowerCase()); }
     var s = streak();
     return '<section class="card progress-card"><h3 class="card-title">' + icon('star') + ' Tu progreso</h3>' +
       '<div class="stats">' + weekTile + statTile('pink', s, s === 1 ? 'día completo seguido' : 'días completos seguidos') + reviewTile() + '</div>' +
-      (st && st.due ? '<p class="small muted">' + st.done + ' de ' + st.due + ' comidas marcadas hasta hoy.</p>' : '') +
+      (st && st.due ? '<p class="small muted">Hasta hoy: ' + markSummary(st) + '.</p>' : '') +
       '<div><button class="btn" data-action="open-report">' + icon('clipboard') + ' Resumen para tu revisión</button></div></section>';
   }
 
@@ -253,6 +281,7 @@
     var meals = sortedMeals();
     var active = meals.filter(function (m) { return !isSkipped(k, m); });
     var done = active.filter(function (m) { return isDone(k, m.id); }).length;
+    var missed = active.filter(function (m) { return isMissed(k, m.id); }).length;
     var pct = active.length ? Math.round(done / active.length * 100) : 0;
     var next = isToday ? findNext(k, meals) : null;
     var pre = RECIPE[recipeId(k, 'pre')];
@@ -284,8 +313,15 @@
         '<button class="link-btn" data-action="open-report">Ve tu resumen</button> para llevarlo.</div></div>';
     }
 
-    h += '<div class="progress"><div class="progress-top"><span><b>' + done + '</b> de ' + active.length + ' comidas</span>' +
-      '<span class="muted">' + (done === active.length && done ? '¡Día completo! 🎉' : pct + '%') + '</span></div>' +
+    if (isToday && !S.settings.medsSeen) {
+      h += '<div class="banner info">' + icon('pill') + '<div><b>Nuevo:</b> marca ' + icon('check', 'ic-xs') + ' si cumpliste o ' + icon('x', 'ic-xs') +
+        ' si no. Además puedes llevar tus vitaminas y medicamentos: tu vitamina ya está con el pre-entreno.<div class="row-gap banner-actions">' +
+        '<button class="chip-btn" data-action="goto-sec" data-sec="tomas">' + icon('pill', 'ic-sm') + ' Agregar medicamento</button>' +
+        '<button class="chip-btn" data-action="meds-seen">Entendido</button></div></div></div>';
+    }
+
+    h += '<div class="progress"><div class="progress-top"><span><b>' + done + '</b> de ' + active.length + ' comidas' + (missed ? ' · ' + missed + ' no' : '') + '</span>' +
+      '<span class="muted">' + (isFullDay(k) && done ? '¡Día completo! 🎉' : pct + '%') + '</span></div>' +
       '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><span style="width:' + pct + '%"></span></div></div>';
 
     h += '<ol class="meals">' + meals.map(function (m) { return mealItem(k, m, next); }).join('') + '</ol>';
@@ -314,28 +350,46 @@
     var rid = recipeId(k, m.id), r = RECIPE[rid], t = mealTime(m.id);
     var clock = '<span class="meal-clock">' + t + '</span>';
     var mc = ' style="--mc:var(--m-' + m.id + ')"';
+    var meds = medsFor(k, m.id);
     if (isSkipped(k, m)) {
       return '<li class="meal is-skipped"><article class="meal-card"' + mc + '><div class="meal-main">' +
         '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span><span class="badge warn">No toca hoy</span></div>' +
         '<div class="dish struck"><span class="roundel">' + r.emoji + '</span><span>' + esc(r.name) + '</span></div>' +
         '<p class="small muted">Solo en días de ejercicio. <button class="link-btn" data-action="set-ex" data-v="1">¿Sí hiciste ejercicio?</button></p>' +
-        '</div></article></li>';
+        '</div></article>' + medRows(k, m, meds, true) + '</li>';
     }
-    var done = isDone(k, m.id), isNext = next && next.id === m.id;
+    var mk = markOf(k, m.id), done = mk === true, missed = mk === false, isNext = next && next.id === m.id;
     var badges = (isNext ? '<span class="badge primary">' + (next.now ? 'Toca ahora' : 'Siguiente') + '</span>' : '') +
+      (missed ? '<span class="badge miss">No cumplí</span>' : '') +
       (m.trainingOnly ? '<span class="badge">Antes de entrenar</span>' : '') +
       (rid !== defaultRecipe(k, m.id) ? '<span class="badge">Cambiado</span>' : '') +
       (r.extra ? '<span class="badge">Idea extra</span>' : '');
-    return '<li class="meal' + (done ? ' is-done' : '') + (isNext ? ' is-next' : '') + '">' +
+    return '<li class="meal' + (done ? ' is-done' : '') + (missed ? ' is-missed' : '') + (isNext ? ' is-next' : '') + '">' +
       '<article class="meal-card"' + mc + '><div class="meal-main">' +
       '<div class="meal-top">' + clock + '<span class="meal-name">' + m.name + '</span>' + badges + '</div>' +
       '<button class="dish" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"><span class="roundel">' + r.emoji + '</span><span class="dish-name">' + esc(r.name) + '</span>' + icon('right', 'ic-sm') + '</button>' +
       eqChips(m.eq) +
       '<div class="meal-actions"><button class="chip-btn" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '">' + icon('book', 'ic-sm') + ' Ver receta</button>' +
       '<button class="chip-btn" data-action="open-swap" data-k="' + k + '" data-meal="' + m.id + '">' + icon('swap', 'ic-sm') + ' Cambiar</button></div>' +
-      '</div>' +
-      '<button class="check" role="checkbox" aria-checked="' + done + '" aria-label="' + (done ? 'Desmarcar ' : 'Marcar como comido: ') + m.name + '" data-action="toggle-done" data-k="' + k + '" data-meal="' + m.id + '">' + icon('check') + '</button>' +
-      '</article></li>';
+      '</div>' + markBtns(mk, m.name, 'data-action="mark" data-k="' + k + '" data-meal="' + m.id + '"', '') +
+      '</article>' + medRows(k, m, meds, false) + '</li>';
+  }
+  // Botones ✓ / ✗: tocar el que ya está marcado lo desmarca
+  function markBtns(mk, label, attrs, cls) {
+    return '<div class="mark' + (cls ? ' ' + cls : '') + '" role="group" aria-label="¿Cumpliste? ' + label + '">' +
+      '<button class="mark-btn yes" aria-pressed="' + (mk === true) + '" ' + attrs + ' data-v="1" aria-label="Sí cumplí: ' + label + '" title="Sí cumplí">' + icon('check') + '</button>' +
+      '<button class="mark-btn no" aria-pressed="' + (mk === false) + '" ' + attrs + ' data-v="0" aria-label="No cumplí: ' + label + '" title="No cumplí">' + icon('x') + '</button></div>';
+  }
+  function medRows(k, m, meds, skipped) {
+    if (!meds.length) return '';
+    return '<ul class="plain tomas" style="--mc:var(--m-' + m.id + ')">' + meds.map(function (md) {
+      var mm = medMark(k, md.id), name = esc(md.name); // el nombre lo escribe la usuaria: siempre escapado
+      return '<li class="toma' + (mm === true ? ' is-done' : mm === false ? ' is-missed' : '') + '">' +
+        '<span class="toma-ic">' + icon('pill') + '</span><span class="toma-txt"><b>' + name + '</b><span class="small muted">' +
+        (skipped ? 'A las ' + mealTime(m.id) + ', aunque hoy no toca pre-entreno' : 'Con tu ' + m.name.toLowerCase()) +
+        (mm === false ? ' · <b class="miss-text">no cumplí</b>' : '') + '</span></span>' +
+        markBtns(mm, name, 'data-action="mark-med" data-k="' + k + '" data-id="' + md.id + '"', 'sm') + '</li>';
+    }).join('') + '</ul>';
   }
 
   /* ---------------- Vista: Semana ---------------- */
@@ -368,10 +422,12 @@
         '<header class="day-card-head"><button class="day-link" data-action="goto-day" data-k="' + k + '"><b>' + DAY_NAMES[wd(d)] + '</b> <span class="muted">' + d.getDate() + ' ' + MONTHS_ABBR[d.getMonth()] + '</span>' + (k === tk ? ' <span class="badge primary">Hoy</span>' : '') + '</button>' +
         '<button class="pill ' + (train ? 'pill-train' : 'pill-rest') + '" data-action="toggle-ex" data-k="' + k + '" aria-label="Cambiar a ' + (train ? 'descanso' : 'día de ejercicio') + '">' + icon(train ? 'dumbbell' : 'moon', 'ic-sm') + (train ? 'Ejercicio' : 'Descanso') + '</button></header>' +
         '<ul class="mini-meals">' + sortedMeals().map(function (m) {
-          var r = RECIPE[recipeId(k, m.id)], sk = isSkipped(k, m), dn = isDone(k, m.id);
-          return '<li><button style="--mc:var(--m-' + m.id + ')" class="mini' + (sk ? ' is-skipped' : '') + (dn ? ' is-done' : '') + '" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"' + (sk ? ' title="No toca: día de descanso"' : '') + '>' +
+          var r = RECIPE[recipeId(k, m.id)], sk = isSkipped(k, m), dn = isDone(k, m.id), ms = isMissed(k, m.id);
+          var meds = medsFor(k, m.id), medTitle = meds.map(function (md) { return md.name; }).join(', ');
+          return '<li><button style="--mc:var(--m-' + m.id + ')" class="mini' + (sk ? ' is-skipped' : '') + (dn ? ' is-done' : '') + (ms ? ' is-missed' : '') + '" data-action="open-recipe" data-id="' + r.id + '" data-k="' + k + '" data-meal="' + m.id + '"' + (sk ? ' title="No toca: día de descanso"' : '') + '>' +
             '<span class="t">' + mealTime(m.id) + '</span><span class="n"><span class="emoji">' + r.emoji + '</span> ' + esc(r.name) + '</span>' +
-            (dn ? icon('check', 'ic-sm ok') : '') + '</button></li>';
+            (meds.length ? '<span class="mini-med" title="' + esc(medTitle) + '">' + icon('pill', 'ic-sm') + '<span class="sr-only">' + esc(medTitle) + '</span></span>' : '') +
+            (dn ? icon('check', 'ic-sm ok') : ms ? icon('x', 'ic-sm miss') : '') + '</button></li>';
         }).join('') + '</ul></article>';
     }).join('') + '</div></div>';
     return h;
@@ -496,6 +552,7 @@
       accordion('eq', icon('swap') + 'Equivalentes veganos', eqHtml()) +
       accordion('tips', icon('leaf') + 'Tips veganos', tipsHtml()) +
       accordion('ajustes', icon('sliders') + 'Ajustes', settingsHtml()) +
+      accordion('tomas', icon('pill') + 'Vitaminas y medicamentos', medsHtml()) +
       accordion('avisos', icon('bell') + 'Recordatorios', remindHtml()) +
       accordion('respaldo', icon('cassette') + 'Respaldo y otros equipos', backupHtml()) +
       accordion('instalar', icon('download') + 'Instalar en tus dispositivos', installHtml()) +
@@ -562,9 +619,50 @@
         return '<label class="time-row"><span>' + m.name + '</span><input type="time" value="' + mealTime(m.id) + '" data-input="time" data-meal="' + m.id + '"></label>';
       }).join('') + '</div>' +
       '<div><button class="link-btn" data-action="reset-times">Restaurar horarios del plan</button></div>' +
+      '<p class="small">' + icon('pill', 'ic-xs') + ' <button class="link-btn" data-action="goto-sec" data-sec="tomas">Vitaminas y medicamentos</button>: elige con qué comida va cada uno.</p>' +
       '<p class="small">' + icon('bell', 'ic-xs') + ' ¿Quieres avisos a estas horas? <button class="link-btn" data-action="goto-sec" data-sec="avisos">Agrégalos a tu calendario</button></p>' +
       '<h4 class="sec-title">Tus datos</h4><p class="small muted">Todo se guarda solo en este dispositivo; nada se envía a internet. <button class="link-btn" data-action="goto-sec" data-sec="respaldo">Guarda un respaldo</button> para no perderlo.</p>' +
       '<div><button class="btn danger" data-action="reset-all">Borrar marcas y cambios de platillos</button></div>';
+  }
+  /* Vitaminas y medicamentos: se guardan solo en este dispositivo */
+  var WHEN = [['all', 'Todos los días'], ['train', 'Solo días de ejercicio']];
+  function mealOptions(sel) {
+    return sortedMeals().map(function (m) { return '<option value="' + m.id + '"' + (m.id === sel ? ' selected' : '') + '>' + m.name + ' (' + mealTime(m.id) + ')</option>'; }).join('');
+  }
+  function whenOptions(sel) {
+    return WHEN.map(function (w) { return '<option value="' + w[0] + '"' + (w[0] === sel ? ' selected' : '') + '>' + w[1] + '</option>'; }).join('');
+  }
+  function medsHtml() {
+    var meds = S.settings.meds || [];
+    return '<p>Cada una aparece en Hoy junto a su comida, con ' + icon('check', 'ic-xs') + ' / ' + icon('x', 'ic-xs') + ' para marcar si la tomaste, y también en tus recordatorios y en el resumen.</p>' +
+      (meds.length ? '<ul class="plain med-list">' + meds.map(function (md) {
+        var name = esc(md.name);
+        return '<li class="med-row" style="--mc:var(--m-' + md.meal + ')"><div class="med-head"><span class="toma-ic">' + icon('pill') + '</span><b>' + name + '</b>' +
+          '<button class="icon-btn sm" data-action="med-del" data-id="' + md.id + '" aria-label="Quitar ' + name + '">' + icon('x') + '</button></div>' +
+          '<div class="med-fields"><label><span class="small muted">Con</span><select data-input="med-meal" data-id="' + md.id + '" aria-label="Comida de ' + name + '">' + mealOptions(md.meal) + '</select></label>' +
+          '<label><span class="small muted">Días</span><select data-input="med-when" data-id="' + md.id + '" aria-label="Días de ' + name + '">' + whenOptions(md.when) + '</select></label></div></li>';
+      }).join('') + '</ul>' : '<p class="small muted">No tienes ninguna todavía.</p>') +
+      '<h4 class="sec-title">Agregar</h4><div class="med-form">' +
+      '<input type="text" id="med-name" maxlength="40" placeholder="Nombre (ej.: Omega 3)" aria-label="Nombre de la vitamina o medicamento" autocomplete="off">' +
+      '<div class="med-fields"><label><span class="small muted">Con</span><select id="med-meal" aria-label="Con qué comida">' + mealOptions('des') + '</select></label>' +
+      '<label><span class="small muted">Días</span><select id="med-when" aria-label="Qué días">' + whenOptions('all') + '</select></label></div>' +
+      '<div><button class="btn primary" data-action="med-add">' + icon('pill') + ' Agregar</button></div></div>' +
+      '<p class="small muted">Solo es un recordatorio: la dosis y el horario los indica tu médico. Estos datos no salen de tu dispositivo (salvo en tu respaldo o en el resumen que tú compartas).</p>';
+  }
+  function addMed() {
+    var inp = document.getElementById('med-name'), name = (inp && inp.value || '').trim().slice(0, 40);
+    if (!name) { toast('Escribe el nombre'); if (inp) inp.focus(); return; }
+    var meal = document.getElementById('med-meal').value, when = document.getElementById('med-when').value;
+    S.settings.meds = (S.settings.meds || []).concat([{ id: 'm' + Date.now().toString(36), name: name, meal: MEAL[meal] ? meal : 'des', when: when === 'train' ? 'train' : 'all' }]);
+    S.settings.medsSeen = true;
+    save(); render();
+    toast(name + ': con tu ' + MEAL[meal].name.toLowerCase());
+  }
+  function delMed(id) {
+    var md = (S.settings.meds || []).filter(function (x) { return x.id === id; })[0];
+    if (!md || !window.confirm('¿Quitar ' + md.name + ' de tu lista?')) return;
+    S.settings.meds = S.settings.meds.filter(function (x) { return x.id !== id; });
+    save(); render();
   }
   function shortDate(k) { var d = fromKey(k); return d.getDate() + ' ' + MONTHS_ABBR[d.getMonth()] + ' ' + d.getFullYear(); }
 
@@ -593,28 +691,38 @@
     var until = start <= fromKey(D.PLAN.review) ? ';UNTIL=' + D.PLAN.review.replace(/-/g, '') + 'T235959' : '';
     var stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NutriJabon//Plan vegano//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:NutriJabón'];
+    var meds = S.settings.meds || [];
     MEALS.forEach(function (m) {
+      // Agrupa los días de la semana que comparten platillo y tomas (vitaminas/medicamentos)
       var groups = {}, order = [];
       for (var i = 0; i < 7; i++) {
-        if (m.trainingOnly && S.settings.trainDays.indexOf(i) === -1) continue;
-        var rid = D.WEEK[m.id][i];
-        if (!groups[rid]) { groups[rid] = []; order.push(rid); }
-        groups[rid].push(i);
+        var train = S.settings.trainDays.indexOf(i) !== -1, eats = !m.trainingOnly || train;
+        var dm = meds.filter(function (md) { return md.meal === m.id && (md.when === 'all' || train); });
+        if (!eats && !dm.length) continue;
+        var key = (eats ? D.WEEK[m.id][i] : '-') + '|' + dm.map(function (md) { return md.id; }).join(',');
+        if (!groups[key]) { groups[key] = { days: [], rid: eats ? D.WEEK[m.id][i] : null, meds: dm }; order.push(key); }
+        groups[key].days.push(i);
       }
       var t = mealTime(m.id).split(':').map(Number);
-      order.forEach(function (rid) {
-        var days = groups[rid], r = RECIPE[rid], first = start;
+      order.forEach(function (key) {
+        var g = groups[key], days = g.days, r = g.rid && RECIPE[g.rid], first = start;
         while (days.indexOf(wd(first)) === -1) first = addDays(first, 1);
         var s = new Date(first.getFullYear(), first.getMonth(), first.getDate(), t[0], t[1]);
         var by = days.map(function (i) { return ICS_DAYS[i]; });
-        var desc = 'Toca: ' + eqList(m.eq).join(', ') + '.' + (m.trainingOnly ? '\nSolo en tus días de ejercicio.' : '') +
-          '\nPuedes cambiarlo por otro platillo con las mismas porciones.' + (url ? '\nReceta: ' + url : '');
-        L.push('BEGIN:VEVENT', 'UID:nj-' + m.id + '-' + by.join('') + '@nutrijabon', 'DTSTAMP:' + stamp,
+        var medNames = g.meds.map(function (md) { return md.name; }).join(', ');
+        var title = r ? r.emoji + ' ' + m.name + ': ' + r.name + (medNames ? ' · 💊 ' + medNames : '')
+          : '💊 ' + medNames + ' (hora de tu ' + m.name.toLowerCase() + ')';
+        var desc = r
+          ? 'Toca: ' + eqList(m.eq).join(', ') + '.' + (medNames ? '\nToma también: ' + medNames + '.' : '') + (m.trainingOnly ? '\nSolo en tus días de ejercicio.' : '') +
+            '\nPuedes cambiarlo por otro platillo con las mismas porciones.'
+          : 'Hoy no toca ' + m.name.toLowerCase() + ', pero sí: ' + medNames + '.';
+        if (url) desc += '\nMarca si cumpliste en NutriJabón: ' + url;
+        L.push('BEGIN:VEVENT', 'UID:nj-' + m.id + '-' + by.join('') + (g.meds.length ? '-' + g.meds.map(function (md) { return md.id; }).join('') : '') + '@nutrijabon', 'DTSTAMP:' + stamp,
           'DTSTART:' + icsLocal(s), 'DTEND:' + icsLocal(new Date(s.getTime() + 30 * 6e4)),
           'RRULE:FREQ=WEEKLY;BYDAY=' + by.join(',') + until,
-          'SUMMARY:' + icsEsc(r.emoji + ' ' + m.name + ': ' + r.name), 'DESCRIPTION:' + icsEsc(desc),
+          'SUMMARY:' + icsEsc(title), 'DESCRIPTION:' + icsEsc(desc),
           'TRANSP:TRANSPARENT', 'CATEGORIES:NutriJabón',
-          'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(m.name + ': ' + r.name), 'TRIGGER:' + (lead ? '-PT' + lead + 'M' : 'PT0S'), 'END:VALARM',
+          'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + icsEsc(title.replace(/^\S+ /, '')), 'TRIGGER:' + (lead ? '-PT' + lead + 'M' : 'PT0S'), 'END:VALARM',
           'END:VEVENT');
       });
     });
@@ -648,18 +756,18 @@
       mac: 'Se descarga un archivo: ábrelo y elige en qué calendario guardarlo.'
     };
     var train = S.settings.trainDays.map(function (i) { return DAY_ABBR[i].toLowerCase(); });
-    return '<p>Agrega tus comidas a tu calendario: te avisa a la hora de cada una con el platillo que toca ese día. El pre-entreno solo aparece en tus días de ejercicio' +
+    return '<p>Agrega tus comidas a tu calendario: te avisa a la hora de cada una con el platillo que toca ese día y las vitaminas o medicamentos que van con ella. El pre-entreno solo aparece en tus días de ejercicio' +
       (train.length ? ' (' + train.join(', ') + ')' : '; ahora no tienes ninguno marcado') + '.</p>' +
       '<label class="time-row lead-row"><span>Avisarme</span><select data-input="lead" aria-label="Cuándo avisarme">' + LEADS.map(function (l) {
         return '<option value="' + l[0] + '"' + (l[0] === lead ? ' selected' : '') + '>' + l[1] + '</option>';
       }).join('') + '</select></label>' +
       '<div><button class="btn primary" data-action="add-calendar">' + icon('bell') + ' Agregar a mi calendario</button></div>' +
       (notes[os] ? '<div class="banner info">' + icon('info') + '<div>' + notes[os] + '</div></div>' : '') +
-      '<p class="small muted">Usa tus horarios de Ajustes y dura hasta tu revisión del ' + rev + '. Si cambias horarios o días de ejercicio, borra los avisos anteriores y vuelve a agregarlos. Los cambios de un solo día no llegan al calendario.</p>';
+      '<p class="small muted">Usa tus horarios de Ajustes y dura hasta tu revisión del ' + rev + '. Si cambias horarios, días de ejercicio o tus vitaminas y medicamentos, borra los avisos anteriores y vuelve a agregarlos. Los cambios de un solo día no llegan al calendario.</p>';
   }
 
   /* ---------------- Respaldo: pasar tus datos a otro equipo ---------------- */
-  var KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+  var KEY_RE = /^\d{4}-\d{2}-\d{2}$/, MED_ID = /^[a-z0-9]{1,20}$/;
   function backupName() { return 'NutriJabon-respaldo-' + keyOf(today()) + '.json'; }
   function backupText() { return JSON.stringify({ app: 'nutrijabon', v: 1, exported: new Date().toISOString(), data: S }); }
   function markBackup() { S.settings.lastBackup = keyOf(today()); save(); render(); }
@@ -673,7 +781,7 @@
   }
   function isObj(x) { return !!x && typeof x === 'object' && !Array.isArray(x); }
   function cleanData(d) { // solo acepta datos con la forma esperada
-    var st = isObj(d.settings) ? d.settings : {}, out = { settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), days: {}, shop: {} };
+    var st = isObj(d.settings) ? d.settings : {}, out = { settings: defaults(), days: {}, shop: {} };
     if (Array.isArray(st.trainDays)) {
       out.settings.trainDays = [0, 1, 2, 3, 4, 5, 6].filter(function (i) { return st.trainDays.indexOf(i) !== -1; });
     }
@@ -683,6 +791,14 @@
     if (LEADS.some(function (l) { return l[0] === st.remindLead; })) out.settings.remindLead = st.remindLead;
     if (KEY_RE.test(st.lastBackup)) out.settings.lastBackup = st.lastBackup;
     if (typeof st.notes === 'string' && st.notes) out.settings.notes = st.notes.slice(0, 2000);
+    if (Array.isArray(st.meds)) {
+      out.settings.meds = st.meds.filter(function (md) {
+        return isObj(md) && MED_ID.test(md.id) && typeof md.name === 'string' && md.name.trim() && MEAL[md.meal];
+      }).slice(0, 20).map(function (md) {
+        return { id: md.id, name: md.name.trim().slice(0, 40), meal: md.meal, when: md.when === 'train' ? 'train' : 'all' };
+      });
+    }
+    if (st.medsSeen === true) out.settings.medsSeen = true;
     out.settings.onboarded = true;
     if (isObj(d.days)) Object.keys(d.days).forEach(function (k) {
       var r = d.days[k], o = {};
@@ -692,7 +808,8 @@
         var x = RECIPE[r.sw[m]];
         if (MEAL[m] && x && x.meal === m) (o.sw = o.sw || {})[m] = x.id;
       });
-      if (isObj(r.done)) Object.keys(r.done).forEach(function (m) { if (MEAL[m] && r.done[m] === true) (o.done = o.done || {})[m] = true; });
+      if (isObj(r.done)) Object.keys(r.done).forEach(function (m) { if (MEAL[m] && typeof r.done[m] === 'boolean') (o.done = o.done || {})[m] = r.done[m]; });
+      if (isObj(r.tk)) Object.keys(r.tk).forEach(function (id) { if (MED_ID.test(id) && typeof r.tk[id] === 'boolean') (o.tk = o.tk || {})[id] = r.tk[id]; });
       if (Object.keys(o).length) out.days[k] = o;
     });
     if (isObj(d.shop)) Object.keys(d.shop).forEach(function (wk) {
@@ -766,7 +883,7 @@
       actions = skipped
         ? '<p class="small muted center grow">Este día es de descanso: el pre-entreno no toca.</p>'
         : '<button class="btn" data-action="open-swap" data-k="' + ctx.k + '" data-meal="' + r.meal + '">' + icon('swap') + ' Cambiar</button>' +
-          '<button class="btn primary" data-action="toggle-done" data-k="' + ctx.k + '" data-meal="' + r.meal + '" data-close="1">' + icon('check') + (done ? ' Desmarcar' : ' Ya lo comí') + '</button>';
+          '<button class="btn primary" data-action="mark" data-v="1" data-k="' + ctx.k + '" data-meal="' + r.meal + '" data-close="1">' + icon('check') + (done ? ' Desmarcar' : ' Ya lo comí') + '</button>';
     } else if (ctx.mode === 'choose') {
       actions = '<button class="btn" data-action="open-swap" data-k="' + ctx.k + '" data-meal="' + r.meal + '">' + icon('left') + ' Opciones</button>' +
         '<button class="btn primary" data-action="choose-swap" data-k="' + ctx.k + '" data-meal="' + r.meal + '" data-id="' + r.id + '">' + icon('check') + ' Elegir este</button>';
@@ -827,7 +944,12 @@
       .sort(function (a, b) { return b.n - a.n || a.r.name.localeCompare(b.r.name, 'es'); }).slice(0, 5);
     return { all: all, weeks: weeks, swaps: swaps, streak: streak(), started: t >= start };
   }
-  function countText(x) { return x.done + ' de ' + x.due + (x.due ? ' · ' + Math.round(x.done / x.due * 100) + '%' : ''); }
+  function countText(x) {
+    if (!x.due) return 'aún no toca';
+    return x.done + ' de ' + x.due + (x.due ? ' · ' + Math.round(x.done / x.due * 100) + '%' : '') + (x.miss ? ' · ' + x.miss + ' no' : '');
+  }
+  function medLabel(md) { return md.name + ' (con ' + MEAL[md.meal].name.toLowerCase() + (md.when === 'train' ? ', días de ejercicio' : '') + ')'; }
+  function medsInReport(a) { return (S.settings.meds || []).filter(function (md) { return a.meds[md.id] && a.meds[md.id].due; }); }
   function barHtml(x, label) {
     var p = x.due ? Math.round(x.done / x.due * 100) : 0;
     return '<div class="bar" role="progressbar" aria-label="' + label + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p + '"><span style="width:' + p + '%"></span></div>';
@@ -843,15 +965,20 @@
     var h = head + '<div class="sheet-content">' +
       '<p class="small muted">Plan vegano del ' + rangeText(a.from, a.to) + ' ' + a.to.getFullYear() + ' · ' + a.days + (a.days === 1 ? ' día' : ' días') +
       '. Se basa en lo que marcaste en este dispositivo.</p>' +
-      '<div class="stats">' + statTile('yellow', pctText(a), 'de las comidas marcadas') +
+      '<div class="stats">' + statTile('yellow', pctText(a), 'de las comidas cumplidas') +
       statTile('green', a.full + '<small>/' + a.days + '</small>', 'días completos') +
       statTile('pink', R.streak, R.streak === 1 ? 'día seguido' : 'días seguidos') + '</div>' +
-      '<p class="small">' + a.done + ' de ' + a.due + ' comidas que ya tocaban · ' + a.train + ' ' + (a.train === 1 ? 'día' : 'días') + ' de ejercicio y ' + (a.days - a.train) + ' de descanso.</p>' +
+      '<p class="small">Comidas que ya tocaban: ' + markSummary(a) + ' · ' + a.train + ' ' + (a.train === 1 ? 'día' : 'días') + ' de ejercicio y ' + (a.days - a.train) + ' de descanso.</p>' +
       '<h3 class="sec-title">Por tiempo de comida</h3><ul class="plain meter-list">' + sortedMeals().map(function (m) {
         var x = a.meal[m.id];
         return '<li style="--mc:var(--m-' + m.id + ')"><div class="meter-top"><b>' + m.name + '</b>' + (m.trainingOnly ? ' <span class="badge">días de ejercicio</span>' : '') +
           '<span class="muted">' + countText(x) + '</span></div>' + barHtml(x, m.name) + '</li>';
       }).join('') + '</ul>' +
+      (medsInReport(a).length ? '<h3 class="sec-title">Vitaminas y medicamentos</h3><ul class="plain meter-list">' + medsInReport(a).map(function (md) {
+        var x = a.meds[md.id];
+        return '<li style="--mc:var(--m-' + md.meal + ')"><div class="meter-top"><b>' + esc(md.name) + '</b> <span class="badge">con ' + MEAL[md.meal].name.toLowerCase() + '</span>' +
+          '<span class="muted">' + countText(x) + '</span></div>' + barHtml(x, esc(md.name)) + '</li>';
+      }).join('') + '</ul>' : '') +
       '<h3 class="sec-title">Por semana</h3><ul class="plain meter-list weeks">' + R.weeks.map(function (w) {
         var lbl = rangeText(w.from, w.to);
         return '<li><div class="meter-top"><b>' + lbl + '</b><span class="muted">' + countText(w) + '</span></div>' + barHtml(w, lbl) + '</li>';
@@ -872,10 +999,15 @@
   function reportText() {
     var R = reportData(), a = R.all;
     var L = ['Resumen NutriJabón · plan vegano', 'Del ' + rangeText(a.from, a.to) + ' ' + a.to.getFullYear() + ' (' + a.days + (a.days === 1 ? ' día' : ' días') + ')', '',
-      'Comidas marcadas: ' + a.done + ' de ' + a.due + (a.due ? ' (' + pctText(a) + ')' : ''),
+      'Comidas: ' + markSummary(a) + (a.due ? ' (' + pctText(a) + ')' : ''),
       'Días completos: ' + a.full + ' de ' + a.days + ' · Racha actual: ' + R.streak,
       'Días de ejercicio: ' + a.train + ' · Descanso: ' + (a.days - a.train), '', 'Por tiempo de comida:'];
     sortedMeals().forEach(function (m) { L.push('• ' + m.name + (m.trainingOnly ? ' (días de ejercicio)' : '') + ': ' + countText(a.meal[m.id])); });
+    var meds = medsInReport(a);
+    if (meds.length) {
+      L.push('', 'Vitaminas y medicamentos:');
+      meds.forEach(function (md) { L.push('• ' + medLabel(md) + ': ' + countText(a.meds[md.id])); });
+    }
     L.push('', 'Por semana:');
     R.weeks.forEach(function (w) { L.push('• ' + rangeText(w.from, w.to) + ': ' + countText(w)); });
     if (R.swaps.length) {
@@ -918,14 +1050,17 @@
     render();
     toast(v ? 'Día de ejercicio: con pre-entreno' : 'Día de descanso: sin pre-entreno');
   }
-  function toggleDone(k, mealId) {
+  // v: true = sí cumplí, false = no cumplí; repetir la misma marca la quita
+  function setMark(field, k, id, v) {
+    var wasFull = isFullDay(k);
     setDay(k, function (r) {
-      r.done = r.done || {};
-      if (r.done[mealId]) delete r.done[mealId]; else r.done[mealId] = true;
+      r[field] = r[field] || {};
+      if (r[field][id] === v) delete r[field][id]; else r[field][id] = v;
     });
+    if (sheet) renderSheet();
     render();
-    var active = MEALS.filter(function (m) { return !isSkipped(k, m); });
-    if (isDone(k, mealId) && active.every(function (m) { return isDone(k, m.id); })) toast('¡Día completo! 🎉');
+    if (v && !wasFull && isFullDay(k)) toast('¡Día completo! 🎉');
+    else if (v === false && (field === 'tk' ? medMark(k, id) : markOf(k, id)) === false) toast('Anotado como no cumplido');
   }
   function chooseSwap(k, mealId, id) {
     var def = defaultRecipe(k, mealId);
@@ -985,7 +1120,11 @@
       case 'set-ex': setEx(currentKey(), ds.v === '1'); break;
       case 'reset-ex': setDay(currentKey(), function (r) { delete r.ex; }); render(); break;
       case 'toggle-ex': setEx(ds.k, !isTraining(ds.k)); break;
-      case 'toggle-done': toggleDone(ds.k, ds.meal); if (ds.close) closeSheet(); break;
+      case 'mark': if (ds.close) closeSheet(); setMark('done', ds.k, ds.meal, ds.v === '1'); break;
+      case 'mark-med': setMark('tk', ds.k, ds.id, ds.v === '1'); break;
+      case 'meds-seen': S.settings.medsSeen = true; save(); render(); break;
+      case 'med-add': addMed(); break;
+      case 'med-del': delMed(ds.id); break;
       case 'open-recipe': openSheet('recipe', [ds.id, ds.k ? { mode: 'day', k: ds.k } : { mode: 'browse' }]); break;
       case 'preview-recipe': openSheet('recipe', [ds.id, { mode: 'choose', k: ds.k }]); break;
       case 'open-swap': openSheet('swap', [ds.k, ds.meal]); break;
@@ -1049,6 +1188,15 @@
       if (!el.value) return;
       if (el.value === MEAL[id].time) delete S.settings.times[id]; else S.settings.times[id] = el.value;
       save();
+    } else if (t === 'med-meal' || t === 'med-when') {
+      (S.settings.meds || []).forEach(function (md) {
+        if (md.id !== el.dataset.id) return;
+        if (t === 'med-meal' && MEAL[el.value]) md.meal = el.value;
+        if (t === 'med-when') md.when = el.value === 'train' ? 'train' : 'all';
+      });
+      save();
+      var row = el.closest('.med-row');
+      if (row && t === 'med-meal') row.style.setProperty('--mc', 'var(--m-' + el.value + ')');
     } else if (t === 'lead') {
       S.settings.remindLead = +el.value; save();
     } else if (t === 'backup') {
@@ -1058,6 +1206,7 @@
     }
   }
   function gotoSection(id) {
+    if (id === 'tomas' && !S.settings.medsSeen) { S.settings.medsSeen = true; save(); }
     closeSheet(); ui.open[id] = true; setTab('guia');
     var sec = document.getElementById('sec-' + id);
     if (sec) sec.scrollIntoView({ block: 'start' });
@@ -1082,7 +1231,10 @@
       var id = e.target && e.target.dataset && e.target.dataset.acc;
       if (id) ui.open[id] = e.target.open;
     }, true);
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet) closeSheet(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sheet) closeSheet();
+      if (e.key === 'Enter' && e.target && e.target.id === 'med-name') { e.preventDefault(); addMed(); }
+    });
     window.addEventListener('popstate', function () { if (sheet) closeSheet(true); });
     document.addEventListener('visibilitychange', function () { if (!document.hidden && !sheet) render(); });
     setInterval(function () { if (ui.tab === 'hoy' && !sheet && !document.hidden) render(); }, 60000);
