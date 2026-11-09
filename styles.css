@@ -552,6 +552,22 @@ main {
 .import-opt .small { color: var(--text-2); line-height: 1.4; }
 .import-opt.is-main { background: var(--ok-bg); }
 .import-opt:active { transform: translate(3px, 3px); box-shadow: none; }
+/* ¿Cómo te sentiste? */
+.checkin { display: flex; flex-direction: column; gap: 12px; }
+.checkin .card-title .ic { width: 24px; height: 24px; }
+.checkin > .small { margin-top: -6px; }
+.ck-row { display: flex; flex-direction: column; gap: 7px; padding-top: 10px; border-top: 2px dashed var(--line-soft); }
+.ck-q { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.ck-q b { font-size: 16px; }
+.ck-val { margin-left: auto; font-size: 13px; font-weight: 850; padding: 0 9px; border-radius: 999px; background: var(--ckc); color: var(--ink); border: 1.5px solid var(--line); }
+.ck-val:empty { display: none; }
+.ck-opts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.ck-opt { height: 46px; border-radius: 14px; border: 2px solid var(--line); background: var(--surface); font-size: 24px; line-height: 1; display: grid; place-items: center; filter: grayscale(.6); opacity: .75; transition: transform .08s; }
+.ck-opt[aria-checked="true"] { background: var(--ckc); filter: none; opacity: 1; box-shadow: 2px 2px 0 var(--hard); transform: translateY(-1px); }
+.ck-opt:active { transform: scale(.95); }
+.ck-note { display: flex; flex-direction: column; gap: 4px; }
+.ck-note textarea { width: 100%; resize: vertical; padding: 10px 12px; border: 2px solid var(--line); border-radius: 14px; background: var(--surface-2); color: var(--text); font: inherit; font-size: 15px; }
+.feel-notes { display: flex; flex-direction: column; gap: 6px; font-size: 14.5px; }
 /* Resumen semanal */
 .recap-card { display: flex; flex-direction: column; gap: 12px; }
 .recap-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

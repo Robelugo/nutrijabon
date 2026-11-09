@@ -165,6 +165,7 @@
     if (r.tk && !Object.keys(r.tk).length) delete r.tk;
     if (r.why && !Object.keys(r.why).length) delete r.why;
     if (r.twhy && !Object.keys(r.twhy).length) delete r.twhy;
+    if (r.ck && !Object.keys(r.ck).length) delete r.ck;
     if (Object.keys(r).length) S.days[k] = r; else delete S.days[k];
     save();
   }
@@ -348,6 +349,8 @@
     if (R.best && R.best.p > 0) lines.push('<li>⭐ <span>Lo mejor: <b>' + R.best.m.name + '</b> (' + R.best.x.done + ' de ' + R.best.x.due + ')</span></li>');
     if (R.worst && R.worst !== R.best && R.worst.p < 1) lines.push('<li>🧗 <span>Lo que más costó: <b>' + R.worst.m.name + '</b> (' + R.worst.x.done + ' de ' + R.worst.x.due + ')</span></li>');
     if (R.top) lines.push('<li>💬 <span>Razón más común: <b>' + lowerFirst(REASON_TEXT.meal[R.top[0]]) + '</b> (' + R.top[1] + (R.top[1] === 1 ? ' vez' : ' veces') + ')</span></li>');
+    var C = checkStats(R.mon, addDays(R.mon, 6));
+    if (C.days >= 3) lines.push('<li>🌡️ <span>' + CHECKS.map(function (x) { var a = avg(C.f[x.id]); return x.name + ' <b>' + (a === null ? '—' : a.toFixed(1)) + '</b>'; }).join(' · ') + ' <span class="muted">(de 5, ' + C.days + ' días)</span></span></li>');
     var T = R.top && R.top[1] >= 2 && RECAP_TIPS[R.top[0]];
     if (T) {
       tip = T[0];
@@ -378,6 +381,76 @@
       '<div class="sheet-titles"><div class="eyebrow">Resumen semanal</div><h2 id="sheet-title">' + rangeText(mon, addDays(mon, 6)) + '</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
       '<div class="sheet-content">' + (R ? '<p class="small muted">Según lo que marcaste esa semana.</p>' + recapBody(R) : '<p>Esa semana tiene muy pocos días con tu plan para hacer un resumen.</p>') + '</div>';
+  }
+
+  /* ---------------- ¿Cómo te sentiste? ----------------
+   * Registro diario rápido (1–5) de energía, hambre entre comidas y digestión, más una nota.
+   * Se guarda en days[k].ck = { e, h, d, n } y sale en el resumen para la revisión. */
+  var CHECKS = [
+    { id: 'e', name: 'Energía', q: '¿Cómo estuvo tu energía?', color: 'yellow', emo: ['😴', '🥱', '🙂', '😀', '⚡'], lab: ['Muy baja', 'Baja', 'Normal', 'Buena', 'Mucha'] },
+    { id: 'h', name: 'Hambre', q: '¿Cuánta hambre tuviste entre comidas?', color: 'orange', emo: ['😌', '🙂', '😐', '😋', '😫'], lab: ['Nada', 'Poca', 'Normal', 'Bastante', 'Mucha'] },
+    { id: 'd', name: 'Digestión', q: '¿Cómo estuvo tu digestión?', color: 'green', emo: ['😣', '😕', '😐', '🙂', '😊'], lab: ['Muy mal', 'Mal', 'Regular', 'Bien', 'Muy bien'] }
+  ];
+  var CHECK = {}; CHECKS.forEach(function (c) { CHECK[c.id] = c; });
+  function ckOf(k) { return dayRec(k).ck || {}; }
+  function ckDone(k) { var c = ckOf(k); return CHECKS.every(function (x) { return c[x.id]; }); }
+  function checkinCard(k, isToday) {
+    var c = ckOf(k), done = ckDone(k);
+    return '<section class="card checkin" id="checkin"><div class="recap-head"><h3 class="card-title">' + icon('sun') + (isToday ? ' ¿Cómo te sentiste hoy?' : ' ¿Cómo te sentiste ese día?') + '</h3>' +
+      (done ? '<span class="badge primary">Anotado ✓</span>' : '') + '</div>' +
+      '<p class="small muted">Toca una carita en cada una. Te ayuda a contarle a tu nutrióloga cómo vas.</p>' +
+      CHECKS.map(function (x) {
+        var v = c[x.id];
+        return '<div class="ck-row" style="--ckc:var(--' + x.color + ')"><div class="ck-q"><b>' + x.name + '</b> <span class="small muted">' + x.q + '</span>' +
+          '<span class="ck-val">' + (v ? x.lab[v - 1] : '') + '</span></div>' +
+          '<div class="ck-opts" role="radiogroup" aria-label="' + x.name + '">' + x.emo.map(function (e, i) {
+            return '<button role="radio" class="ck-opt" aria-checked="' + (v === i + 1) + '" aria-label="' + x.name + ': ' + x.lab[i] + '" title="' + x.lab[i] + '" data-action="ck" data-k="' + k + '" data-f="' + x.id + '" data-v="' + (i + 1) + '">' + e + '</button>';
+          }).join('') + '</div></div>';
+      }).join('') +
+      '<label class="ck-note"><span class="small muted">Algo más (opcional)</span><textarea rows="2" maxlength="300" data-input="ck-note" data-k="' + k + '" placeholder="Ej.: sentí inflamación después de la comida">' + esc(c.n || '') + '</textarea></label></section>';
+  }
+  function checkinNudge(k) { // de noche, si hoy no lo has llenado
+    if (nowMin() < toMin('20:00') || ckDone(k)) return '';
+    return '<div class="banner info">' + icon('sun') + '<div><b>¿Cómo te sentiste hoy?</b> Anótalo en 10 segundos. <button class="link-btn" data-action="goto-checkin">Ir abajo</button></div></div>';
+  }
+  function setCheck(k, f, v) {
+    setDay(k, function (r) {
+      r.ck = r.ck || {};
+      if (r.ck[f] === v) delete r.ck[f]; else r.ck[f] = v;
+    });
+    var y = window.scrollY; render(); window.scrollTo(0, y);
+    if (ckDone(k) && ckOf(k)[f] === v) toast('¡Gracias! Quedó anotado');
+  }
+  function checkStats(from, to) { // promedios y notas del rango (dentro del plan, hasta hoy)
+    var start = fromKey(D.PLAN.assigned), t = today();
+    if (from < start) from = start;
+    if (to > t) to = t;
+    var out = { days: 0, f: {}, train: {}, rest: {}, low: [], notes: [] };
+    CHECKS.forEach(function (x) { out.f[x.id] = { s: 0, n: 0 }; out.train[x.id] = { s: 0, n: 0 }; out.rest[x.id] = { s: 0, n: 0 }; });
+    for (var d = from; d <= to; d = addDays(d, 1)) {
+      var k = keyOf(d), c = ckOf(k), any = false, tr = isTraining(k);
+      CHECKS.forEach(function (x) {
+        var v = c[x.id]; if (!v) return;
+        any = true; out.f[x.id].s += v; out.f[x.id].n++;
+        var g = tr ? out.train[x.id] : out.rest[x.id]; g.s += v; g.n++;
+      });
+      if (c.d && c.d <= 2) out.low.push(k);
+      if (c.n) out.notes.push({ k: k, n: c.n });
+      if (any) out.days++;
+    }
+    return out;
+  }
+  function avg(g) { return g.n ? g.s / g.n : null; }
+  function avgText(x, g) { var a = avg(g); return a === null ? '—' : a.toFixed(1).replace('.0', '') + ' de 5 · ' + lowerFirst(x.lab[Math.round(a) - 1]); }
+  function checkInsights(C) { // frases cortas con diferencias claras entre días de ejercicio y descanso
+    var out = [];
+    ['h', 'e'].forEach(function (id) {
+      var a = avg(C.train[id]), b = avg(C.rest[id]);
+      if (a === null || b === null || C.train[id].n < 2 || C.rest[id].n < 2 || Math.abs(a - b) < 0.5) return;
+      out.push(CHECK[id].name + ': ' + a.toFixed(1) + ' en días de ejercicio y ' + b.toFixed(1) + ' en descanso.');
+    });
+    if (C.low.length) out.push('Digestión baja (mal o muy mal) en ' + C.low.length + (C.low.length === 1 ? ' día: ' : ' días: ') + listText(C.low.map(function (k) { return shortDate(k).replace(/ \d{4}$/, ''); })) + '.');
+    return out;
   }
 
   /* ---------------- Vista: Hoy ---------------- */
@@ -422,7 +495,7 @@
         '<button class="link-btn" data-action="open-report">Ve tu resumen</button> para llevarlo.</div></div>';
     }
 
-    if (isToday) h += prepBanner() + recapCard();
+    if (isToday) h += prepBanner() + recapCard() + checkinNudge(k);
 
     if (isToday && !S.settings.medsSeen) {
       h += '<div class="banner info">' + icon('pill') + '<div><b>Nuevo:</b> marca ' + icon('check', 'ic-xs') + ' si cumpliste o ' + icon('x', 'ic-xs') +
@@ -436,6 +509,7 @@
       '<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><span style="width:' + pct + '%"></span></div></div>';
 
     h += '<ol class="meals">' + meals.map(function (m) { return mealItem(k, m, next); }).join('') + '</ol>';
+    if (diff <= 0) h += checkinCard(k, isToday);
 
     var tm = addDays(d, 1), tmk = keyOf(tm);
     var prep = sortedMeals().filter(function (m) { return !isSkipped(tmk, m); })
@@ -975,7 +1049,8 @@
           : '💊 ' + medNames + ' (hora de tu ' + m.name.toLowerCase() + ')';
         var desc = r
           ? 'Toca: ' + eqList(m.eq).join(', ') + '.' + (medNames ? '\nToma también: ' + medNames + '.' : '') + (m.trainingOnly ? '\nSolo en tus días de ejercicio.' : '') +
-            '\nPuedes cambiarlo por otro platillo con las mismas porciones.'
+            '\nPuedes cambiarlo por otro platillo con las mismas porciones.' +
+            (m.id === 'cen' ? '\nAl terminar el día, anota en NutriJabón cómo te sentiste (energía, hambre y digestión).' : '')
           : 'Hoy no toca ' + m.name.toLowerCase() + ', pero sí: ' + medNames + '.';
         if (url) desc += '\nMarca si cumpliste en NutriJabón: ' + url;
         L.push('BEGIN:VEVENT', 'UID:nj-' + m.id + '-' + by.join('') + (g.meds.length ? '-' + g.meds.map(function (md) { return md.id; }).join('') : '') + '@nutrijabon', 'DTSTAMP:' + stamp,
@@ -1096,6 +1171,12 @@
       // razones: solo de la lista y solo donde la marca es ✗
       if (isObj(r.why)) Object.keys(r.why).forEach(function (m) { if (o.done && o.done[m] === false && REASON_TEXT.meal[r.why[m]]) (o.why = o.why || {})[m] = r.why[m]; });
       if (isObj(r.twhy)) Object.keys(r.twhy).forEach(function (id) { if (o.tk && o.tk[id] === false && REASON_TEXT.med[r.twhy[id]]) (o.twhy = o.twhy || {})[id] = r.twhy[id]; });
+      if (isObj(r.ck)) { // ¿cómo te sentiste?: 1–5 y nota corta
+        var ck = {};
+        CHECKS.forEach(function (x) { var v = r.ck[x.id]; if (v === (v | 0) && v >= 1 && v <= 5) ck[x.id] = v; });
+        if (typeof r.ck.n === 'string' && r.ck.n.trim()) ck.n = r.ck.n.slice(0, 300);
+        if (Object.keys(ck).length) o.ck = ck;
+      }
       if (Object.keys(o).length) out.days[k] = o;
     });
     if (isObj(d.shop)) Object.keys(d.shop).forEach(function (wk) {
@@ -1149,6 +1230,7 @@
     Object.keys(b.days).forEach(function (k) {
       var x = out.days[k] || (out.days[k] = {}), y = b.days[k];
       if (typeof x.ex !== 'boolean' && typeof y.ex === 'boolean') x.ex = y.ex;
+      if (y.ck) { x.ck = x.ck || {}; Object.keys(y.ck).forEach(function (f) { if (!(f in x.ck)) x.ck[f] = y.ck[f]; }); }
       if (y.sw) { x.sw = x.sw || {}; Object.keys(y.sw).forEach(function (m) { if (!(m in x.sw)) x.sw[m] = y.sw[m]; }); }
       [['done', 'why', false], ['tk', 'twhy', true]].forEach(function (f) {
         var mk = f[0], wy = f[1]; if (!y[mk]) return;
@@ -1162,7 +1244,7 @@
           } else if (mine === false && theirs === false && why && !(x[wy] && x[wy][id])) { x[wy] = x[wy] || {}; x[wy][id] = why; }
         });
       });
-      ['sw', 'done', 'tk', 'why', 'twhy'].forEach(function (f) { if (x[f] && !Object.keys(x[f]).length) delete x[f]; });
+      ['sw', 'done', 'tk', 'why', 'twhy', 'ck'].forEach(function (f) { if (x[f] && !Object.keys(x[f]).length) delete x[f]; });
       if (!Object.keys(x).length) delete out.days[k];
     });
     ['shop', 'prep'].forEach(function (f) {
@@ -1350,7 +1432,7 @@
     }
     var swaps = Object.keys(all.swaps).map(function (id) { return { r: RECIPE[id], n: all.swaps[id] }; })
       .sort(function (a, b) { return b.n - a.n || a.r.name.localeCompare(b.r.name, 'es'); }).slice(0, 5);
-    return { all: all, weeks: weeks, swaps: swaps, streak: streak(), started: t >= start };
+    return { all: all, weeks: weeks, swaps: swaps, streak: streak(), started: t >= start, ck: checkStats(start, t) };
   }
   function countText(x, kind) {
     if (!x.due) return 'aún no toca';
@@ -1363,6 +1445,20 @@
   function whyText(x, kind) { // “ (comí fuera ×2, se me olvidó)”
     var w = whyCounts(x, kind).slice(0, 2);
     return w.length ? ' (' + w.map(function (e) { return lowerFirst(REASON_TEXT[kind][e[0]]) + (e[1] > 1 ? ' ×' + e[1] : ''); }).join(', ') + ')' : '';
+  }
+  function feelHtml(C) { // sección “¿Cómo te sentiste?” del resumen
+    if (!C || !C.days) return '<h3 class="sec-title">¿Cómo te sentiste?</h3><p class="small muted">Aún no hay registros. Anótalo cada día al final de Hoy.</p>';
+    var ins = checkInsights(C);
+    return '<h3 class="sec-title">¿Cómo te sentiste?</h3><p class="small muted">' + C.days + (C.days === 1 ? ' día anotado.' : ' días anotados.') + '</p>' +
+      '<ul class="plain meter-list">' + CHECKS.map(function (x) {
+        var g = C.f[x.id], a = avg(g), p = a === null ? 0 : Math.round(a / 5 * 100);
+        return '<li style="--mc:var(--' + x.color + ')"><div class="meter-top"><b>' + x.name + '</b><span class="muted">' + avgText(x, g) + '</span></div>' +
+          '<div class="bar" role="progressbar" aria-label="' + x.name + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p + '"><span style="width:' + p + '%"></span></div></li>';
+      }).join('') + '</ul>' +
+      (ins.length ? '<ul class="plain out-tips">' + ins.map(function (s) { return '<li>' + icon('info', 'ic-xs') + '<span>' + esc(s) + '</span></li>'; }).join('') + '</ul>' : '') +
+      (C.notes.length ? '<h4 class="sec-title">Tus notas</h4><ul class="plain feel-notes">' + C.notes.slice(-10).reverse().map(function (o) {
+        return '<li><b>' + shortDate(o.k).replace(/ \d{4}$/, '') + ':</b> ' + esc(o.n) + '</li>';
+      }).join('') + '</ul>' : '');
   }
   function reasonsHtml(a) {
     if (!a.miss) return '';
@@ -1406,7 +1502,7 @@
         return '<li style="--mc:var(--m-' + md.meal + ')"><div class="meter-top"><b>' + esc(md.name) + '</b> <span class="badge">con ' + MEAL[md.meal].name.toLowerCase() + '</span>' +
           '<span class="muted">' + countText(x, 'med') + '</span></div>' + barHtml(x, esc(md.name)) + '</li>';
       }).join('') + '</ul>' : '') +
-      reasonsHtml(a) + '<h3 class="sec-title">Por semana</h3><ul class="plain meter-list weeks">' + R.weeks.map(function (w) {
+      reasonsHtml(a) + feelHtml(R.ck) + '<h3 class="sec-title">Por semana</h3><ul class="plain meter-list weeks">' + R.weeks.map(function (w) {
         var lbl = rangeText(w.from, w.to);
         return '<li><div class="meter-top"><b>' + lbl + '</b><span class="muted">' + countText(w) + '</span></div>' + barHtml(w, lbl) + '</li>';
       }).join('') + '</ul>' +
@@ -1440,6 +1536,16 @@
       L.push('', '¿Por qué no se cumplieron? (' + a.miss + ')');
       w.forEach(function (e) { L.push('• ' + REASON_TEXT.meal[e[0]] + ': ' + e[1]); });
       if (none) L.push('• Sin razón anotada: ' + none);
+    }
+    var C = R.ck;
+    if (C.days) {
+      L.push('', '¿Cómo me sentí? (' + C.days + (C.days === 1 ? ' día' : ' días') + ')');
+      CHECKS.forEach(function (x) { L.push('• ' + x.name + ': ' + avgText(x, C.f[x.id])); });
+      checkInsights(C).forEach(function (s) { L.push('• ' + s); });
+      if (C.notes.length) {
+        L.push('', 'Mis notas:');
+        C.notes.slice(-10).forEach(function (o) { L.push('• ' + shortDate(o.k).replace(/ \d{4}$/, '') + ': ' + o.n); });
+      }
     }
     L.push('', 'Por semana:');
     R.weeks.forEach(function (w) { L.push('• ' + rangeText(w.from, w.to) + ': ' + countText(w)); });
@@ -1754,6 +1860,8 @@
       case 'open-out': openSheet('out', [ds.meal]); break;
       case 'open-recap': openSheet('recap', [ds.mon]); break;
       case 'recap-seen': S.settings.recapSeen = ds.wk; save(); render(); break;
+      case 'ck': setCheck(ds.k, ds.f, +ds.v); break;
+      case 'goto-checkin': { var ckEl = document.getElementById('checkin'); if (ckEl) ckEl.scrollIntoView({ block: 'start', behavior: 'smooth' }); break; }
       case 'import-merge': finishImport(true); break;
       case 'import-replace': finishImport(false); break;
       case 'cook-recipe': startCook('recipe', ds.id); break;
@@ -1812,6 +1920,10 @@
     var el = e.target, t = el.dataset && el.dataset.input;
     if (t === 'rq') { ui.rQuery = el.value; document.getElementById('recipe-results').innerHTML = recipeResults(); }
     else if (t === 'eq') { ui.eqQuery = el.value; document.getElementById('eq-results').innerHTML = eqResults(); }
+    else if (t === 'ck-note') { // se guarda al escribir, sin volver a pintar la pantalla
+      var nk = el.dataset.k, nv = el.value.slice(0, 300);
+      setDay(nk, function (r) { r.ck = r.ck || {}; if (nv.trim()) r.ck.n = nv; else delete r.ck.n; });
+    }
     else if (t === 'notes') {
       S.settings.notes = el.value.slice(0, 2000);
       if (!S.settings.notes) delete S.settings.notes;
