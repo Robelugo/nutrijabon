@@ -20,7 +20,7 @@
   // meds: vitaminas y medicamentos (“tomas”). Solo se guardan en el dispositivo, nunca en el código.
   var DEFAULT_SETTINGS = {
     trainDays: [0, 1, 2, 3, 4], times: {}, onboarded: false,
-    meds: [{ id: 'vit', name: 'Vitamina', meal: 'pre', when: 'train' }]
+    meds: [{ id: 'vit', name: 'Vitamina', meal: 'pre', when: 'all' }]
   };
   function defaults() { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
 
@@ -181,6 +181,12 @@
     return (S.settings.meds || []).filter(function (md) { return md.meal === mealId && (md.when === 'all' || isTraining(k)); });
   }
   function medMark(k, id) { var r = dayRec(k); return r.tk ? r.tk[id] : undefined; }
+  // Tomas del pre-entreno que también van en días de descanso (p. ej. la vitamina)
+  function restMeds() { return (S.settings.meds || []).filter(function (md) { return md.meal === 'pre' && md.when === 'all'; }); }
+  function restMedsText() {
+    var ms = restMeds(); if (!ms.length) return '';
+    return ' <b>Sí toma: ' + esc(listText(ms.map(function (md) { return md.name; }))) + '</b>, a las ' + mealTime('pre') + '.';
+  }
   // ¿Por qué no se cumplió? Se guarda en why (comidas) y twhy (vitaminas/medicamentos)
   var REASONS = {
     meal: [['fuera', '🍽️', 'Comí fuera'], ['tiempo', '⏰', 'No tuve tiempo'], ['hambre', '😶', 'Sin hambre'],
@@ -335,7 +341,8 @@
 
     h += train
       ? '<div class="banner ok">' + icon('dumbbell') + '<div><b>Día de ejercicio:</b> incluye tu pre-entreno (' + esc(pre.name) + ') antes de entrenar.</div></div>'
-      : '<div class="banner warn">' + icon('ban') + '<div><b>Día de descanso: no comas el pre-entreno</b> (' + esc(pre.name) + '). Son 1 fruta, 1 cereal y 1 grasa con proteína menos. Todo lo demás sigue igual.</div></div>';
+      : '<div class="banner warn">' + icon('ban') + '<div><b>Día de descanso: no comas el pre-entreno</b> (' + esc(pre.name) + '). Son 1 fruta, 1 cereal y 1 grasa con proteína menos. Todo lo demás sigue igual.' +
+        restMedsText() + '</div></div>';
 
     var toRev = daysToReview();
     if (isToday && toRev >= 0 && toRev <= 7) {
@@ -748,6 +755,7 @@
       '<li>Total: 3 frutas, 7 cereales y 3 grasas con proteína.</li></ul></div>' +
       '<div class="ex-col warn"><h4>' + icon('moon') + ' Días de descanso</h4><ul>' +
       '<li><b>No comas el pre-entreno</b>: ' + pres.join(', ') + '.</li>' +
+      (restMeds().length ? '<li>' + restMedsText().trim() + '</li>' : '') +
       '<li>No pases esas porciones a otras comidas (salvo que tu nutrióloga te diga otra cosa).</li>' +
       '<li>Desayuno, colaciones, comida y cena quedan igual.</li>' +
       '<li>Total: 2 frutas, 6 cereales y 2 grasas con proteína.</li></ul></div></div>' +
@@ -1000,6 +1008,7 @@
       });
     }
     if (st.medsSeen === true) out.settings.medsSeen = true;
+    if (st.vitAllDays === true) out.settings.vitAllDays = true;
     out.settings.onboarded = true;
     if (isObj(d.days)) Object.keys(d.days).forEach(function (k) {
       var r = d.days[k], o = {};
@@ -1778,6 +1787,13 @@
       if (ui.tab === 'guia') render();
     });
     window.addEventListener('appinstalled', function () { deferredPrompt = null; toast('¡App instalada!'); });
+
+    // Una sola vez: la vitamina también va en días de descanso (antes venía solo en días de ejercicio)
+    if (!S.settings.vitAllDays) {
+      (S.settings.meds || []).forEach(function (md) { if (md.id === 'vit' && md.when === 'train') md.when = 'all'; });
+      S.settings.vitAllDays = true;
+      save();
+    }
 
     render();
     if (!S.settings.onboarded) openSheet('onboarding', []);
