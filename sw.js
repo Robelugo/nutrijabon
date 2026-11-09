@@ -1,11 +1,12 @@
 /* NutriJabón · service worker: funciona sin internet y se actualiza solo en segundo plano. */
-var CACHE = 'nutrijabon-v15';
+var CACHE = 'nutrijabon-v16';
 var FONT_CACHE = 'nutrijabon-fonts-v1';
 var FILES_CACHE = 'nutrijabon-files'; // archivos que arma la app (recordatorios .ics)
 var FONT_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 var ASSETS = [
   './', './index.html', './styles.css', './data.js', './app.js', './manifest.webmanifest',
-  './icons/favicon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png'
+  './icons/favicon.svg', './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png', './icons/apple-touch-icon.png',
+  './icons/sc-hoy.png', './icons/sc-semana.png', './icons/sc-compras.png', './icons/sc-prep.png'
 ];
 
 self.addEventListener('install', function (e) {

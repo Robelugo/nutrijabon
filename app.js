@@ -1118,14 +1118,69 @@
       var p = null;
       try { p = JSON.parse(rd.result); } catch (e) { /* no es JSON */ }
       if (!isObj(p) || p.app !== 'nutrijabon' || !isObj(p.data)) { toast('Ese archivo no es un respaldo de NutriJabón'); return; }
-      var when = new Date(p.exported), wk = isNaN(when) ? '' : ' del ' + shortDate(keyOf(when));
-      if (!window.confirm('¿Cargar el respaldo' + wk + '? Reemplaza las marcas, platillos, lista de compras y ajustes de este dispositivo.')) return;
-      S = cleanData(p.data);
-      save(); render();
-      toast('Respaldo cargado ✓');
+      var when = new Date(p.exported);
+      pendingImport = { data: cleanData(p.data), when: isNaN(when) ? '' : shortDate(keyOf(when)) };
+      openSheet('import', []);
     };
     rd.onerror = function () { toast('No se pudo leer el archivo'); };
     rd.readAsText(file);
+  }
+  // Al cargar un respaldo: combinar con lo de este equipo o reemplazarlo todo
+  var pendingImport = null;
+  function markedDays(data) { return Object.keys(data.days).filter(function (k) { var r = data.days[k]; return r.done || r.tk; }).length; }
+  function importSheet() {
+    var P = pendingImport; if (!P) return '';
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--orange)">' + icon('cassette') + '</span>' +
+      '<div class="sheet-titles"><div class="eyebrow">Cargar respaldo</div><h2 id="sheet-title">Respaldo' + (P.when ? ' del ' + P.when : '') + '</h2></div>' +
+      '<button class="icon-btn" data-action="close-sheet" aria-label="Cancelar">' + icon('x') + '</button></div>' +
+      '<div class="sheet-content"><p>El respaldo tiene marcas en <b>' + markedDays(P.data) + '</b> días; este equipo, en <b>' + markedDays(S) + '</b>.</p>' +
+      '<button class="import-opt is-main" data-action="import-merge"><b>' + icon('swap') + ' Combinar con este equipo</b><span class="small">Junta las marcas de los dos. Si una comida tiene ✓ en uno y ✗ en el otro, se queda ✓. ' +
+      'Tus ajustes de este equipo se quedan y se agregan las vitaminas o medicamentos que falten.</span></button>' +
+      '<button class="import-opt" data-action="import-replace"><b>' + icon('download') + ' Reemplazar todo</b><span class="small">Este equipo queda igual que el respaldo; lo que solo esté aquí se pierde.</span></button>' +
+      '</div>';
+  }
+  function mergeData(a, b) { // a = este equipo, b = respaldo (ya limpio). Gana ✓ sobre ✗; en lo demás, este equipo.
+    var out = JSON.parse(JSON.stringify(a)), idMap = {};
+    out.settings.meds = out.settings.meds || [];
+    (b.settings.meds || []).forEach(function (md) {
+      var same = out.settings.meds.filter(function (x) { return x.id === md.id || (x.meal === md.meal && x.name.trim().toLowerCase() === md.name.trim().toLowerCase()); })[0];
+      if (same) idMap[md.id] = same.id; else { out.settings.meds.push(md); idMap[md.id] = md.id; }
+    });
+    Object.keys(b.days).forEach(function (k) {
+      var x = out.days[k] || (out.days[k] = {}), y = b.days[k];
+      if (typeof x.ex !== 'boolean' && typeof y.ex === 'boolean') x.ex = y.ex;
+      if (y.sw) { x.sw = x.sw || {}; Object.keys(y.sw).forEach(function (m) { if (!(m in x.sw)) x.sw[m] = y.sw[m]; }); }
+      [['done', 'why', false], ['tk', 'twhy', true]].forEach(function (f) {
+        var mk = f[0], wy = f[1]; if (!y[mk]) return;
+        x[mk] = x[mk] || {};
+        Object.keys(y[mk]).forEach(function (id0) {
+          var id = f[2] ? (idMap[id0] || id0) : id0, mine = x[mk][id], theirs = y[mk][id0], why = y[wy] && y[wy][id0];
+          if (mine === undefined || (mine === false && theirs === true)) {
+            x[mk][id] = theirs;
+            if (theirs === true) { if (x[wy]) delete x[wy][id]; }
+            else if (why) { x[wy] = x[wy] || {}; x[wy][id] = why; }
+          } else if (mine === false && theirs === false && why && !(x[wy] && x[wy][id])) { x[wy] = x[wy] || {}; x[wy][id] = why; }
+        });
+      });
+      ['sw', 'done', 'tk', 'why', 'twhy'].forEach(function (f) { if (x[f] && !Object.keys(x[f]).length) delete x[f]; });
+      if (!Object.keys(x).length) delete out.days[k];
+    });
+    ['shop', 'prep'].forEach(function (f) {
+      Object.keys(b[f] || {}).forEach(function (wk) { out[f][wk] = Object.assign({}, b[f][wk], out[f][wk] || {}); });
+    });
+    var n1 = (out.settings.notes || '').trim(), n2 = (b.settings.notes || '').trim();
+    if (n2 && n1.indexOf(n2) === -1) out.settings.notes = ((n1 ? n1 + '\n' : '') + n2).slice(0, 2000);
+    if (b.settings.lastBackup && (!out.settings.lastBackup || b.settings.lastBackup > out.settings.lastBackup)) out.settings.lastBackup = b.settings.lastBackup;
+    out.settings.medsSeen = out.settings.medsSeen || b.settings.medsSeen;
+    return out;
+  }
+  function finishImport(merge) {
+    var P = pendingImport; if (!P) return;
+    if (!merge && !window.confirm('¿Reemplazar todo con el respaldo' + (P.when ? ' del ' + P.when : '') + '? Lo que solo esté en este equipo se pierde.')) return;
+    S = merge ? mergeData(S, P.data) : P.data;
+    pendingImport = null;
+    save(); closeSheet(); render();
+    toast(merge ? 'Respaldo combinado ✓' : 'Respaldo cargado ✓');
   }
   function backupHtml() {
     var lb = S.settings.lastBackup;
@@ -1136,7 +1191,7 @@
       (canShareFiles() ? '<button class="btn" data-action="backup-send">' + icon('share') + ' Enviar</button>' : '') +
       '<label class="btn file-btn">' + icon('upload') + ' Cargar respaldo<input type="file" accept=".json,application/json" data-input="backup"></label>' +
       '</div>' +
-      '<p class="small muted"><b>Para pasarlo a otro equipo:</b> guarda o envía el respaldo (por correo, WhatsApp o AirDrop), abre NutriJabón en el otro equipo y toca <b>Cargar respaldo</b>. Reemplaza lo que haya en ese equipo.</p>';
+      '<p class="small muted"><b>Para pasarlo a otro equipo:</b> guarda o envía el respaldo (por correo, WhatsApp o AirDrop), abre NutriJabón en el otro equipo y toca <b>Cargar respaldo</b>. Puedes combinarlo con lo que ya haya ahí o reemplazarlo.</p>';
   }
   var deferredPrompt = null;
   function detectOS() {
@@ -1572,7 +1627,7 @@
   function runningTimers() { return cook ? cook.timers.filter(function (t) { return t.end > Date.now(); }).length : 0; }
 
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet, import: importSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -1699,6 +1754,8 @@
       case 'open-out': openSheet('out', [ds.meal]); break;
       case 'open-recap': openSheet('recap', [ds.mon]); break;
       case 'recap-seen': S.settings.recapSeen = ds.wk; save(); render(); break;
+      case 'import-merge': finishImport(true); break;
+      case 'import-replace': finishImport(false); break;
       case 'cook-recipe': startCook('recipe', ds.id); break;
       case 'cook-prep': startCook('prep'); break;
       case 'cook-next': cookGo(1, true); break;
@@ -1869,6 +1926,16 @@
       S.settings.vitAllDays = true;
       save();
     }
+
+    // Accesos directos del ícono (mantener presionado): ?tab=compras&view=prep, etc.
+    try {
+      var qs = new URLSearchParams(location.search), qt = qs.get('tab');
+      if (qt && VIEWS[qt]) {
+        ui.tab = qt;
+        if (qt === 'compras' && qs.get('view') === 'prep') ui.shopView = 'prep';
+        history.replaceState(null, '', location.pathname); // deja la dirección limpia
+      }
+    } catch (e) { /* navegador sin URLSearchParams */ }
 
     render();
     if (!S.settings.onboarded) openSheet('onboarding', []);

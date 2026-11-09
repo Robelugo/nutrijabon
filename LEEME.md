@@ -20,7 +20,8 @@ App para seguir tu plan de alimentación **vegano** día por día. Funciona en A
 - **¿Cumpliste?**: cada comida tiene ✓ (sí cumplí) y ✗ (no cumplí); tocar la misma marca la quita. Con ✗ se puede elegir por qué (comí fuera, no tuve tiempo, sin hambre, comí otra cosa, se me olvidó, otro), y el resumen muestra qué razones se repiten.
 - **Vitaminas y medicamentos** (Guía): cada uno va con una comida, todos los días o solo en días de ejercicio, y se marca con ✓/✗ en Hoy. Aparecen en los recordatorios y en el resumen. Se guardan solo en el dispositivo (nunca en el código, que es público); viene precargada la vitamina, todos los días a la hora del pre-entreno (en días de descanso aparece aunque no toque el pre-entreno).
 - **Progreso**: en Semana ves el porcentaje de comidas marcadas, tu racha de días completos y cuántos días faltan para la revisión. El **resumen para tu revisión** junta todo (por tiempo de comida, por semana, platillos cambiados y tus preguntas) para compartirlo o imprimirlo en PDF. El **resumen semanal** aparece en Hoy de lunes a miércoles (cómo te fue la semana pasada, comparado con la anterior, y un consejo según la razón de "no cumplí" que más se repitió); cualquier semana pasada se ve desde Semana.
-- **Respaldo**: guarda tus datos en un archivo `.json` y cárgalo en otro equipo (reemplaza lo que haya ahí).
+- **Respaldo**: guarda tus datos en un archivo `.json` y cárgalo en otro equipo. Al cargarlo eliges **combinar** (junta las marcas de los dos; si una comida tiene ✓ en uno y ✗ en otro gana ✓; se quedan los ajustes de ese equipo y se agregan las vitaminas o medicamentos que falten) o **reemplazar todo**.
+- **Accesos directos**: en Android y en Windows, mantén presionado el ícono de la app para ir directo a Hoy, Semana, Compras o el Prep del domingo (iPhone no tiene esta función).
 
 Tus datos (marcas, cambios, ajustes) se guardan solo en cada dispositivo; usa el respaldo para pasarlos de uno a otro.
 

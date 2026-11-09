@@ -527,6 +527,12 @@ main {
   .cook-step { font-size: 30px; }
   .cook-nav { padding-left: max(16px, calc(50% - 380px)); padding-right: max(16px, calc(50% - 380px)); }
 }
+/* Cargar respaldo: combinar o reemplazar */
+.import-opt { display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: left; padding: 14px 16px; border: 2px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 3px 3px 0 var(--hard); }
+.import-opt b { display: flex; align-items: center; gap: 8px; font-size: 17px; }
+.import-opt .small { color: var(--text-2); line-height: 1.4; }
+.import-opt.is-main { background: var(--ok-bg); }
+.import-opt:active { transform: translate(3px, 3px); box-shadow: none; }
 /* Resumen semanal */
 .recap-card { display: flex; flex-direction: column; gap: 12px; }
 .recap-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
