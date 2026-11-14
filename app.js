@@ -391,7 +391,7 @@
     var un = x.due - x.done - x.miss;
     return x.done + ' de ' + x.due + ' cumplidas' + (x.miss ? ' · ' + x.miss + ' no' : '') + (un ? ' · ' + un + ' sin marcar' : '');
   }
-  function daysToReview() { return dayDiff(fromKey(D.PLAN.review), today()); }
+  function daysToReview() { return dayDiff(fromKey(reviewKey()), today()); }
   function pctText(st) { return st.pct === null ? '—' : st.pct + '%'; }
   function rangeText(a, b) {
     return a.getMonth() === b.getMonth()
@@ -402,7 +402,7 @@
     return '<div class="stat" style="--sc:var(--' + color + ')"><b>' + big + '</b><span>' + label + '</span></div>';
   }
   function reviewTile() {
-    var n = daysToReview(), rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, '');
+    var n = daysToReview(), rev = shortDate(reviewKey()).replace(/ \d{4}$/, '');
     if (n > 1) return statTile('blue', n, 'días para tu revisión (' + rev + ')');
     if (n === 1) return statTile('blue', '1', 'día: tu revisión es mañana');
     if (n === 0) return statTile('blue', '¡Hoy!', 'es tu revisión');
@@ -420,7 +420,8 @@
       (st && st.due ? '<p class="small muted">Hasta hoy: ' + markSummary(st) + '.' + (st.mov.due ? ' Movimiento: ' + st.mov.done + ' de ' + st.mov.due + '.' : '') +
         (st.water.days ? ' Agua: ' + avgGlasses(st.water) + ' vasos al día en promedio.' : '') + '</p>' : '') +
       '<div class="row-gap">' + (st && sun < t && st.days >= 3 ? '<button class="btn" data-action="open-recap" data-mon="' + keyOf(mon) + '">' + icon('star') + ' Resumen de esa semana</button>' : '') +
-      '<button class="btn" data-action="open-report">' + icon('clipboard') + ' Resumen para tu revisión</button></div></section>';
+      '<button class="btn" data-action="open-report">' + icon('clipboard') + ' Resumen para tu revisión</button>' +
+      (daysToReview() >= 0 ? '<button class="btn" data-action="open-review">' + icon('check') + ' Preparar mi revisión</button>' : '') + '</div></section>';
   }
 
   /* ---------------- Resumen semanal ----------------
@@ -940,11 +941,7 @@
       : '<div class="banner warn">' + icon('ban') + '<div><b>Día de descanso: no comas el pre-entreno</b> (' + esc(pre.name) + '). Son 1 fruta, 1 cereal y 1 grasa con proteína menos. Todo lo demás sigue igual.' +
         restMedsText() + '</div></div>';
 
-    var toRev = daysToReview();
-    if (isToday && toRev >= 0 && toRev <= 7) {
-      h += '<div class="banner info">' + icon('clipboard') + '<div><b>' + (toRev === 0 ? 'Hoy es tu revisión.' : toRev === 1 ? 'Mañana es tu revisión.' : 'Tu revisión es en ' + toRev + ' días.') + '</b> ' +
-        '<button class="link-btn" data-action="open-report">Ve tu resumen</button> para llevarlo.</div></div>';
-    }
+    if (isToday) h += reviewCard();
 
     if (isToday) h += prepBanner() + recapCard() + checkinNudge(k);
 
@@ -1638,7 +1635,7 @@
       accordion('avisos', emblem('avisos') + 'Recordatorios', remindHtml()) +
       accordion('respaldo', emblem('respaldo') + 'Respaldo y otros equipos', backupHtml()) +
       accordion('instalar', emblem('instalar') + 'Instalar en tus dispositivos', installHtml()) +
-      '<p class="small muted center">Basado en el plan de tu nutrióloga del 8 nov 2026 · Próxima revisión: 18 dic 2026.<br>NutriJabón te ayuda a seguir tu plan; no sustituye la consulta profesional.</p></div>';
+      '<p class="small muted center">Basado en el plan de tu nutrióloga del ' + shortDate(D.PLAN.assigned) + ' · Próxima revisión: ' + shortDate(reviewKey()) + '.<br>NutriJabón te ayuda a seguir tu plan; no sustituye la consulta profesional.</p></div>';
   }
   function exHtml() {
     var pres = D.RECIPES.filter(function (r) { return r.meal === 'pre' && !r.extra; }).map(function (r) { return dishThumb(r) + ' ' + esc(r.name); });
@@ -1840,7 +1837,7 @@
   function appUrl() { return /^https?:$/.test(location.protocol) ? location.origin + location.pathname.replace(/[^/]*$/, '') : ''; }
   function buildIcs() {
     var lead = remindLead(), start = today(), url = appUrl();
-    var until = start <= fromKey(D.PLAN.review) ? ';UNTIL=' + D.PLAN.review.replace(/-/g, '') + 'T235959' : '';
+    var until = start <= fromKey(reviewKey()) ? ';UNTIL=' + reviewKey().replace(/-/g, '') + 'T235959' : '';
     var stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
     var L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NutriJabon//Plan vegano//ES', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:NutriJabón'];
     var meds = S.settings.meds || [];
@@ -1986,7 +1983,7 @@
     }).then(function () { location.href = 'recordatorios.ics'; }, function () { location.href = dataUrl; });
   }
   function remindHtml() {
-    var os = detectOS(), lead = remindLead(), rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, '');
+    var os = detectOS(), lead = remindLead(), rev = shortDate(reviewKey()).replace(/ \d{4}$/, '');
     var notes = {
       ios: 'Te mostramos los pasos: lo compartes a <b>Mail</b> (o a Archivos), lo abres ahí y tocas <b>Agregar todo</b>.',
       android: 'Se descarga un archivo: ábrelo y elige tu app de calendario. Si Google Calendar no lo abre, impórtalo desde una computadora en <b>calendar.google.com</b> (Configuración → Importar y exportar) y te llegará al celular.',
@@ -2052,6 +2049,14 @@
     }
     if (st.waterGoal === (st.waterGoal | 0) && st.waterGoal >= 4 && st.waterGoal <= 16) out.settings.waterGoal = st.waterGoal;
     if (st.servings === (st.servings | 0) && st.servings >= 1 && st.servings <= 6) out.settings.servings = st.servings;
+    if (KEY_RE.test(st.reviewDate || '')) out.settings.reviewDate = st.reviewDate;
+    if (isObj(st.revPrep)) Object.keys(st.revPrep).forEach(function (rk) { // lista de la revisión: palomitas a mano y cuándo guardaste el resumen
+      var x = st.revPrep[rk], o = {};
+      if (!KEY_RE.test(rk) || !isObj(x)) return;
+      if (isObj(x.m)) Object.keys(x.m).forEach(function (id) { if (x.m[id] === true && /^[a-z]{1,12}$/.test(id)) (o.m = o.m || {})[id] = true; });
+      if (KEY_RE.test(x.rep || '')) o.rep = x.rep;
+      if (Object.keys(o).length) (out.settings.revPrep = out.settings.revPrep || {})[rk] = o;
+    });
     if (st.theme === 'light' || st.theme === 'auto' || st.theme === 'dark') out.settings.theme = st.theme;
     if (st.catsSeen === (st.catsSeen | 0) && st.catsSeen > 0 && st.catsSeen < 1000) out.settings.catsSeen = st.catsSeen;
     out.settings.onboarded = true;
@@ -2170,6 +2175,14 @@
     var tb = b.settings.taste || {}; out.settings.taste = out.settings.taste || {};
     Object.keys(tb).forEach(function (id) { if (!(id in out.settings.taste)) out.settings.taste[id] = tb[id]; });
     out.settings.pantry = Object.assign({}, b.settings.pantry || {}, out.settings.pantry || {});
+    if (!out.settings.reviewDate && b.settings.reviewDate) out.settings.reviewDate = b.settings.reviewDate;
+    out.settings.revPrep = out.settings.revPrep || {};
+    Object.keys(b.settings.revPrep || {}).forEach(function (rk) {
+      var x = out.settings.revPrep[rk] || (out.settings.revPrep[rk] = {}), y = b.settings.revPrep[rk];
+      if (y.m) x.m = Object.assign({}, y.m, x.m || {});
+      if (y.rep && (!x.rep || y.rep > x.rep)) x.rep = y.rep;
+    });
+    if (!Object.keys(out.settings.revPrep).length) delete out.settings.revPrep;
     out.body = out.body || {};
     Object.keys(b.body || {}).forEach(function (k) { out.body[k] = Object.assign({}, b.body[k], out.body[k] || {}); });
     out.settings.catsSeen = Math.max(out.settings.catsSeen || 0, b.settings.catsSeen || 0) || undefined;
@@ -2347,6 +2360,130 @@
       }).join('') + '</div>';
   }
 
+  /* ---------------- Tu revisión ----------------
+   * Lista para llegar lista a la cita: peso, marcas pendientes, registro diario, preguntas, resumen y respaldo.
+   * Lo que la app puede comprobar se palomea solo; lo demás se palomea a mano (settings.revPrep[fecha].m).
+   * Las preguntas sugeridas salen de tus datos y se agregan a “Preguntas para tu nutrióloga”. */
+  function reviewKey() { var k = S.settings.reviewDate; return KEY_RE.test(k || '') ? k : D.PLAN.review; }
+  function revState() { return (S.settings.revPrep || {})[reviewKey()] || {}; }
+  function revEdit(fn) {
+    var all = S.settings.revPrep = S.settings.revPrep || {}, rk = reviewKey();
+    all[rk] = all[rk] || {}; fn(all[rk]); save();
+  }
+  function unmarkedRecent() { // comidas sin marcar en los últimos 14 días (dentro del plan)
+    var t = today(), n = 0;
+    for (var i = 0; i < 14; i++) { var x = dayInfo(keyOf(addDays(t, -i))); n += x.due - x.marked; }
+    return n;
+  }
+  function reviewItems() {
+    var rk = reviewKey(), rev = fromKey(rk), t = today(), P = revState(), man = P.m || {};
+    var wk = bodyKeys('w'), lastW = wk[wk.length - 1], weekStart = keyOf(addDays(rev, -7));
+    var un = unmarkedRecent(), ck = checkStats(addDays(t, -13), t).days, notes = (S.settings.notes || '').trim(), lb = S.settings.lastBackup;
+    var nq = notes ? notes.split('\n').filter(function (l) { return l.trim(); }).length : 0;
+    var items = [
+      { id: 'peso', t: 'Pésate la semana de tu cita', auto: !!(lastW && lastW >= weekStart), btn: ['open-body', 'Anotar'],
+        d: lastW && lastW >= weekStart ? 'Anotado el ' + day2(lastW) + ': ' + fmtBody(S.body[lastW].w) + ' kg.' : 'Anótalo entre el ' + day2(weekStart) + ' y el ' + day2(rk) + ', de preferencia en ayunas.' },
+      { id: 'marcas', t: 'Marca lo que te falte', auto: !un, btn: ['goto-month', 'Ver el mes'],
+        d: un ? 'Te ' + (un === 1 ? 'falta 1 comida' : 'faltan ' + un + ' comidas') + ' por marcar en las últimas 2 semanas.' : 'Tus últimas 2 semanas están marcadas.' },
+      { id: 'sentir', t: 'Anota cómo te sentiste', auto: ck >= 5, btn: ['review-checkin', 'Ir a hoy'],
+        d: ck + (ck === 1 ? ' día anotado' : ' días anotados') + ' en las últimas 2 semanas' + (ck >= 5 ? '.' : '. Con 5 o más se ve mejor cómo vas.') },
+      { id: 'preguntas', t: 'Escribe tus preguntas', auto: !!nq,
+        d: nq ? nq + (nq === 1 ? ' anotada' : ' anotadas') + '. Abajo hay más ideas según tus datos.' : 'Abajo hay ideas según tus datos: toca + para agregarlas.' },
+      { id: 'resumen', t: 'Guarda o comparte tu resumen', auto: !!(P.rep && P.rep >= weekStart), btn: ['open-report', 'Abrir'],
+        d: P.rep ? 'Lo guardaste el ' + day2(P.rep) + '.' + (P.rep < rk ? ' Hazlo otra vez cerca de la cita para que esté completo.' : '') : 'Imprímelo en PDF o compártelo para llevarlo a la cita.' },
+      { id: 'respaldo', t: 'Guarda un respaldo', auto: !!(lb && lb >= keyOf(addDays(rev, -14))), btn: ['goto-sec', 'Respaldo', ' data-sec="respaldo"'],
+        d: lb ? 'Último: ' + day2(lb) + '.' : 'Todavía no tienes ninguno.' }
+    ];
+    items.forEach(function (it) { it.done = it.auto || !!man[it.id]; });
+    return items;
+  }
+  var MEAL_ART = { pre: 'el', des: 'el', c1: 'la', com: 'la', c2: 'la', cen: 'la' };
+  function reviewSuggestions() { // preguntas en primera persona, solo cuando tus datos lo muestran claro
+    var R = reportData(), a = R.all, C = R.ck, out = [];
+    if (!R.started) return out;
+    var acts = S.settings.acts || [], tr = S.settings.trainDays;
+    var extra = acts.filter(function (x) { return (x.kind === 'pilates' || x.kind === 'fuerza') && x.days.some(function (i) { return tr.indexOf(i) === -1; }); });
+    if (extra.length) out.push('¿' + listText(extra.map(function (x, i) { return i ? lowerFirst(x.name) : x.name; })) + (extra.length > 1 ? ' cuentan' : ' cuenta') + ' como día de ejercicio? ¿Debo comer el pre-entreno esos días?');
+    if (acts.length && a.mov.due >= 5) out.push('¿Ajustamos mis porciones ahora que hago ' + listText(acts.map(function (x) { return lowerFirst(x.name) + ' (' + actDaysText(x) + ')'; })) + '?');
+    var hard = MEALS.map(function (m) { var x = a.meal[m.id]; return { m: m, x: x, p: x.due ? x.done / x.due : 1 }; })
+      .filter(function (o) { return o.x.due >= 5 && o.p < 0.7; }).sort(function (p, q) { return p.p - q.p; })[0];
+    if (hard) out.push('Me cuesta cumplir ' + MEAL_ART[hard.m.id] + ' ' + lowerFirst(hard.m.name) + ' (' + Math.round(hard.p * 100) + '%). ¿Hay opciones más fáciles o le puedo cambiar el horario?');
+    var why = {}; whyCounts(a, 'meal').forEach(function (e) { why[e[0]] = e[1]; });
+    if (why.fuera >= 3) out.push('Comí fuera ' + why.fuera + ' veces. ¿Qué me recomienda pedir cuando como fuera?');
+    if (why.tiempo >= 3) out.push('No tuve tiempo de comer ' + why.tiempo + ' veces. ¿Hay opciones más rápidas que pueda preparar?');
+    if (why.hambre >= 3) out.push('No tuve hambre a la hora de comer ' + why.hambre + ' veces. ¿Puedo ajustar porciones u horarios?');
+    if (why.otra >= 3) out.push('Comí otra cosa ' + why.otra + ' veces. ¿Cómo hago cambios sin salirme del plan?');
+    var h = avg(C.f.h), e = avg(C.f.e), ht = avg(C.train.h), hr = avg(C.rest.h);
+    if (h !== null && C.f.h.n >= 5 && h >= 3.5) out.push('Tuve bastante hambre entre comidas (' + h.toFixed(1) + ' de 5 en promedio). ¿Puedo agregar algo o mover porciones?');
+    if (ht !== null && hr !== null && C.train.h.n >= 3 && C.rest.h.n >= 3 && Math.abs(ht - hr) >= 0.7) {
+      out.push('Tengo más hambre en días de ' + (ht > hr ? 'ejercicio' : 'descanso') + ' (' + Math.max(ht, hr).toFixed(1) + ' contra ' + Math.min(ht, hr).toFixed(1) + ' de 5). ¿Ajustamos porciones esos días?');
+    }
+    if (e !== null && C.f.e.n >= 5 && e <= 2.5) out.push('Mi energía estuvo baja (' + e.toFixed(1) + ' de 5 en promedio). ¿Es normal con el plan o ajustamos algo?');
+    if (C.low.length >= 3) out.push('Tuve la digestión baja ' + C.low.length + ' días (' + (C.low.length > 5 ? 'los más recientes: ' : '') +
+      listText(C.low.slice(-5).map(function (k) { return day2(k); })) + '). ¿Puede ser por algún alimento?');
+    var nos = tasteList(-1);
+    if (nos.length) out.push((nos.length > 1 ? 'No me gustan: ' : 'No me gusta: ') + listText(nos) + '. ¿Por qué ' + (nos.length > 1 ? 'platillos los' : 'platillo lo') + ' puedo cambiar?');
+    var top = R.swaps[0];
+    if (top && top.n >= 3) out.push('Elegí ' + top.r.name + ' ' + top.n + ' veces en lugar de lo del plan. ¿Lo puedo dejar fijo?');
+    if (a.water.days >= 5) out.push('Tomo ' + avgGlasses(a.water) + ' vasos de agua al día en promedio. ¿Cuánta agua me recomienda?');
+    var w = bodyDelta('w');
+    if (w) out.push('Mi peso cambió ' + deltaText(w, 'kg') + ' desde el ' + day2(w.first) + '. ¿Cómo vamos?');
+    out.push('¿Qué cambia en mi plan a partir de ahora (menú, porciones u horarios)?');
+    return out;
+  }
+  function hasQuestion(q) { return (S.settings.notes || '').indexOf(q) !== -1; }
+  function addQuestions(qs) {
+    var notes = (S.settings.notes || '').replace(/\s+$/, ''), add = qs.filter(function (q) { return !hasQuestion(q); });
+    if (!add.length) return;
+    S.settings.notes = ((notes ? notes + '\n' : '') + add.map(function (q) { return '• ' + q; }).join('\n')).slice(0, 2000);
+    save();
+    if (sheet) renderSheet();
+    render();
+    toast(add.length === 1 ? 'Pregunta agregada' : add.length + ' preguntas agregadas');
+  }
+  function suggestionsHtml() {
+    var qs = reviewSuggestions(); if (!qs.length) return '';
+    var pending = qs.filter(function (q) { return !hasQuestion(q); }).length;
+    return '<div class="rev-sugs"><h3 class="sec-title">Preguntas sugeridas</h3><p class="small muted">Salen de lo que marcaste. Toca + para agregarlas a tus preguntas; después puedes editarlas.</p>' +
+      '<ul class="plain rev-sug-list">' + qs.map(function (q, i) {
+        var added = hasQuestion(q);
+        return '<li' + (added ? ' class="is-added"' : '') + '><span>' + esc(q) + '</span>' + (added
+          ? '<span class="badge">Agregada</span>'
+          : '<button class="icon-btn sm rev-add" data-action="rev-add" data-i="' + i + '" aria-label="Agregar: ' + esc(q) + '">+</button>') + '</li>';
+      }).join('') + '</ul>' +
+      (pending > 1 ? '<button class="chip-btn" data-action="rev-add-all">Agregar todas (' + pending + ')</button>' : '') + '</div>';
+  }
+  function reviewHead(n) { return n === 0 ? 'Hoy es tu revisión' : n === 1 ? 'Mañana es tu revisión' : n > 1 ? 'Tu revisión es en ' + n + ' días' : 'Tu revisión ya pasó'; }
+  function reviewSheet() {
+    var rk = reviewKey(), n = daysToReview(), items = reviewItems(), done = items.filter(function (x) { return x.done; }).length, pct = Math.round(done / items.length * 100);
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--blue)">' + icon('clipboard') + '</span>' +
+      '<div class="sheet-titles"><div class="eyebrow">Preparar mi revisión</div><h2 id="sheet-title">' + longDate(fromKey(rk)) + '</h2></div>' +
+      '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
+      '<div class="sheet-content"><p><b>' + reviewHead(n) + '.</b> Llevas ' + done + ' de ' + items.length + ' listos.</p>' +
+      '<div class="bar" role="progressbar" aria-label="Lista para tu revisión" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><span style="width:' + pct + '%"></span></div>' +
+      '<ul class="plain rev-list">' + items.map(function (it) {
+        return '<li class="rev-item' + (it.done ? ' is-done' : '') + '">' +
+          '<button class="rev-check" data-action="rev-toggle" data-id="' + it.id + '" aria-pressed="' + it.done + '"' + (it.auto ? ' disabled title="Listo según tus datos"' : ' title="Marcar como hecho"') + ' aria-label="' + it.t + (it.done ? ': listo' : ': pendiente') + '">' + (it.done ? icon('check') : '') + '</button>' +
+          '<div class="rev-txt"><b>' + it.t + '</b><span class="small muted">' + it.d + '</span></div>' +
+          (it.btn ? '<button class="chip-btn" data-action="' + it.btn[0] + '"' + (it.btn[2] || '') + '>' + it.btn[1] + '</button>' : '') + '</li>';
+      }).join('') + '</ul>' +
+      '<p class="small muted">Lo que la app puede revisar se palomea solo; lo demás, toca el círculo cuando lo hagas.</p>' +
+      suggestionsHtml() +
+      '<details class="cook-more"><summary>¿Cambió la fecha de tu cita?</summary><label class="time-row"><span>Fecha</span>' +
+      '<input type="date" data-input="review-date" value="' + rk + '" min="' + D.PLAN.assigned + '"></label>' +
+      '<p class="small muted">Se usa en la cuenta regresiva, tu resumen y los recordatorios (si ya los agregaste, vuelve a agregarlos).</p></details></div>' +
+      '<div class="sheet-actions"><button class="btn primary" data-action="open-report">' + icon('clipboard') + ' Abrir mi resumen</button></div>';
+  }
+  function reviewCard() { // en Hoy, la semana antes de la cita y el mismo día
+    var n = daysToReview(); if (n < 0 || n > 7) return '';
+    var items = reviewItems(), done = items.filter(function (x) { return x.done; }).length, pct = Math.round(done / items.length * 100);
+    var sugs = reviewSuggestions().filter(function (q) { return !hasQuestion(q); }).length;
+    return '<section class="card review-card"><h3 class="card-title">' + icon('clipboard') + ' ' + reviewHead(n) + '</h3>' +
+      '<div class="bar" role="progressbar" aria-label="Lista para tu revisión" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><span style="width:' + pct + '%"></span></div>' +
+      '<p class="small muted">' + done + ' de ' + items.length + ' listos' + (sugs ? ' · ' + sugs + (sugs === 1 ? ' pregunta sugerida' : ' preguntas sugeridas') : '') + '.</p>' +
+      '<div class="row-gap"><button class="btn primary" data-action="open-review">' + icon('clipboard') + ' Preparar mi revisión</button></div></section>';
+  }
+
   /* Resumen para la revisión con la nutrióloga */
   function reportData() {
     var start = fromKey(D.PLAN.assigned), t = today();
@@ -2398,7 +2535,14 @@
   }
   function medLabel(md) { return md.name + ' (con ' + MEAL[md.meal].name.toLowerCase() + (md.when === 'train' ? ', días de ejercicio' : '') + ')'; }
   function medsInReport(a) { return (S.settings.meds || []).filter(function (md) { return a.meds[md.id] && a.meds[md.id].due; }); }
-  function actDaysText(a) { return a.days.length === 7 ? 'diario' : daysText(a.days); }
+  function actDaysText(a) { // “diario”, “lun a sáb”, “mar y jue”, “lun a mié y vie”
+    if (a.days.length === 7) return 'diario';
+    var ds = a.days.slice().sort(), runs = [];
+    ds.forEach(function (i) { var r = runs[runs.length - 1]; if (r && i === r[1] + 1) r[1] = i; else runs.push([i, i]); });
+    return listText([].concat.apply([], runs.map(function (r) {
+      return r[1] - r[0] >= 2 ? [DAY_SHORT[r[0]] + ' a ' + DAY_SHORT[r[1]]] : r[0] === r[1] ? [DAY_SHORT[r[0]]] : [DAY_SHORT[r[0]], DAY_SHORT[r[1]]];
+    })));
+  }
   function movInReport(a) {
     return (S.settings.acts || []).filter(function (x) { return a.acts[x.id] && a.acts[x.id].due; }).map(function (x) { return { a: x, x: a.acts[x.id] }; });
   }
@@ -2435,7 +2579,7 @@
     return '<div class="bar" role="progressbar" aria-label="' + label + '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + p + '"><span style="width:' + p + '%"></span></div>';
   }
   function reportSheet() {
-    var R = reportData(), a = R.all, rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, ''), notes = S.settings.notes || '';
+    var R = reportData(), a = R.all, rev = shortDate(reviewKey()).replace(/ \d{4}$/, ''), notes = S.settings.notes || '';
     var head = '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--blue)">' + icon('clipboard') + '</span>' +
       '<div class="sheet-titles"><div class="eyebrow">Para tu revisión · ' + rev + '</div><h2 id="sheet-title">Tu resumen</h2></div>' +
       '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>';
@@ -2473,6 +2617,7 @@
       '<textarea id="notes" class="notes no-print" rows="4" data-input="notes" placeholder="Ej.: ¿En días de descanso solo quito el pre-entreno?">' + esc(notes) + '</textarea>' +
       '<p id="notes-print" class="print-only notes-print">' + esc(notes) + '</p>' +
       '<p class="small muted no-print">Se guardan solo aquí y salen en el resumen que compartas o imprimas.</p>' +
+      '<div class="no-print">' + suggestionsHtml() + '</div>' +
       '</div>' +
       '<div class="sheet-actions"><button class="btn" data-action="report-share">' + icon('share') + ' Compartir</button>' +
       '<button class="btn primary" data-action="report-print">' + icon('download') + ' Imprimir o PDF</button></div>';
@@ -2711,7 +2856,7 @@
   function runningTimers() { return cook ? cook.timers.filter(function (t) { return t.end > Date.now(); }).length : 0; }
 
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet, import: importSheet, cat: catSheet, body: bodySheet, photo: photoSheet, cal: calSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet, import: importSheet, cat: catSheet, body: bodySheet, photo: photoSheet, cal: calSheet, review: reviewSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -2922,8 +3067,14 @@
       case 'backup-save': saveBackup(); break;
       case 'backup-send': sendBackup(); break;
       case 'open-report': openSheet('report', []); break;
-      case 'report-share': shareText('Resumen NutriJabón', reportText(), 'Resumen copiado'); break;
-      case 'report-print': window.print(); break;
+      case 'report-share': revEdit(function (P) { P.rep = keyOf(today()); }); shareText('Resumen NutriJabón', reportText(), 'Resumen copiado'); break;
+      case 'report-print': revEdit(function (P) { P.rep = keyOf(today()); }); window.print(); break;
+      case 'open-review': openSheet('review', []); break;
+      case 'rev-toggle': revEdit(function (P) { P.m = P.m || {}; if (P.m[ds.id]) delete P.m[ds.id]; else P.m[ds.id] = true; }); renderSheet(); render(); break;
+      case 'rev-add': { var rq = reviewSuggestions()[+ds.i]; if (rq) addQuestions([rq]); break; }
+      case 'rev-add-all': addQuestions(reviewSuggestions()); break;
+      case 'goto-month': closeSheet(); ui.semMode = 'month'; ui.monthOffset = 0; setTab('semana'); break;
+      case 'review-checkin': { closeSheet(); ui.date = null; setTab('hoy'); var rc = document.getElementById('checkin'); if (rc) rc.scrollIntoView({ block: 'start' }); break; }
       case 'reset-times': S.settings.times = {}; save(); render(); toast('Horarios del plan restaurados'); break;
       case 'reset-all':
         if (window.confirm('¿Borrar tus marcas de comidas y movimiento, el agua, cambios de platillos, la lista de compras y el prep? Tus ajustes, medicamentos, actividades y peso se quedan.')) {
@@ -3002,6 +3153,13 @@
       save();
       var arow = el.closest('.med-row');
       if (arow && t === 'act-after') arow.style.setProperty('--mc', 'var(--m-' + el.value + ')');
+    } else if (t === 'review-date') {
+      if (!KEY_RE.test(el.value) || el.value < D.PLAN.assigned) { toast('Elige una fecha después del inicio de tu plan'); return; }
+      var oldRk = reviewKey(), rp = S.settings.revPrep;
+      if (el.value === D.PLAN.review) delete S.settings.reviewDate; else S.settings.reviewDate = el.value;
+      if (rp && rp[oldRk] && !rp[el.value]) { rp[el.value] = rp[oldRk]; delete rp[oldRk]; } // la misma cita, solo cambió de día
+      save(); renderSheet(); render();
+      toast('Tu revisión: ' + longDate(fromKey(el.value)).toLowerCase());
     } else if (t === 'water-goal') {
       S.settings.waterGoal = +el.value; save();
     } else if (t === 'lead') {

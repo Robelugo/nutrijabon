@@ -383,3 +383,26 @@ button.cat-btn { cursor:pointer; }
 /* Horas de sueño */
 .ck-hours { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
 .ck-hours select { font:inherit; font-weight:800; padding:7px 10px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--text); }
+
+/* Preparar mi revisión */
+.review-card { border:1px solid var(--blue); }
+.review-card .bar, .sheet-content > .bar { margin:6px 0 4px; }
+.rev-list { display:grid; gap:2px; margin:6px 0; }
+.rev-item { display:grid; grid-template-columns:34px minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 0; border-top:1px solid var(--line-soft); }
+.rev-item:first-child { border-top:0; }
+.rev-check {
+  display:grid; place-items:center; width:32px; height:32px; padding:0; border:2px solid var(--line); border-radius:50%;
+  background:transparent; color:var(--ink); cursor:pointer;
+}
+.rev-check:disabled { cursor:default; }
+.rev-item.is-done .rev-check { background:var(--green); border-color:var(--green); }
+.rev-check .ic { width:18px; height:18px; stroke-width:3; }
+.rev-txt { display:grid; gap:2px; min-width:0; }
+.rev-item.is-done .rev-txt b { color:var(--muted); }
+.rev-sugs { margin-top:8px; }
+.rev-sug-list { display:grid; gap:8px; margin:8px 0 10px; }
+.rev-sug-list li { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line-soft); border-radius:12px; background:var(--surface); }
+.rev-sug-list li span:first-child { flex:1; min-width:0; }
+.rev-sug-list li.is-added { opacity:.65; }
+.rev-add { flex:none; width:36px; height:36px; font:800 1.25rem var(--font-body); }
+@media(max-width:380px){ .rev-item { grid-template-columns:32px minmax(0,1fr); } .rev-item > .chip-btn { grid-column:2; justify-self:start; } }
