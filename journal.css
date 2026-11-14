@@ -360,3 +360,26 @@ button.cat-btn { cursor:pointer; }
 @media(min-width:960px){
   [data-theme=light] .tab[aria-current=page] .tab-emblem { background:#f6e3ab; box-shadow:none; }
 }
+
+/* Mes en pantalla (oscuro): más cumplido = verde más brillante. */
+:root { --lv1:#4a4232; --lv2:#4f6a38; --lv3:#6e9a4b; --lv4:#a5d277; --lv-ink:var(--text); --lv-ink-hi:#13200b; }
+:root[data-theme=light] { --lv1:#f1ead2; --lv2:#d3e6b8; --lv3:#9fcd7c; --lv4:#5e9f45; --lv-ink:#1d2a14; --lv-ink-hi:#10200a; }
+.month-card { padding:clamp(12px,2vw,20px); }
+.mc-cell.is-today { box-shadow:inset 0 0 0 2px var(--yellow); }
+[data-theme=light] .mc-cell.is-today { box-shadow:inset 0 0 0 2px #8a5a00; }
+
+/* Cocinar para más personas */
+.serv-ctl { display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-weight:750; color:var(--text-2); }
+.serv-ctl b { min-width:1.4em; text-align:center; font:850 1.3rem var(--font-display); color:var(--text); }
+.serv-ctl .icon-btn { width:38px; height:38px; font:800 1.2rem var(--font-body); }
+.serv-ctl .icon-btn:disabled { opacity:.4; }
+.serv-note { margin:2px 0 0; }
+
+/* Foto del plato */
+.featured .meal-main > .plate-thumb { grid-column:1 / -1; max-width:260px; }
+.timeline-photo { display:inline-flex; color:var(--muted); }
+.photo-btn .ic { width:18px; height:18px; }
+
+/* Horas de sueño */
+.ck-hours { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:8px; }
+.ck-hours select { font:inherit; font-weight:800; padding:7px 10px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--text); }
