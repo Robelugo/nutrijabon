@@ -1937,11 +1937,48 @@
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
   }
+  var ICS_NAME = 'NutriJabon-recordatorios.ics';
   function addToCalendar() {
+    if (detectOS() === 'ios') { openSheet('cal', []); return; } // iPhone/iPad: pasos con Mail o Archivos
+    downloadFile(ICS_NAME, 'text/calendar;charset=utf-8', buildIcs()); toast('Listo: abre el archivo descargado');
+  }
+  /* iPhone: dentro de la app instalada (y a veces en Safari) iOS no abre un archivo de calendario que arma la
+   * página, así que no aparece nada. Lo que sí funciona es pasar el archivo a Mail o a Archivos con el menú
+   * de compartir y abrirlo ahí: iOS muestra los eventos con “Agregar todo”. */
+  function icsFile() { return new File([buildIcs()], ICS_NAME, { type: 'text/calendar' }); }
+  function canShareIcs() { try { return !!(navigator.share && navigator.canShare && navigator.canShare({ files: [icsFile()] })); } catch (e) { return false; } }
+  function calSheet() {
+    var share = canShareIcs();
+    return '<div class="sheet-head"><span class="sheet-emoji roundel" style="--mc:var(--yellow)">' + icon('bell') + '</span>' +
+      '<div class="sheet-titles"><div class="eyebrow">Recordatorios</div><h2 id="sheet-title">En tu iPhone</h2></div>' +
+      '<button class="icon-btn" data-action="close-sheet" aria-label="Cerrar">' + icon('x') + '</button></div>' +
+      '<div class="sheet-content"><p>El iPhone no abre el calendario directo desde la app, pero sí desde <b>Mail</b> o <b>Archivos</b>:</p>' +
+      '<ol class="steps">' +
+      (share ? '<li>Toca <b>Compartir el archivo</b> y elige <b>Mail</b>.</li><li>Envíalo a tu propio correo.</li>'
+        : '<li>Toca <b>Descargar el archivo</b>: queda en la carpeta Descargas de la app <b>Archivos</b>.</li>') +
+      (share ? '<li>Abre ese correo en la app <b>Mail</b> y toca el archivo <b>' + ICS_NAME + '</b>.</li>'
+        : '<li>Abre la app <b>Archivos</b>, entra a <b>Descargas</b> y toca <b>' + ICS_NAME + '</b>.</li>') +
+      '<li>Toca <b>Agregar todo</b> y elige tu calendario.</li></ol>' +
+      (share ? '<p class="small muted">También puedes elegir <b>Guardar en Archivos</b> y abrirlo desde la app Archivos. Si no ves la opción de agregar en una app, prueba con la otra.</p>' : '') +
+      '<details class="cook-more"><summary>Otra forma: abrir directo</summary><p class="small muted">A veces funciona en Safari (no en la app instalada en tu pantalla de inicio). Si no pasa nada, usa los pasos de arriba.</p>' +
+      '<button class="btn" data-action="cal-direct">' + icon('calendar') + ' Abrir directo</button></details>' +
+      '<p class="small muted">Si cambias horarios, días, actividades o tus vitaminas y medicamentos, borra los avisos anteriores en tu calendario y vuelve a hacer esto.</p></div>' +
+      '<div class="sheet-actions">' + (share
+        ? '<button class="btn primary" data-action="cal-share">' + icon('share') + ' Compartir el archivo</button>'
+        : '<button class="btn primary" data-action="cal-download">' + icon('download') + ' Descargar el archivo</button>') + '</div>';
+  }
+  function shareIcs() {
+    var f;
+    try { f = icsFile(); } catch (e) { toast('No se pudo preparar el archivo'); return; }
+    navigator.share({ files: [f], title: 'Recordatorios de NutriJabón' }).then(function () {
+      toast('Listo. Ábrelo en Mail o Archivos y toca Agregar todo');
+    }, function (err) {
+      if (err && err.name === 'AbortError') return; // cerró el menú
+      toast('No se pudo compartir; prueba Abrir directo');
+    });
+  }
+  function openIcsDirect() { // lo de antes: el service worker sirve el .ics; si no hay, una dirección data:
     var ics = buildIcs();
-    if (detectOS() !== 'ios') { downloadFile('NutriJabon-recordatorios.ics', 'text/calendar;charset=utf-8', ics); toast('Listo: abre el archivo descargado'); return; }
-    // iPhone/iPad: Safari abre el Calendario con “Agregar todo” cuando visita un .ics real.
-    // El service worker lo sirve desde el caché; si no hay, se usa una dirección data:.
     var dataUrl = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(ics);
     if (!(window.caches && navigator.serviceWorker && navigator.serviceWorker.controller)) { location.href = dataUrl; return; }
     caches.open(FILES_CACHE).then(function (c) {
@@ -1951,7 +1988,7 @@
   function remindHtml() {
     var os = detectOS(), lead = remindLead(), rev = shortDate(D.PLAN.review).replace(/ \d{4}$/, '');
     var notes = {
-      ios: 'Se abre tu Calendario: toca <b>Agregar todo</b>.',
+      ios: 'Te mostramos los pasos: lo compartes a <b>Mail</b> (o a Archivos), lo abres ahí y tocas <b>Agregar todo</b>.',
       android: 'Se descarga un archivo: ábrelo y elige tu app de calendario. Si Google Calendar no lo abre, impórtalo desde una computadora en <b>calendar.google.com</b> (Configuración → Importar y exportar) y te llegará al celular.',
       windows: 'Se descarga un archivo: ábrelo y se agrega a Outlook o a Calendario.',
       mac: 'Se descarga un archivo: ábrelo y elige en qué calendario guardarlo.'
@@ -2674,7 +2711,7 @@
   function runningTimers() { return cook ? cook.timers.filter(function (t) { return t.end > Date.now(); }).length : 0; }
 
   var sheetEl, sheetBox, sheetBody, sheet = null, lastFocus = null;
-  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet, import: importSheet, cat: catSheet, body: bodySheet, photo: photoSheet };
+  var SHEETS = { recipe: recipeSheet, swap: swapSheet, onboarding: onboardingSheet, report: reportSheet, out: outSheet, cook: cookSheet, recap: recapSheet, import: importSheet, cat: catSheet, body: bodySheet, photo: photoSheet, cal: calSheet };
   function openSheet(type, args) {
     var wasOpen = !!sheet;
     if (!wasOpen) lastFocus = document.activeElement;
@@ -2879,6 +2916,9 @@
       case 'goto-settings': gotoSection('ajustes'); break;
       case 'goto-sec': gotoSection(ds.sec); break;
       case 'add-calendar': addToCalendar(); break;
+      case 'cal-share': shareIcs(); break;
+      case 'cal-download': downloadFile(ICS_NAME, 'text/calendar;charset=utf-8', buildIcs()); toast('Guardado en Descargas: ábrelo desde la app Archivos'); break;
+      case 'cal-direct': openIcsDirect(); break;
       case 'backup-save': saveBackup(); break;
       case 'backup-send': sendBackup(); break;
       case 'open-report': openSheet('report', []); break;
