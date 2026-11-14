@@ -277,3 +277,86 @@ main { padding-top:22px; }
 }
 [data-view=recetas] .rc-name .section-emblem, [data-view=recetas] .badge .section-emblem,
 .sheet-content .eq-chip .section-emblem { width:17px; height:17px; padding:1px; }
+
+/* Movimiento: las actividades usan la misma fila que las tomas; en Semana van como fichas. */
+.acts .toma-ic .planner-icon { width:22px; height:22px; }
+.mini-acts { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 0; padding-top:10px; border-top:1px dashed var(--line-soft); }
+.mini-act {
+  display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:4px 11px;
+  border:1px solid var(--line-soft); border-radius:999px; background:var(--surface-2);
+  color:var(--text-2); font:750 .84rem var(--font-body);
+}
+.mini-acts .is-done .mini-act { border-color:var(--green); }
+.mini-acts .is-missed .mini-act span { text-decoration:line-through; text-decoration-color:var(--red); }
+.act-row .day-chips { margin:10px 0 2px; }
+
+/* Agua: un vaso por toque. */
+.water .recap-head { align-items:center; }
+.water-count { color:var(--text-2); font-weight:750; font-size:.9rem; font-variant-numeric:tabular-nums; }
+.water-count b { font-size:1.25rem; color:var(--text); }
+.water-count.is-goal, .water-count.is-goal b { color:var(--ok-text); }
+.glasses { display:grid; grid-template-columns:repeat(auto-fill,minmax(32px,1fr)); gap:4px; margin:8px 0 10px; }
+.glass-btn {
+  display:grid; place-items:center; height:50px; padding:0; border:1px solid var(--line-soft);
+  border-radius:12px; background:var(--surface-2); color:var(--muted); cursor:pointer;
+}
+.glass-btn .planner-icon { width:28px; height:28px; }
+.glass-btn:not(.is-full) .planner-icon path[fill] { fill:none; stroke:none; }
+.glass-btn.is-full { color:var(--text); border-color:var(--chart-line); }
+.water-tools { align-items:center; }
+
+/* Gatos: colección en Semana, aviso en Hoy y hoja con el gato en grande. */
+.cat-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px 8px; margin:10px 0; }
+.cat-btn {
+  display:grid; justify-items:center; align-content:start; gap:3px; width:100%; padding:4px 2px;
+  border:0; background:transparent; color:var(--text); font:inherit; text-align:center; border-radius:14px;
+}
+button.cat-btn { cursor:pointer; }
+.cat-btn .cat-svg { width:min(96px,100%); }
+.cat-btn b { font:800 1rem var(--font-display); }
+.cat-slot:not(.is-won) b { color:var(--muted); }
+.cat-btn .small { font-size:.72rem; }
+.cat-new { display:grid; grid-template-columns:minmax(92px,30%) minmax(0,1fr); gap:14px; align-items:center; border:1px solid var(--yellow); }
+.cat-new h3 { margin:2px 0 4px; font:850 clamp(1.5rem,5vw,2rem)/1.05 var(--font-display); letter-spacing:-.03em; }
+.cat-new .eyebrow { letter-spacing:.06em; }
+.cat-new .row-gap { margin-top:10px; align-items:center; }
+.cat-big .cat-svg { width:min(230px,70vw); margin:0 auto 8px; }
+.cat-sheet { text-align:center; }
+
+/* Peso y medidas */
+.body-card .stats .stat b small { font-size:.55em; }
+.body-card .stat span { font-size:12px; }
+.body-card .stat .stat-delta { margin-top:2px; color:var(--text-2); font-variant-numeric:tabular-nums; }
+.body-form { display:grid; gap:8px; }
+.body-form input { font:inherit; font-weight:800; padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); color:var(--text); max-width:150px; }
+.theme-pick { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
+.theme-pick button { min-height:42px; }
+
+/* Dark screen palette for the chart and locked cats. */
+:root { --chart-line:#8cc1ea; --cat-shadow:#3b3129; }
+
+/* Tema claro: mismas formas, papel crema. */
+:root[data-theme=light] {
+  color-scheme:light;
+  --bg:#f6efe2; --surface:#fffaf1; --surface-2:#efe5d3; --text:#2a2019; --text-2:#4b3c30;
+  --muted:#735f4c; --line:#c9b597; --line-soft:#e2d4bd; --hard:transparent; --ink:#20180f;
+  --yellow:#f3c34f; --pink:#c0446d; --orange:#c7773a;
+  --nav-bg:#fbf5e8; --nav-fg:#5b4838; --pressed-bg:#f3c34f; --pressed-fg:#20180f;
+  --ok-bg:#e2efd8; --ok-text:#2c5527; --warn-bg:#f9e8c3; --warn-text:#674610;
+  --info-bg:#e0eaf1; --info-text:#21455b; --danger:#b3261e;
+  --title-face:var(--yellow); --title-side:#b15072; --toast-bg:#2a2019; --toast-fg:#fbefd9;
+  --chart-line:#2f78b7; --cat-shadow:#ddd0bb;
+}
+[data-theme=light] :focus-visible { outline-color:#8a5a00; }
+[data-theme=light] .featured .meal-card { background:linear-gradient(125deg,#fff6e3,#f6ead3); border-color:#d9b98f; }
+[data-theme=light] .featured .meal.is-next .meal-clock { color:#8a5a00; }
+[data-theme=light] .stats .stat b { color:color-mix(in srgb,var(--sc) 62%,#2a2019); }
+[data-theme=light] .tab[aria-current=page] .ic { color:#8a5a00; }
+[data-theme=light] .tab[aria-current=page] .planner-icon { background:#f3dfa6; }
+[data-theme=light] .tab[aria-current=page] .tab-emblem { background:#f6e3ab; box-shadow:inset 0 -2px #c9952a; }
+[data-theme=light] .sheet { box-shadow:0 20px 60px #3a2a1a33; }
+[data-theme=light] .sheet-backdrop { background:#2a20198a; }
+[data-theme=light] .glass-btn.is-full { background:#e4eef6; }
+@media(min-width:960px){
+  [data-theme=light] .tab[aria-current=page] .tab-emblem { background:#f6e3ab; box-shadow:none; }
+}

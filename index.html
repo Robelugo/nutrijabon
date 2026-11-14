@@ -6,6 +6,10 @@
   <title>NutriJabón</title>
   <meta name="description" content="Tu plan de alimentación vegano día por día: menú, recetas, lista de compras y equivalentes.">
   <meta name="theme-color" content="#191511">
+  <script>/* Tema guardado, antes de pintar (oscuro si no hay ninguno) */
+    try { var njs = (JSON.parse(localStorage.getItem('nutrijabon:v1')) || {}).settings || {}, njt = njs.theme;
+      document.documentElement.dataset.theme = njt === 'light' || (njt === 'auto' && !matchMedia('(prefers-color-scheme: dark)').matches) ? 'light' : 'dark';
+    } catch (e) { document.documentElement.dataset.theme = 'dark'; }</script>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
